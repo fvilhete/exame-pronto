@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExamePronto | Preparação Escolar Nacional, Explicador IA e Jogos Educativos de Moçambique</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="A maior plataforma de preparação escolar, exames de condução e explicações inteligentes em Moçambique. Pratica com simuladores e joga jogos educativos.">
+  <meta name="keywords" content="exames nacionais mocambique, 10 classe, 12 classe, 7 classe, admissão uem, admissão up, exames de condução Moçambique, jogos educativos, explicador virtual">
+  <meta name="author" content="ExamePronto">
+  
+  <!-- Social Media Meta Tags (Open Graph) -->
+  <meta property="og:title" content="ExamePronto | Secundário, Técnico, Cambridge, Condução e Jogos">
+  <meta property="og:description" content="Pratica com simuladores reais de exames oficiais, estuda com o explicador virtual e desafia os teus amigos em jogos educativos.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ExamePronto">
+  
+  <!-- Estilos -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-container">
+      <a href="#" class="logo" id="nav-logo-btn">
+        <div class="logo-icon">EP</div>
+        <span>ExamePronto</span>
+      </a>
+      
+      <!-- Menu de Navegação Superior -->
+      <nav class="nav-menu" id="main-nav-menu" style="display: none; gap: 10px;">
+        <button class="btn btn-sm btn-outline nav-menu-item active" data-target="dashboard">Simulador</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="explicador">Explicador IA</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="games">Jogos Educativos</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="investor">Área de Negócios 💼</button>
+      </nav>
+      
+      <div class="nav-actions">
+        <!-- Status de Subscrição -->
+        <div id="header-premium-badge" style="display: none;">
+          <span class="premium-status-indicator" style="margin: 0; padding: 6px 12px; font-size: 0.8rem;">
+            <span class="badge">PREMIUM</span> Ativo
+          </span>
+        </div>
+        
+        <button class="btn btn-sm btn-accent" id="header-upgrade-btn" style="display: none;">
+          Adquirir Premium
+        </button>
+        
+        <!-- Botão de Sessão -->
+        <button class="btn btn-sm btn-outline" id="header-auth-btn">
+          Entrar / Registar
+        </button>
+        <span id="header-user-phone" style="display: none; font-size: 0.85rem; font-weight: 600;"></span>
+        <button class="btn btn-sm btn-outline" id="header-logout-btn" style="display: none; padding: 5px 10px; font-size: 0.8rem;">
+          Sair
+        </button>
+        
+        <!-- Switch de Tema -->
+        <button class="theme-toggle" id="theme-toggle-btn" aria-label="Alternar Tema Escuro/Claro">
+          <svg id="theme-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+          </svg>
+          <svg id="theme-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="display: none;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- 1. LANDING PAGE SECTION -->
+    <section id="section-landing" class="section active">
+      <div class="hero">
+        <span class="hero-tag">A tua vaga está garantida! 🎓</span>
+        <h1>Todo o Sistema de Ensino, Cambridge e Condução no teu Telemóvel</h1>
+        <p>Aprende com simuladores de exames nacionais, currículo internacional Cambridge, código de estrada (escola de condução) e diverte-te com jogos educativos desafiantes.</p>
+        
+        <div class="hero-cta">
+          <button class="btn btn-primary" id="landing-start-btn">Estudar Agora</button>
+          <button class="btn btn-outline" id="landing-plans-btn">Ver Planos M-Pesa</button>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Completo</h3>
+            <p>Moçambique e Cambridge</p>
+          </div>
+          <div class="stat-card">
+            <h3>Código Carta</h3>
+            <p>Simulador de Condução</p>
+          </div>
+          <div class="stat-card">
+            <h3>Jogos IA</h3>
+            <p>Aprender a Jogar</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Provas Sociais -->
+      <div class="testimonials">
+        <h2>O que dizem os nossos alunos e condutores:</h2>
+        <div class="testimonials-grid">
+          <div class="testimonial-card">
+            <p class="testimonial-quote">"O simulador de exame de código ajudou-me imenso a passar no teste real do INATRO à primeira! Recomendo as perguntas de prioridade."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">JG</div>
+              <div class="author-info">
+                <h4>João Ganhane</h4>
+                <p>Carta de Condução Ligeira - Maputo (2026)</p>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">"Estudo no currículo Cambridge (IGCSE) e foi muito bom encontrar explicações e contas resolvidas em inglês aqui. Excelente suporte."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">AM</div>
+              <div class="author-info">
+                <h4>Aisha Mussa</h4>
+                <p>Estudante de IGCSE - Maputo (2025)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. DASHBOARD SECTION -->
+    <section id="section-dashboard" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2 id="dashboard-welcome-title">Olá, Estudante! 👋</h2>
+          <p>Selecione o nível de ensino, Cambridge ou Escola de Condução para treinar.</p>
+        </div>
+        <div id="dashboard-premium-box" class="premium-status-indicator">
+          <span class="badge">GRÁTIS</span> Conta Limitada
+          <button class="btn btn-sm btn-accent" id="dashboard-upgrade-btn" style="margin-left: 10px;">Ativar Premium</button>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Main Column: Select Level & Exams -->
+        <div class="main-column">
+          <!-- Select Level -->
+          <h3 class="uni-section-title"><span></span>1. Escolha a Categoria</h3>
+          <div class="uni-grid" id="education-level-grid">
+            <div class="uni-card active" data-level="superior">
+              <div class="uni-badge" style="background: var(--primary-light); color: var(--primary);">UNIV</div>
+              <h3>Ensino Superior</h3>
+              <p>Admissão UEM e UP.</p>
+            </div>
+            <div class="uni-card" data-level="12a">
+              <div class="uni-badge" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);">12ª</div>
+              <h3>12ª Classe</h3>
+              <p>Exames Nacionais de Matemática, etc.</p>
+            </div>
+            <div class="uni-card" data-level="10a">
+              <div class="uni-badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">10ª</div>
+              <h3>10ª Classe</h3>
+              <p>Exames de Fim de Ciclo.</p>
+            </div>
+            <div class="uni-card" data-level="primario">
+              <div class="uni-badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">7ª</div>
+              <h3>7ª Classe</h3>
+              <p>Exames do Ensino Primário.</p>
+            </div>
+            <div class="uni-card" data-level="tecnico">
+              <div class="uni-badge" style="background: rgba(239, 68, 68, 0.1); color: var(--error);">TÉC</div>
+              <h3>Ensino Técnico</h3>
+              <p>Exames para IFP, Saúde e IIC.</p>
+            </div>
+            <div class="uni-card" data-level="cambridge">
+              <div class="uni-badge" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5;">CAM</div>
+              <h3>Cambridge IGCSE</h3>
+              <p>Exames de Currículo Internacional.</p>
+            </div>
+            <div class="uni-card" data-level="conducao">
+              <div class="uni-badge" style="background: rgba(249, 115, 22, 0.1); color: #f97316;">COND</div>
+              <h3>Carta Condução</h3>
+              <p>Simulador INATRO, Código e Sinais.</p>
+            </div>
+          </div>
+
+          <!-- Exams List -->
+          <div class="exams-list-container">
+            <h3 class="uni-section-title"><span></span>2. Exames e Simulados Disponíveis</h3>
+            <div class="exams-grid" id="exams-list-grid">
+              <!-- JS will populate this list from Server Database -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar: User Stats -->
+        <div class="sidebar">
+          <div class="progress-card">
+            <h3>O teu progresso</h3>
+            
+            <div class="progress-stat">
+              <div class="progress-stat-header">
+                <span>Média Geral</span>
+                <strong id="progress-average-score">0%</strong>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-average-bar"></div>
+              </div>
+            </div>
+
+            <div class="progress-stat">
+              <div class="progress-stat-header">
+                <span>Simulados Concluídos</span>
+                <strong id="progress-completed-count">0</strong>
+              </div>
+            </div>
+
+            <div class="recent-activities">
+              <h4>Histórico Seguro</h4>
+              <div class="activity-list" id="dashboard-activity-list">
+                <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; font-style: italic;">Nenhum teste concluído. Inicia sessão para salvar o teu progresso.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. EXPLICADOR IA SECTION -->
+    <section id="section-explicador" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Explicador Inteligente EP 💡</h2>
+          <p>Lê as explicações teóricas resumidas ou conversa com o Explicador Virtual para tira-dúvidas instantâneo.</p>
+        </div>
+      </div>
+
+      <div class="explicador-grid">
+        <!-- Left: Lessons Library -->
+        <div class="lessons-panel">
+          <h3 class="uni-section-title"><span></span>Biblioteca de Explicações</h3>
+          
+          <div class="lessons-filters" style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <select id="lesson-filter-subject" class="lesson-select">
+              <option value="">Todas Disciplinas / Tópicos</option>
+              <option value="matematica">Matemática (ESG/Primário)</option>
+              <option value="portugues">Português</option>
+              <option value="codigo">Código de Estrada (Condução)</option>
+              <option value="mathematics">Cambridge Mathematics</option>
+            </select>
+          </div>
+
+          <div class="lessons-list" id="lessons-list-container">
+            <!-- Populated via API -->
+          </div>
+
+          <!-- Lesson Viewer Area -->
+          <div class="lesson-viewer-card" id="lesson-viewer" style="display: none;">
+            <button class="btn btn-sm btn-outline" id="lesson-close-viewer-btn" style="margin-bottom: 15px;">&larr; Voltar à Lista</button>
+            <h3 id="lesson-viewer-title">Título da Aula</h3>
+            <span class="exam-tag" id="lesson-viewer-badge" style="margin-bottom: 15px; display: inline-block;">Premium</span>
+            <div class="lesson-content-text" id="lesson-viewer-content">
+              Conteúdo da explicação.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Chat Tira-Dúvidas -->
+        <div class="tutor-chat-panel">
+          <h3 class="uni-section-title"><span></span>Tira-Dúvidas Inteligente</h3>
+          
+          <div class="tutor-chat-box">
+            <div class="chat-messages" id="chat-messages-container">
+              <div class="chat-bubble reply">
+                Olá! Sou o teu Explicador Virtual ExamePronto. Tens alguma dúvida sobre exames nacionais, regras de trânsito (condução) ou IGCSE Cambridge? Digita a tua dúvida abaixo!
+              </div>
+            </div>
+            
+            <div class="chat-typing-indicator" id="chat-typing" style="display: none;">
+              <span></span><span></span><span></span> Explicador está a formular resposta...
+            </div>
+
+            <div class="chat-input-area">
+              <input type="text" id="chat-user-input" class="chat-input" placeholder="Ex: Quem tem prioridade num cruzamento sem sinalização?">
+              <button class="btn btn-primary" id="chat-send-btn">Perguntar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. JOGOS EDUCATIVOS SECTION -->
+    <section id="section-games" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Jogos Educativos EP 🎮</h2>
+          <p>Desafia o teu cérebro, acumula pontos e lidera o ranking de Moçambique!</p>
+        </div>
+      </div>
+
+      <div class="games-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+        <!-- Left Column: Game Area -->
+        <div class="game-play-area" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow);">
+          <!-- Game Select Dashboard -->
+          <div id="game-selection-panel">
+            <h3 class="uni-section-title"><span></span>Escolhe o teu Jogo</h3>
+            
+            <div class="game-cards-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+              <div class="uni-card" id="game-card-math" style="text-align: left; padding: 25px; cursor: pointer;">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">⚡</div>
+                <h3>Matemática Rápida (Math Rush)</h3>
+                <p>Operações aritméticas geradas aleatoriamente. Responde ao maior número de contas corretas em 30 segundos!</p>
+                <button class="btn btn-primary btn-sm" style="margin-top: 15px; width: 100%;">Jogar Agora</button>
+              </div>
+              <div class="uni-card" id="game-card-quiz" style="text-align: left; padding: 25px; cursor: pointer;">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">🇲🇿</div>
+                <h3>Moçambique Quiz</h3>
+                <p>Testa os teus conhecimentos sobre geografia, história, fauna e cultura geral do nosso belo país!</p>
+                <button class="btn btn-accent btn-sm" style="margin-top: 15px; width: 100%;">Jogar Agora</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Game 1: Math Rush Arena -->
+          <div id="game-math-arena" style="display: none; text-align: center; animation: fadeIn 0.3s;">
+            <button class="btn btn-sm btn-outline" class="btn-game-back" style="margin-bottom: 20px; float: left;">&larr; Sair</button>
+            <div style="clear: both;"></div>
+            <h2 style="font-size: 2rem; color: var(--primary);">Math Rush!</h2>
+            <div style="display: flex; justify-content: space-around; font-size: 1.2rem; font-weight: bold; margin: 20px 0;">
+              <div>Tempo: <span id="game-math-timer" style="color: var(--error);">30s</span></div>
+              <div>Pontos: <span id="game-math-score" style="color: var(--success);">0</span></div>
+            </div>
+            
+            <div class="math-question-box" style="background: var(--bg-primary); padding: 30px; border-radius: var(--radius-md); font-size: 3rem; font-weight: 800; margin-bottom: 25px;" id="game-math-expression">
+              5 + 3 = ?
+            </div>
+
+            <div class="math-options-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+              <!-- 4 numeric option buttons generated dynamically -->
+            </div>
+          </div>
+
+          <!-- Game 2: Moz Quiz Arena -->
+          <div id="game-quiz-arena" style="display: none; text-align: left; animation: fadeIn 0.3s;">
+            <button class="btn btn-sm btn-outline" class="btn-game-back" style="margin-bottom: 20px;">&larr; Sair</button>
+            <h2 style="font-size: 1.8rem; color: var(--accent); margin-bottom: 10px;">Quiz de Moçambique</h2>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin-bottom: 20px;">
+              <div>Pergunta: <span id="game-quiz-number">1/5</span></div>
+              <div>Pontos: <span id="game-quiz-score" style="color: var(--success);">0</span></div>
+            </div>
+
+            <div class="question-text" id="game-quiz-question" style="font-size: 1.25rem; font-weight: 600; margin-bottom: 25px;">
+              Qual é a capital provincial de Cabo Delgado?
+            </div>
+
+            <div class="options-list" id="game-quiz-options-container">
+              <!-- Options loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- Game Over Screen -->
+          <div id="game-over-screen" style="display: none; text-align: center; padding: 40px 0; animation: scaleUp 0.3s;">
+            <div style="font-size: 4rem; margin-bottom: 15px;">🏆</div>
+            <h2>Fim do Jogo!</h2>
+            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 20px;" id="game-over-message">Excelente pontuação!</p>
+            <div style="font-size: 3rem; font-weight: 800; color: var(--primary); margin-bottom: 25px;" id="game-over-points">0 Pontos</div>
+            <div style="display: flex; justify-content: center; gap: 15px;">
+              <button class="btn btn-primary" id="game-over-retry-btn">Jogar Novamente</button>
+              <button class="btn btn-outline" id="game-over-lobby-btn">Voltar ao Lobby</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Leaderboard -->
+        <div class="game-leaderboard-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow); height: fit-content;">
+          <h3 class="uni-section-title"><span></span>Tabela de Líderes</h3>
+          
+          <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+            <button class="btn btn-sm btn-outline active" id="btn-leaderboard-math" style="flex: 1; font-size: 0.75rem;">Math Rush</button>
+            <button class="btn btn-sm btn-outline" id="btn-leaderboard-quiz" style="flex: 1; font-size: 0.75rem;">Moz Quiz</button>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;" id="leaderboard-table">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                <th style="padding: 8px 5px;">Pos</th>
+                <th style="padding: 8px 5px;">Telefone</th>
+                <th style="padding: 8px 5px; text-align: right;">Pontos</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-tbody">
+              <!-- Loaded via API -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. PITCH DE NEGÓCIOS & SIMULADOR FINANCEIRO (INVESTIDORES) -->
+    <section id="section-investor" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Dossier de Negócios ExamePronto 💼</h2>
+          <p>Métricas reais do sistema e simulador de escalabilidade para investidores e empresários.</p>
+        </div>
+      </div>
+
+      <!-- Real-Time Metrics -->
+      <div class="investor-metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <div class="metric-card gold">
+          <h4 style="color: var(--accent);">Faturação Registada</h4>
+          <h3 id="inv-metric-revenue">0.00 MT</h3>
+          <p>Total processado pelo M-Pesa</p>
+        </div>
+        <div class="metric-card">
+          <h4>Estudantes Registados</h4>
+          <h3 id="inv-metric-users">0</h3>
+          <p>Contas ativas na base de dados</p>
+        </div>
+        <div class="metric-card">
+          <h4>Alunos Premium</h4>
+          <h3 id="inv-metric-premium">0</h3>
+          <p>Utilizadores pagantes ativos</p>
+        </div>
+        <div class="metric-card">
+          <h4>Taxa de Conversão</h4>
+          <h3 id="inv-metric-rate">0%</h3>
+          <p>Média de conversão de alunos</p>
+        </div>
+        <div class="metric-card">
+          <h4>Testes Concluídos</h4>
+          <h3 id="inv-metric-exams">0</h3>
+          <p>Engajamento no simulador</p>
+        </div>
+      </div>
+
+      <div class="investor-grid" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px;">
+        <!-- Left: Business Pitch -->
+        <div class="pitch-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 30px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow);">
+          <h3 style="font-size: 1.5rem; margin-bottom: 20px; color: var(--primary);">A Oportunidade Educacional e Financeira em Moçambique</h3>
+          
+          <div class="pitch-content" style="font-size: 0.95rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 15px;">
+            <p><strong>O Problema:</strong> Moçambique possui mais de 2 milhões de alunos no Ensino Primário e Secundário. A taxa de admissão no ensino superior e a aprovação nos exames nacionais é extremamente baixa devido à falta de material de estudo de qualidade e explicadores acessíveis.</p>
+            
+            <p><strong>A Solução ExamePronto:</strong> Uma plataforma móvel que funciona em qualquer smartphone (antigo ou moderno), com consumo mínimo de dados móveis, integrando explicações e simuladores de exames.</p>
+            
+            <p><strong>A Rota de Receita:</strong> Cobrança direta de micro-pagamentos via M-Pesa ou e-Mola. Subscrições semanais de 49 MT (o preço de 1 fotocópia de exame nas escolas) ou mensais de 119 MT. Acesso imediato e automatizado no servidor, sem custos de stock físico.</p>
+            
+            <p><strong>Barreira de Segurança:</strong> Segurança total implementada a nível do servidor com JWT e encriptação. O conteúdo premium nunca é transmitido a utilizadores não pagantes, eliminando pirataria do material escolar.</p>
+          </div>
+        </div>
+
+        <!-- Right: Interactive Scaling Simulator -->
+        <div class="simulator-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 30px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow); text-align: left;">
+          <h3 style="font-size: 1.3rem; margin-bottom: 20px; color: var(--accent);">Simulador Financeiro de Escalabilidade</h3>
+          
+          <!-- Slider 1 -->
+          <div class="sim-slider-group" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px;">
+              <span>Alunos Ativos Mensais</span>
+              <span id="sim-val-users" style="color: var(--primary);">10.000</span>
+            </div>
+            <input type="range" id="sim-slider-users" min="1000" max="100000" step="1000" value="10000" style="width: 100%;">
+          </div>
+
+          <!-- Slider 2 -->
+          <div class="sim-slider-group" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px;">
+              <span>Taxa de Conversão Premium</span>
+              <span id="sim-val-rate" style="color: var(--primary);">5%</span>
+            </div>
+            <input type="range" id="sim-slider-rate" min="1" max="20" step="1" value="5" style="width: 100%;">
+          </div>
+
+          <!-- Slider 3 -->
+          <div class="sim-slider-group" style="margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px;">
+              <span>Preço da Subscrição Mensal</span>
+              <span id="sim-val-price" style="color: var(--primary);">119 MT</span>
+            </div>
+            <input type="range" id="sim-slider-price" min="50" max="300" step="10" value="119" style="width: 100%;">
+          </div>
+
+          <!-- Simulation Outputs -->
+          <div class="sim-outputs" style="background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem;">
+              <span>Alunos Premium Ativos:</span>
+              <strong id="sim-out-premium">500</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem;">
+              <span>Faturação Bruta Mensal:</span>
+              <strong id="sim-out-gross" style="color: var(--success);">59.500 MT</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem;">
+              <span>Custos Servidor e SMS:</span>
+              <strong id="sim-out-costs" style="color: var(--error);">9.500 MT</strong>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700;">
+              <span>Lucro Mensal Líquido:</span>
+              <span id="sim-out-net" style="color: var(--primary);">50.000 MT</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.95rem; font-weight: 600; margin-top: 5px; opacity: 0.8;">
+              <span>Lucro Diário Projetado:</span>
+              <span id="sim-out-daily" style="color: var(--accent);">1.666 MT</span>
+            </div>
+          </div>
+          <p style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin-top: 10px;">
+            *Simulador baseado em custos reais de infraestrutura na nuvem (VPS, SQLite e Gateway de SMS).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. QUIZ ARENA SECTION -->
+    <section id="section-quiz" class="section">
+      <div class="quiz-header">
+        <div class="quiz-title-info">
+          <h2 id="quiz-exam-title">Carregando Exame...</h2>
+          <span class="exam-tag" id="quiz-question-counter">Pergunta 1</span>
+        </div>
+        <div class="quiz-timer-box" id="quiz-timer-container">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span id="quiz-timer">02:00:00</span>
+        </div>
+      </div>
+
+      <div class="quiz-body">
+        <div class="question-number" id="quiz-question-number">QUESTÃO 1</div>
+        <div class="question-text" id="quiz-question-text">Questão de exemplo para o simulador de exame de admissão.</div>
+        
+        <div class="options-list" id="quiz-options-container">
+          <!-- JS will render options here -->
+        </div>
+
+        <!-- Explanation box, hidden initially -->
+        <div class="explanation-box" id="quiz-explanation-box">
+          <h4>💡 Resolução Explicada:</h4>
+          <p id="quiz-explanation-text">Explicação detalhada da questão.</p>
+        </div>
+      </div>
+
+      <div class="quiz-footer">
+        <button class="btn btn-outline" id="quiz-quit-btn">Sair do Exame</button>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-primary" id="quiz-verify-btn" disabled>Verificar Resposta</button>
+          <button class="btn btn-accent" id="quiz-next-btn" style="display: none;">Seguinte</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. RESULTS SECTION -->
+    <section id="section-results" class="section">
+      <div class="results-card">
+        <div class="results-icon">🎉</div>
+        <h2 id="results-headline">Exame Concluído!</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;" id="results-subheading">Vê o teu desempenho no simulador:</p>
+        
+        <div class="results-score-circle">
+          <h3 id="results-score-text">0/0</h3>
+          <p id="results-percentage-text">0% Corretas</p>
+        </div>
+
+        <p id="results-feedback-message" style="font-weight: 600; margin-bottom: 30px;">Feedback.</p>
+        
+        <div class="results-actions">
+          <button class="btn btn-whatsapp" id="results-share-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.504-5.729-1.465L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.59 2.003 14.12 1.025 11.99 1.025c-5.442 0-9.87 4.372-9.874 9.802-.001 1.968.528 3.888 1.533 5.607L2.645 20.9l4.002-1.046zM17.72 14.73c-.31-.155-1.833-.904-2.11-.998-.278-.1-.482-.154-.683.155-.202.308-.782.998-.958 1.198-.175.2-.35.226-.66.071-1.365-.678-2.39-1.189-3.21-2.585-.218-.37.218-.344.622-1.144.068-.135.034-.252-.017-.355-.052-.1-.482-1.159-.66-1.584-.173-.42-.347-.361-.482-.368h-.414c-.143 0-.376.053-.573.266-.197.213-.75.732-.75 1.785s.767 2.072.87 2.211c.104.14 1.51 2.3 3.657 3.224.51.22 1.08.354 1.45.47.51.162.97.139 1.34.084.41-.061 1.83-.748 2.09-1.432.26-.684.26-1.27.18-1.393-.08-.122-.3-.193-.61-.348z"/>
+            </svg>
+            Desafiar Colegas no WhatsApp
+          </button>
+          <button class="btn btn-primary" id="results-back-btn">Voltar ao Dashboard</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. CHECKOUT/PREMIUM SECTION -->
+    <section id="section-checkout" class="section">
+      <div class="checkout-container">
+        <div class="checkout-header">
+          <h2>Ativa o Acesso Premium 🚀</h2>
+          <p>Desbloqueia as resoluções explicadas e todas as aulas do Explicador.</p>
+        </div>
+        
+        <div class="checkout-body">
+          <h3 style="font-size: 1.1rem; margin-bottom: 15px; text-align: center;">Escolhe o teu Plano de Acesso:</h3>
+          
+          <div class="price-plans">
+            <div class="plan-card selected" id="plan-weekly" data-plan="semanal" data-price="49">
+              <h4>Acesso Semanal</h4>
+              <div class="price">49 MT<span>/7 dias</span></div>
+              <p style="font-size: 0.75rem; color: var(--text-secondary);">Perfeito para o exame atual.</p>
+            </div>
+            
+            <div class="plan-card" id="plan-monthly" data-plan="mensal" data-price="119">
+              <h4>Acesso Mensal</h4>
+              <div class="price">119 MT<span>/30 dias</span></div>
+              <p style="font-size: 0.75rem; color: var(--text-secondary);">Acesso contínuo.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="checkout-phone-input">Número do Telemóvel (M-Pesa / e-Mola):</label>
+            <div class="input-phone-container">
+              <span class="phone-prefix">+258</span>
+              <input type="tel" id="checkout-phone-input" class="input-phone" placeholder="84 123 4567" max-length="9">
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;" id="phone-helper-text">Número Vodacom (84/85) ou Movitel (86/87).</p>
+          </div>
+
+          <ul class="benefits-list">
+            <li>✓ Resoluções passo-a-passo exclusivas de todas as perguntas.</li>
+            <li>✓ Desbloqueio de todas as aulas de 7ª classe, 10ª/12ª classe, Técnico e Superior.</li>
+            <li>✓ Aulas de Código de Estrada (INATRO) e currículo Cambridge IGCSE.</li>
+            <li>✓ Tira-dúvidas ILIMITADO com o Explicador Virtual IA.</li>
+            <li>✓ Histórico de notas e recordes de jogos encriptados.</li>
+          </ul>
+
+          <button class="btn btn-mpesa" id="checkout-pay-btn" style="width: 100%; font-size: 1.1rem;" disabled>
+            Pagar com M-Pesa / e-Mola
+          </button>
+          
+          <button class="btn btn-outline" id="checkout-back-btn" style="width: 100%; margin-top: 10px;">
+            Voltar
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Form/Modal de Autenticação Segura -->
+  <div class="auth-overlay" id="auth-overlay" style="display: none;">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <h2 id="auth-title">Iniciar Sessão</h2>
+        <button id="auth-close-btn" class="auth-close-btn">&times;</button>
+      </div>
+      
+      <div class="auth-card-body">
+        <div id="auth-error-alert" class="auth-alert error" style="display: none;"></div>
+        <div id="auth-success-alert" class="auth-alert success" style="display: none;"></div>
+        
+        <form id="auth-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="auth-phone-input">Número de Telemóvel (+258):</label>
+            <div class="input-phone-container">
+              <span class="phone-prefix">+258</span>
+              <input type="tel" id="auth-phone-input" class="input-phone" placeholder="84 123 4567" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="auth-password-input">Palavra-passe (ou PIN):</label>
+            <input type="password" id="auth-password-input" class="auth-input-text" placeholder="Insira a sua senha" required>
+          </div>
+          
+          <button type="submit" class="btn btn-primary" id="auth-submit-btn" style="width: 100%; margin-top: 10px;">
+            Entrar
+          </button>
+        </form>
+        
+        <p class="auth-toggle-link" id="auth-toggle-link">
+          Não tem conta? <span style="color: var(--primary); font-weight: 600; cursor: pointer;">Registe-se aqui</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulação do Telemóvel com USSD M-Pesa -->
+  <div class="ussd-overlay" id="mpesa-ussd-overlay">
+    <div class="ussd-phone-mockup">
+      <div class="phone-screen">
+        <div class="phone-status-bar">
+          <span>Vodacom MZ</span>
+          <span>22:08</span>
+        </div>
+        
+        <!-- Passo 1: Solicitação de PIN USSD -->
+        <div class="ussd-popup" id="ussd-step-pin">
+          <div class="ussd-message" id="ussd-prompt-message">
+            M-PESA: Introduza o PIN para autorizar o pagamento.
+          </div>
+          <input type="password" class="ussd-input" id="ussd-pin-input" placeholder="••••" maxlength="4">
+          <div class="ussd-actions">
+            <button class="ussd-btn" id="ussd-cancel-btn">Cancelar</button>
+            <button class="ussd-btn" id="ussd-send-btn" disabled>Enviar</button>
+          </div>
+        </div>
+
+        <!-- Passo 2: Processamento/Loading -->
+        <div id="ussd-step-loading" style="display: none; text-align: center; color: white;">
+          <div class="spinner"></div>
+          <p style="font-size: 0.9rem; font-family: monospace;">A processar transação...<br>Por favor aguarde.</p>
+        </div>
+
+        <!-- Passo 3: Sucesso e SMS de Confirmação -->
+        <div class="success-indicator" id="ussd-step-success" style="display: none;">
+          <div class="success-icon">✓</div>
+          <h3 style="color: white; margin-bottom: 10px;">Sucesso!</h3>
+          <p style="font-size: 0.8rem; color: #a7f3d0; font-family: monospace; line-height: 1.4; padding: 0 10px;" id="ussd-success-sms">
+            Confirmação M-Pesa.
+          </p>
+          <button class="btn btn-sm btn-accent" id="ussd-success-close-btn" style="margin-top: 20px;">Ativar Acesso</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 ExamePronto. Todos os direitos reservados.</p>
+      <p style="font-size: 0.75rem; margin-top: 5px; opacity: 0.7;">Central de Preparação Estudantil Segura de Moçambique. Funciona em qualquer smartphone.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>

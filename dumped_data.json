@@ -1,0 +1,449 @@
+{
+  "exams": [
+    {
+      "id": "ep-mat-7-2025",
+      "level": "primario",
+      "level_name": "7ª Classe (Ensino Primário)",
+      "subject": "matematica",
+      "subject_name": "Matemática",
+      "year": 2025,
+      "duration_minutes": 90
+    },
+    {
+      "id": "ep-por-7-2025",
+      "level": "primario",
+      "level_name": "7ª Classe (Ensino Primário)",
+      "subject": "portugues",
+      "subject_name": "Português",
+      "year": 2025,
+      "duration_minutes": 90
+    },
+    {
+      "id": "uem-mat-2025",
+      "level": "superior",
+      "level_name": "Ensino Superior (Admissão)",
+      "subject": "matematica",
+      "subject_name": "Matemática",
+      "year": 2025,
+      "duration_minutes": 120
+    },
+    {
+      "id": "uem-port-2025",
+      "level": "superior",
+      "level_name": "Ensino Superior (Admissão)",
+      "subject": "portugues",
+      "subject_name": "Português",
+      "year": 2025,
+      "duration_minutes": 120
+    },
+    {
+      "id": "esg-mat-12-2025",
+      "level": "12a",
+      "level_name": "12ª Classe (Ensino Secundário)",
+      "subject": "matematica",
+      "subject_name": "Matemática",
+      "year": 2025,
+      "duration_minutes": 120
+    },
+    {
+      "id": "esg-por-10-2025",
+      "level": "10a",
+      "level_name": "10ª Classe (Ensino Secundário)",
+      "subject": "portugues",
+      "subject_name": "Português",
+      "year": 2025,
+      "duration_minutes": 90
+    },
+    {
+      "id": "tec-ifp-mat-2025",
+      "level": "tecnico",
+      "level_name": "Técnico Profissional",
+      "subject": "matematica",
+      "subject_name": "IFP - Matemática Geral",
+      "year": 2025,
+      "duration_minutes": 120
+    },
+    {
+      "id": "cond-codigo-2025",
+      "level": "conducao",
+      "level_name": "Escola de Condução",
+      "subject": "codigo",
+      "subject_name": "Código de Estrada",
+      "year": 2025,
+      "duration_minutes": 30
+    },
+    {
+      "id": "cam-igcse-mat-2025",
+      "level": "cambridge",
+      "level_name": "Cambridge IGCSE",
+      "subject": "mathematics",
+      "subject_name": "IGCSE Mathematics",
+      "year": 2025,
+      "duration_minutes": 120
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "exam_id": "ep-mat-7-2025",
+      "number": 1,
+      "text": "Qual é o resultado da operação: 3/4 + 1/2?",
+      "options": "[\"A) 4/6\",\"B) 5/4\",\"C) 1\",\"D) 3/8\",\"E) 1/4\"]",
+      "correct_option": 1,
+      "explanation": "Para somar frações com denominadores diferentes, achamos o mínimo múltiplo comum (MMC) de 4 e 2, que é 4. \nEquiparando as frações:\n3/4 + 2/4 = 5/4. A alternativa correta é a B."
+    },
+    {
+      "id": 2,
+      "exam_id": "ep-mat-7-2025",
+      "number": 2,
+      "text": "Um comerciante no mercado informal do Xipamanine comprou um saco de batatas por 800 MT e vendeu-o por 1.000 MT. Qual foi a percentagem de lucro obtida?",
+      "options": "[\"A) 20%\",\"B) 25%\",\"C) 15%\",\"D) 30%\",\"E) 10%\"]",
+      "correct_option": 1,
+      "explanation": "Lucro absoluto: 1.000 MT - 800 MT = 200 MT.\nPercentagem de lucro em relação ao custo:\n(200 / 800) * 100 = 0.25 * 100 = 25%. A alternativa correta é a B."
+    },
+    {
+      "id": 3,
+      "exam_id": "ep-mat-7-2025",
+      "number": 3,
+      "text": "Qual é o valor de x na equação simples: 2x + 5 = 17?",
+      "options": "[\"A) 12\",\"B) 6\",\"C) 5\",\"D) 8\",\"E) 10\"]",
+      "correct_option": 1,
+      "explanation": "Isolamos o termo com x:\n2x = 17 - 5\n2x = 12\nx = 12 / 2 = 6. A alternativa correta é a B."
+    },
+    {
+      "id": 4,
+      "exam_id": "ep-mat-7-2025",
+      "number": 4,
+      "text": "Um retângulo tem 8 cm de largura e 12 cm de comprimento. Qual é a sua área em cm²?",
+      "options": "[\"A) 40 cm²\",\"B) 96 cm²\",\"C) 20 cm²\",\"D) 48 cm²\",\"E) 80 cm²\"]",
+      "correct_option": 1,
+      "explanation": "A área do retângulo calcula-se multiplicando a largura pelo comprimento:\nÁrea = L * C = 8 cm * 12 cm = 96 cm². A alternativa correta é a B."
+    },
+    {
+      "id": 5,
+      "exam_id": "ep-mat-7-2025",
+      "number": 5,
+      "text": "Qual é o M.C.D. (Máximo Divisor Comum) entre os números 12 e 18?",
+      "options": "[\"A) 2\",\"B) 3\",\"C) 6\",\"D) 12\",\"E) 36\"]",
+      "correct_option": 2,
+      "explanation": "Os divisores de 12 são: {1, 2, 3, 4, 6, 12}.\nOs divisores de 18 são: {1, 2, 3, 6, 9, 18}.\nOs divisores comuns são {1, 2, 3, 6}, onde o maior é 6. A alternativa correta é a C."
+    },
+    {
+      "id": 6,
+      "exam_id": "ep-por-7-2025",
+      "number": 1,
+      "text": "Indique o pronome pessoal na frase: 'Nós fomos visitar o Museu da Revolução em Maputo.'",
+      "options": "[\"A) Museu\",\"B) Fomos\",\"C) Revolução\",\"D) Nós\",\"E) Visitar\"]",
+      "correct_option": 3,
+      "explanation": "'Nós' é um pronome pessoal reto da primeira pessoa do plural. A alternativa correta é a D."
+    },
+    {
+      "id": 7,
+      "exam_id": "ep-por-7-2025",
+      "number": 2,
+      "text": "Na frase 'O mar de Bazaruto é muito bonito', a palavra 'bonito' é um:",
+      "options": "[\"A) Adjetivo\",\"B) Substantivo\",\"C) Verbo\",\"D) Advérbio\",\"E) Artigo\"]",
+      "correct_option": 0,
+      "explanation": "A palavra 'bonito' qualifica o substantivo 'mar', caracterizando-o. Trata-se, portanto, de um adjetivo. A alternativa correta é a A."
+    },
+    {
+      "id": 8,
+      "exam_id": "ep-por-7-2025",
+      "number": 3,
+      "text": "Qual é o antónimo da palavra 'guerra'?",
+      "options": "[\"A) Conflito\",\"B) Paz\",\"C) União\",\"D) Harmonia\",\"E) Combate\"]",
+      "correct_option": 1,
+      "explanation": "O antónimo é a palavra de significado oposto. O oposto de guerra é paz. A alternativa correta é a B."
+    },
+    {
+      "id": 9,
+      "exam_id": "ep-por-7-2025",
+      "number": 4,
+      "text": "Qual é o plural correto da frase: 'O jovem moçambicano é muito trabalhador.'?",
+      "options": "[\"A) Os jovens moçambicanos são muito trabalhadores.\",\"B) Os jovem moçambicanos são muito trabalhador.\",\"C) Os jovens moçambicano são muito trabalhadores.\",\"D) Os jovens moçambicanos são muito trabalhador.\",\"E) Os jovem moçambicanos são muito trabalhadores.\"]",
+      "correct_option": 0,
+      "explanation": "Tanto o artigo, o substantivo, o adjetivo pátrio, o verbo e o adjetivo qualificador devem concordar no plural: 'Os jovens moçambicanos são muito trabalhadores'. A alternativa correta é a A."
+    },
+    {
+      "id": 10,
+      "exam_id": "ep-por-7-2025",
+      "number": 5,
+      "text": "Na oração 'A Mariana comprou uma capulana nova', qual é o objeto direto da ação?",
+      "options": "[\"A) A Mariana\",\"B) Nova\",\"C) Comprou\",\"D) Uma capulana nova\",\"E) Capulana\"]",
+      "correct_option": 3,
+      "explanation": "Quem compra, compra algo. 'Mariana' é o sujeito, 'comprou' é o verbo transitivo direto, e o que ela comprou foi 'uma capulana nova' (objeto direto completo). A alternativa correta é a D."
+    },
+    {
+      "id": 11,
+      "exam_id": "uem-mat-2025",
+      "number": 1,
+      "text": "Simplificando a expressão algébrica (x² - 9) / (x - 3) para x ≠ 3, obtemos:",
+      "options": "[\"A) x - 3\",\"B) x + 3\",\"C) x² + 9\",\"D) 3x - 9\",\"E) 1\"]",
+      "correct_option": 1,
+      "explanation": "A expressão no numerador (x² - 9) é uma diferença de quadrados, que pode ser fatorada como (x - 3)(x + 3). Substituindo na expressão original:\n(x² - 9) / (x - 3) = [(x - 3)(x + 3)] / (x - 3) = x + 3."
+    },
+    {
+      "id": 12,
+      "exam_id": "uem-mat-2025",
+      "number": 2,
+      "text": "Qual é o valor do limite de f(x) = (2x² - 8) / (x - 2) quando x tende a 2?",
+      "options": "[\"A) 2\",\"B) 4\",\"C) 8\",\"D) Infinito\",\"E) Não existe\"]",
+      "correct_option": 2,
+      "explanation": "Substituindo x = 2 temos indeterminação 0/0. Fatorando o numerador: 2(x² - 4) = 2(x - 2)(x + 2).\nlim (x->2) [2(x - 2)(x + 2)] / (x - 2) = lim (x->2) [2(x + 2)] = 2 * (2 + 2) = 8."
+    },
+    {
+      "id": 13,
+      "exam_id": "uem-mat-2025",
+      "number": 3,
+      "text": "Se log₃(x) = 4, então o valor de x é:",
+      "options": "[\"A) 12\",\"B) 64\",\"C) 81\",\"D) 243\",\"E) 7\"]",
+      "correct_option": 2,
+      "explanation": "Pela definição de logaritmo: se log_b(a) = c, então b^c = a. Logo, 3⁴ = x, ou seja, x = 3*3*3*3 = 81."
+    },
+    {
+      "id": 14,
+      "exam_id": "uem-mat-2025",
+      "number": 4,
+      "text": "Dada a função f(x) = 3x² - 5x + 2, a sua derivada f'(x) é:",
+      "options": "[\"A) 6x - 5\",\"B) 3x - 5\",\"C) 6x\",\"D) 6x² - 5\",\"E) 6x + 2\"]",
+      "correct_option": 0,
+      "explanation": "Usando a regra da potência:\n- Derivada de 3x² é 6x.\n- Derivada de -5x é -5.\n- Derivada da constante 2 é 0.\nResultando em f'(x) = 6x - 5."
+    },
+    {
+      "id": 15,
+      "exam_id": "uem-mat-2025",
+      "number": 5,
+      "text": "A solução da inequação exponencial 2^x > 32 é:",
+      "options": "[\"A) x > 2\",\"B) x < 5\",\"C) x > 5\",\"D) x ≥ 5\",\"E) x > 16\"]",
+      "correct_option": 2,
+      "explanation": "Como 32 = 2⁵, a inequação reescreve-se como 2^x > 2⁵.\nSendo a base (2) maior que 1, comparamos diretamente os expoentes: x > 5."
+    },
+    {
+      "id": 16,
+      "exam_id": "uem-port-2025",
+      "number": 1,
+      "text": "No trecho 'Moçambique é uma nação multicultural e rica em tradições', a palavra 'multicultural' funciona gramaticalmente como:",
+      "options": "[\"A) Substantivo\",\"B) Adjetivo\",\"C) Advérbio\",\"D) Conjunção\",\"E) Verbo\"]",
+      "correct_option": 1,
+      "explanation": "A palavra 'multicultural' caracteriza o substantivo 'nação', qualificando-o. Logo, funciona como um adjetivo."
+    },
+    {
+      "id": 17,
+      "exam_id": "uem-port-2025",
+      "number": 2,
+      "text": "Qual das seguintes frases apresenta um erro de regência verbal na norma padrão?",
+      "options": "[\"A) Eu assisti ao filme ontem.\",\"B) Ela aspira ao cargo de diretora.\",\"C) O estudante esqueceu o livro na sala.\",\"D) Nós fomos no mercado de manhã.\",\"E) Visamos ao sucesso do projeto.\"]",
+      "correct_option": 3,
+      "explanation": "O verbo 'ir' indica direção e movimento, exigindo a preposição 'a' (ir ao mercado) e não 'em' (no mercado). A frase D está incorreta."
+    },
+    {
+      "id": 18,
+      "exam_id": "uem-port-2025",
+      "number": 3,
+      "text": "Identifique a figura de linguagem presente em: 'Os meus olhos choraram rios de lágrimas com a sua partida.'",
+      "options": "[\"A) Metáfora\",\"B) Antítese\",\"C) Hipérbole\",\"D) Eufemismo\",\"E) Ironia\"]",
+      "correct_option": 2,
+      "explanation": "Dizer que os olhos 'choraram rios' é um exagero expressivo e deliberado. Esta figura de linguagem é a hipérbole."
+    },
+    {
+      "id": 19,
+      "exam_id": "uem-port-2025",
+      "number": 4,
+      "text": "Na oração 'Embora estivesse cansado, continuou a estudar para o exame de admissão', a conjunção sublinhada ('Embora') introduz uma idea de:",
+      "options": "[\"A) Causa\",\"B) Consequência\",\"C) Concessão\",\"D) Condição\",\"E) Comparação\"]",
+      "correct_option": 2,
+      "explanation": "A conjunção 'Embora' introduz uma oração subordinada concessiva, que exprime uma oposição que não impede o facto da oração principal."
+    },
+    {
+      "id": 20,
+      "exam_id": "uem-port-2025",
+      "number": 5,
+      "text": "Qual é a função sintática de 'para o exame de admissão' em 'O estudante preparou-se para o exame de admissão'?",
+      "options": "[\"A) Objeto direto\",\"B) Objeto indireto\",\"C) Complemento nominal\",\"D) Adjunto adverbial\",\"E) Agente da passiva\"]",
+      "correct_option": 1,
+      "explanation": "O verbo 'preparar-se' rege a preposição 'para' (transitivo indireto). O constituinte 'para o exame...' é o objeto indireto."
+    },
+    {
+      "id": 21,
+      "exam_id": "esg-mat-12-2025",
+      "number": 1,
+      "text": "Considere a sucessão de termo geral a_n = 3n - 1. Qual é o valor do quarto termo (a₄)?",
+      "options": "[\"A) 10\",\"B) 11\",\"C) 12\",\"D) 13\",\"E) 14\"]",
+      "correct_option": 1,
+      "explanation": "Substituindo n = 4 no termo geral a_n:\na₄ = 3 * (4) - 1 = 12 - 1 = 11. A resposta correta é a B."
+    },
+    {
+      "id": 22,
+      "exam_id": "esg-mat-12-2025",
+      "number": 2,
+      "text": "Qual é a amplitude de variação da função trigonométrica f(x) = 3sen(x) + 1?",
+      "options": "[\"A) 2\",\"B) 3\",\"C) 4\",\"D) 6\",\"E) 1\"]",
+      "correct_option": 3,
+      "explanation": "O valor máximo de sen(x) é 1, logo f_max = 3(1) + 1 = 4. O valor mínimo é -1, logo f_min = 3(-1) + 1 = -2.\nA amplitude de variação é a diferença: Max - Min = 4 - (-2) = 6. A resposta é a D."
+    },
+    {
+      "id": 23,
+      "exam_id": "esg-mat-12-2025",
+      "number": 3,
+      "text": "Quantos números de 3 algarismos diferentes podem ser formados com os dígitos {1, 2, 3, 4}?",
+      "options": "[\"A) 12\",\"B) 24\",\"C) 64\",\"D) 6\",\"E) 48\"]",
+      "correct_option": 1,
+      "explanation": "Usamos arranjos simples: A(4,3) = 4! / (4-3)! = 4 * 3 * 2 = 24 números diferentes."
+    },
+    {
+      "id": 24,
+      "exam_id": "esg-mat-12-2025",
+      "number": 4,
+      "text": "A função f(x) = ln(x - 2) tem como domínio de definição:",
+      "options": "[\"A) IR\",\"B) x > 0\",\"C) x ≥ 2\",\"D) x > 2\",\"E) x < 2\"]",
+      "correct_option": 3,
+      "explanation": "A função logarítmica só está definida para valores estritamente positivos do logaritmando: x - 2 > 0 => x > 2."
+    },
+    {
+      "id": 25,
+      "exam_id": "esg-mat-12-2025",
+      "number": 5,
+      "text": "A soma dos primeiros 5 termos de uma Progressão Aritmética onde o primeiro termo a₁ = 2 e a diferença d = 3 é:",
+      "options": "[\"A) 35\",\"B) 40\",\"C) 45\",\"D) 50\",\"E) 30\"]",
+      "correct_option": 1,
+      "explanation": "Os termos são: 2, 5, 8, 11, 14.\nA soma é: 2 + 5 + 8 + 11 + 14 = 40. Pela fórmula: S₅ = 5/2 * (2 + 14) = 5/2 * 16 = 40."
+    },
+    {
+      "id": 26,
+      "exam_id": "esg-por-10-2025",
+      "number": 1,
+      "text": "Qual das seguintes palavras é classificada como esdrúxula (proparoxítona)?",
+      "options": "[\"A) Café\",\"B) Escola\",\"C) Lápis\",\"D) Moçambique\",\"E) Sábado\"]",
+      "correct_option": 4,
+      "explanation": "As palavras proparoxítonas têm o acento tónico na antepenúltima sílaba. 'Sá-ba-do' é um exemplo e todas são acentuadas graficamente."
+    },
+    {
+      "id": 27,
+      "exam_id": "esg-por-10-2025",
+      "number": 2,
+      "text": "Na frase 'O cão ladrou durante a noite', o termo 'durante a noite' expressa uma circunstância de:",
+      "options": "[\"A) Lugar\",\"B) Causa\",\"C) Tempo\",\"D) Modo\",\"E) Companhia\"]",
+      "correct_option": 2,
+      "explanation": "O constituinte indica o momento em que a ação aconteceu, tratando-se de um adjunto adverbial de tempo."
+    },
+    {
+      "id": 28,
+      "exam_id": "esg-por-10-2025",
+      "number": 3,
+      "text": "O antónimo correto da palavra 'efímero' é:",
+      "options": "[\"A) Passageiro\",\"B) Curto\",\"C) Duradouro\",\"D) Rápido\",\"E) Frágil\"]",
+      "correct_option": 2,
+      "explanation": "Efímero significa algo que dura pouco tempo. O oposto é duradouro ou eterno."
+    },
+    {
+      "id": 29,
+      "exam_id": "esg-por-10-2025",
+      "number": 4,
+      "text": "Qual das orações é coordenada adversativa?",
+      "options": "[\"A) Estudei muito e passei no teste.\",\"B) Estudei muito, mas não passei no teste.\",\"C) Ou estudas, ou trabalhas.\",\"D) Não estudei, por isso reprovei.\",\"E) Como estudei, passei no teste.\"]",
+      "correct_option": 1,
+      "explanation": "A conjunção 'mas' liga duas orações estabelecendo uma relação de oposição/contraste, típica das adversativas."
+    },
+    {
+      "id": 30,
+      "exam_id": "esg-por-10-2025",
+      "number": 5,
+      "text": "Identifique o sujeito da oração: 'Bateram à porta da sala de aula.'",
+      "options": "[\"A) Porta\",\"B) Sala\",\"C) Eles (oculto)\",\"D) Indeterminado\",\"E) Inexistente\"]",
+      "correct_option": 3,
+      "explanation": "Quando o verbo está na 3ª pessoa do plural e não se refere a nenhum sujeito mencionado anteriormente, dizemos que o sujeito é indeterminado."
+    },
+    {
+      "id": 31,
+      "exam_id": "tec-ifp-mat-2025",
+      "number": 1,
+      "text": "Uma impressora ligada a um computador de gestão de PME imprime 45 páginas em 3 minutos. Quantas páginas imprimirá em 10 minutos?",
+      "options": "[\"A) 135\",\"B) 150\",\"C) 90\",\"D) 200\",\"E) 120\"]",
+      "correct_option": 1,
+      "explanation": "A velocidade da impressora é 45 / 3 = 15 páginas por minuto. Em 10 minutos: 15 * 10 = 150 páginas. Regra de três simples."
+    },
+    {
+      "id": 32,
+      "exam_id": "tec-ifp-mat-2025",
+      "number": 2,
+      "text": "O lucro L (em milhares de Meticais) de uma pequena marcenaria em Maputo é dado por L(x) = -2x² + 40x, onde x é a quantidade de mesas vendidas por mês. Qual é a quantidade de mesas que maximiza o lucro?",
+      "options": "[\"A) 10\",\"B) 20\",\"C) 15\",\"D) 5\",\"E) 8\"]",
+      "correct_option": 0,
+      "explanation": "O ponto máximo de uma parábola f(x) = ax² + bx + c ocorre no vértice x_v = -b / (2a).\nNeste caso, a = -2 e b = 40. Logo, x_v = -40 / (2 * -2) = -40 / -4 = 10 mesas."
+    },
+    {
+      "id": 33,
+      "exam_id": "tec-ifp-mat-2025",
+      "number": 3,
+      "text": "Uma fatura de serviços elétricos no valor de 2.000 MT foi paga com um atraso de 15 dias, sofrendo uma multa de 0.5% por dia de atraso. Qual é o valor total pago?",
+      "options": "[\"A) 2.150 MT\",\"B) 2.050 MT\",\"C) 2.100 MT\",\"D) 2.200 MT\",\"E) 2.300 MT\"]",
+      "correct_option": 0,
+      "explanation": "A taxa de juros simples acumulada é de 15 dias * 0.5% = 7.5% de multa.\nMulta: 2000 * 0.075 = 150 MT.\nTotal pago: 2000 + 150 = 2.150 MT."
+    },
+    {
+      "id": 34,
+      "exam_id": "tec-ifp-mat-2025",
+      "number": 4,
+      "text": "A média aritmética de idade de 4 alunos de um curso técnico é 20 anos. Se adicionarmos um novo estudante de 25 anos, qual passa a ser a nova média?",
+      "options": "[\"A) 21 anos\",\"B) 22 anos\",\"C) 20.5 anos\",\"D) 23 anos\",\"E) 21.5 anos\"]",
+      "correct_option": 0,
+      "explanation": "A soma das idades dos 4 alunos é 4 * 20 = 80 anos. Com o novo aluno de 25 anos, a soma passa a ser 80 + 25 = 105 anos. O total de alunos passa a 5. A nova média é 105 / 5 = 21 anos."
+    },
+    {
+      "id": 35,
+      "exam_id": "tec-ifp-mat-2025",
+      "number": 5,
+      "text": "Um terreno retangular de criação de frangos possui 12 metros de largura e 15 metros de comprimento. Pretende-se vedar este terreno com 3 voltas de arame. Quantos metros de arame são necessários?",
+      "options": "[\"A) 54 m\",\"B) 108 m\",\"C) 162 m\",\"D) 81 m\",\"E) 216 m\"]",
+      "correct_option": 2,
+      "explanation": "O perímetro do retângulo é 2 * (largura + comprimento) = 2 * (12 + 15) = 2 * 27 = 54 metros.\nPara 3 voltas de arame: 54 * 3 = 162 metros. A resposta correta é a C."
+    }
+  ],
+  "lessons": [
+    {
+      "id": 1,
+      "level": "primario",
+      "subject": "matematica",
+      "title": "Frações e Percentagem",
+      "summary": "Aprende a converter frações ordinárias em percentagem e a aplicar no comércio local.",
+      "content": "Uma fração representa uma parte de um todo. Por exemplo, 1/2 (um meio) significa metade.\n\nPara converter uma fração em percentagem, multiplicamos a fração por 100:\n\nExemplo 1:\n1/2 * 100 = 50%\n\nExemplo 2 (Comércio no Mercado):\nSe compras uma banana por 4 MT e vendes por 5 MT, o teu lucro é 1 MT. Em fração do custo, o teu lucro é 1/4.\nConvertendo para percentagem:\n1/4 * 100 = 25% de lucro!\n\nAgora pratica convertendo 3/5 em percentagem (3/5 * 100 = 60%).",
+      "is_premium": 0
+    },
+    {
+      "id": 2,
+      "level": "primario",
+      "subject": "portugues",
+      "title": "Sintaxe: O Sujeito e o Predicado",
+      "summary": "Descobre como identificar os dois pilares fundamentais da estrutura de uma oração.",
+      "content": "Todas as frases organizadas possuem dois elementos principais: o Sujeito e o Predicado.\n\n1. Sujeito: É o ser sobre o qual se faz uma declaração.\nPara encontrar o sujeito, perguntamos 'Quem?' ou 'O que?' ao verbo.\n\nExemplo:\n'O pescador de Bazaruto apanhou um peixe grande.'\nPergunta: Quem apanhou um peixe? \nResposta: 'O pescador de Bazaruto' (Este é o Sujeito).\n\n2. Predicado: É tudo o que se declara sobre o sujeito. Ele contém obrigatoriamente o verbo.\nNo exemplo acima, o predicado é: 'apanhou um peixe grande'.",
+      "is_premium": 0
+    },
+    {
+      "id": 3,
+      "level": "10a",
+      "subject": "portugues",
+      "title": "Textos Administrativos: A Minuta",
+      "summary": "Aprende a estrutura formal para redigir uma minuta de requerimento oficial em Moçambique.",
+      "content": "A minuta é um texto de natureza administrativa usado como rascunho oficial de um documento que se pretende redigir (ex: um requerimento a um Diretor Provincial ou Reitor).\n\nA estrutura formal de um Requerimento em Moçambique deve conter:\n1. Cabeçalho (Destinatário: ex: Excelentíssimo Senhor Diretor...)\n2. Fórmulas de Cortesia (Tem a honra de expor e requerer a V.Excia...)\n3. Corpo do texto (Exposição clara do pedido e fundamentação legal)\n4. Termos de Encerramento (Pede Deferimento)\n5. Local e Data (Maputo, 5 de Junho de 2026)\n6. Assinatura do requerente.",
+      "is_premium": 1
+    },
+    {
+      "id": 4,
+      "level": "12a",
+      "subject": "matematica",
+      "title": "Progressões Aritméticas (PA)",
+      "summary": "Tudo sobre sequências numéricas de razão constante para aprovação no exame nacional.",
+      "content": "Uma Progressão Aritmética (PA) é uma sucessão numérica onde a diferença entre termos consecutivos é constante. Essa diferença chama-se 'razão' (d).\n\nFórmulas Fundamentais:\n\n1. Termo Geral:\na_n = a₁ + (n - 1) * d\n\n2. Soma dos Primeiros n Termos:\nS_n = (n / 2) * (a₁ + a_n)\n\nExemplo Prático:\nNuma PA com a₁ = 3 e d = 4, calcula o quinto termo (a₅).\na₅ = 3 + (5 - 1) * 4 = 3 + 4 * 4 = 3 + 16 = 19.\n\nSoma dos 5 termos: S₅ = (5 / 2) * (3 + 19) = 2.5 * 22 = 55.",
+      "is_premium": 1
+    },
+    {
+      "id": 5,
+      "level": "superior",
+      "subject": "matematica",
+      "title": "Cálculo de Limites com Indeterminação 0/0",
+      "summary": "Métodos algébricos e fatorização para resolver indeterminações clássicas nos exames da UEM.",
+      "content": "Ao calcular limites, frequentemente encontramos a indeterminação 0/0. Para resolvê-la, devemos simplificar a expressão eliminando o fator nulo.\n\nMétodos:\n\n1. Fatorização (Diferença de Quadrados, Trinómios):\nx² - a² = (x - a)(x + a)\n\nExemplo:\nlim (x -> 3) (x² - 9) / (x - 3)\nSe substituirmos x = 3, dá 0/0. Fatoramos x² - 9:\nlim (x -> 3) [(x - 3)(x + 3)] / (x - 3)\nSimplificamos (x - 3):\nlim (x -> 3) (x + 3) = 3 + 3 = 6.\n\n2. Regra de L'Hôpital (Derivação): Derivamos o numerador e o denominador separadamente.",
+      "is_premium": 1
+    }
+  ]
+}

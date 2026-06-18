@@ -90,6 +90,18 @@ function requireAuth(req, res, next) {
   });
 }
 
+// Middleware para administradores (bloqueia se não for admin)
+function requireAdmin(req, res, next) {
+  requireAuth(req, res, () => {
+    db.get("SELECT is_admin FROM users WHERE id = ?", [req.user.id], (err, user) => {
+      if (err || !user || user.is_admin !== 1) {
+        return res.status(403).json({ error: 'Acesso proibido. Apenas administradores.' });
+      }
+      next();
+    });
+  });
+}
+
 // Helper para verificar se utilizador é premium
 function checkPremiumUser(userId) {
   return new Promise((resolve) => {
@@ -123,10 +135,14 @@ app.post('/api/auth/register', (req, res) => {
   const salt = bcrypt.genSaltSync(10);
   const passwordHash = bcrypt.hashSync(password, salt);
 
-  const query = `INSERT INTO users (phone, password_hash) VALUES (?, ?)`;
-  db.run(query, [cleanPhone, passwordHash], function(err) {
+  const adminPhone = process.env.ADMIN_PHONE || '840000000';
+  const cleanAdminPhone = adminPhone.replace(/\D/g, '');
+  const isAdmin = (cleanPhone === cleanAdminPhone) ? 1 : 0;
+
+  const query = `INSERT INTO users (phone, password_hash, is_admin) VALUES (?, ?, ?)`;
+  db.run(query, [cleanPhone, passwordHash, isAdmin], function(err) {
     if (err) {
-      if (err.message.includes('UNIQUE constraint failed')) {
+      if (err.message && err.message.includes('UNIQUE constraint failed')) {
         return res.status(400).json({ error: 'Este número de telefone já está registado.' });
       }
       return res.status(500).json({ error: 'Erro ao criar conta.' });
@@ -136,7 +152,7 @@ app.post('/api/auth/register', (req, res) => {
     res.status(201).json({
       message: 'Utilizador criado com sucesso.',
       token,
-      user: { id: this.lastID, phone: cleanPhone, isPremium: false }
+      user: { id: this.lastID, phone: cleanPhone, isPremium: false, isAdmin: isAdmin === 1 }
     });
   });
 });
@@ -164,25 +180,40 @@ app.post('/api/auth/login', (req, res) => {
       return res.status(400).json({ error: 'Número de telefone ou palavra-passe incorretos.' });
     }
 
-    const now = new Date().getTime();
-    const isPremium = user.premium_until > now;
+    const adminPhone = process.env.ADMIN_PHONE || '840000000';
+    const cleanAdminPhone = adminPhone.replace(/\D/g, '');
+    const shouldBeAdmin = (user.phone === cleanAdminPhone);
 
-    const token = jwt.sign({ id: user.id, phone: user.phone }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({
-      message: 'Autenticação bem-sucedida.',
-      token,
-      user: {
-        id: user.id,
-        phone: user.phone,
-        isPremium,
-        premiumExpires: user.premium_until
-      }
-    });
+    const sendLoginResponse = (finalUser) => {
+      const now = new Date().getTime();
+      const isPremium = finalUser.premium_until > now;
+      const token = jwt.sign({ id: finalUser.id, phone: finalUser.phone }, JWT_SECRET, { expiresIn: '7d' });
+      res.json({
+        message: 'Autenticação bem-sucedida.',
+        token,
+        user: {
+          id: finalUser.id,
+          phone: finalUser.phone,
+          isPremium,
+          premiumExpires: finalUser.premium_until,
+          isAdmin: finalUser.is_admin === 1
+        }
+      });
+    };
+
+    if (shouldBeAdmin && !user.is_admin) {
+      db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [user.id], () => {
+        user.is_admin = 1;
+        sendLoginResponse(user);
+      });
+    } else {
+      sendLoginResponse(user);
+    }
   });
 });
 
 app.get('/api/user/profile', requireAuth, (req, res) => {
-  db.get("SELECT id, phone, premium_until FROM users WHERE id = ?", [req.user.id], (err, user) => {
+  db.get("SELECT id, phone, premium_until, is_admin FROM users WHERE id = ?", [req.user.id], (err, user) => {
     if (err || !user) {
       return res.status(404).json({ error: 'Utilizador não encontrado.' });
     }
@@ -192,7 +223,8 @@ app.get('/api/user/profile', requireAuth, (req, res) => {
       id: user.id,
       phone: user.phone,
       isPremium,
-      premiumExpires: user.premium_until
+      premiumExpires: user.premium_until,
+      isAdmin: user.is_admin === 1
     });
   });
 });
@@ -587,6 +619,105 @@ app.get('/api/investor/metrics', (req, res) => {
         });
       });
     });
+  });
+});// --- ROTAS DO PAINEL DE ADMINISTRAÇÃO ---
+
+// 1. Listar utilizadores
+app.get('/api/admin/users', requireAdmin, (req, res) => {
+  db.all("SELECT id, phone, premium_until, is_admin FROM users ORDER BY id DESC", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Erro ao listar utilizadores.' });
+    res.json(rows);
+  });
+});
+
+// 2. Modificar estatuto premium de um utilizador (dias)
+app.post('/api/admin/users/premium', requireAdmin, (req, res) => {
+  const { userId, days } = req.body;
+  if (!userId || days === undefined) {
+    return res.status(400).json({ error: 'ID do utilizador e dias são obrigatórios.' });
+  }
+  
+  const numDays = parseInt(days);
+  let timestamp = 0;
+  if (numDays > 0) {
+    const premiumUntil = new Date();
+    premiumUntil.setDate(premiumUntil.getDate() + numDays);
+    timestamp = premiumUntil.getTime();
+  }
+  
+  db.run("UPDATE users SET premium_until = ? WHERE id = ?", [timestamp, userId], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao atualizar estatuto premium.' });
+    res.json({ message: 'Plano premium atualizado com sucesso.', premiumExpires: timestamp });
+  });
+});
+
+// 3. Alternar estatuto de administrador
+app.post('/api/admin/users/toggle-admin', requireAdmin, (req, res) => {
+  const { userId, is_admin } = req.body;
+  if (!userId || is_admin === undefined) {
+    return res.status(400).json({ error: 'ID do utilizador e estatuto administrativo são obrigatórios.' });
+  }
+  db.run("UPDATE users SET is_admin = ? WHERE id = ?", [is_admin ? 1 : 0, userId], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao atualizar administrador.' });
+    res.json({ message: 'Estatuto administrativo atualizado com sucesso.' });
+  });
+});
+
+// 4. Listar todas as transações de pagamento
+app.get('/api/admin/payments', requireAdmin, (req, res) => {
+  db.all("SELECT p.*, u.phone FROM payments p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Erro ao obter pagamentos.' });
+    res.json(rows);
+  });
+});
+
+// 5. Criar um novo exame
+app.post('/api/admin/exams', requireAdmin, (req, res) => {
+  const { id, level, level_name, subject, subject_name, year, duration_minutes } = req.body;
+  if (!id || !level || !level_name || !subject || !subject_name || !year) {
+    return res.status(400).json({ error: 'Preencha todos os campos obrigatórios do exame.' });
+  }
+  db.run(
+    `INSERT INTO exams (id, level, level_name, subject, subject_name, year, duration_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [id, level, level_name, subject, subject_name, parseInt(year), parseInt(duration_minutes) || 120],
+    function(err) {
+      if (err) return res.status(500).json({ error: 'Erro ao criar exame: ' + err.message });
+      res.status(201).json({ message: 'Exame criado com sucesso.', examId: id });
+    }
+  );
+});
+
+// 6. Eliminar um exame
+app.delete('/api/admin/exams/:id', requireAdmin, (req, res) => {
+  const examId = req.params.id;
+  db.run("DELETE FROM exams WHERE id = ?", [examId], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao eliminar exame.' });
+    res.json({ message: 'Exame e todas as respetivas perguntas eliminados com sucesso.' });
+  });
+});
+
+// 7. Criar uma nova explicação/aula
+app.post('/api/admin/lessons', requireAdmin, (req, res) => {
+  const { level, subject, title, summary, content, is_premium } = req.body;
+  if (!level || !subject || !title || !summary || !content) {
+    return res.status(400).json({ error: 'Preencha todos os campos obrigatórios da explicação.' });
+  }
+  db.run(
+    `INSERT INTO lessons (level, subject, title, summary, content, is_premium) VALUES (?, ?, ?, ?, ?, ?)`,
+    [level, subject, title, summary, content, is_premium ? 1 : 0],
+    function(err) {
+      if (err) return res.status(500).json({ error: 'Erro ao criar lição.' });
+      res.status(201).json({ message: 'Explicação criada com sucesso.', lessonId: this.lastID });
+    }
+  );
+});
+
+// 8. Eliminar uma explicação
+app.delete('/api/admin/lessons/:id', requireAdmin, (req, res) => {
+  const lessonId = req.params.id;
+  db.run("DELETE FROM lessons WHERE id = ?", [lessonId], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao eliminar lição.' });
+    res.json({ message: 'Explicação eliminada com sucesso.' });
   });
 });
 

@@ -35,6 +35,7 @@
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="explicador">Explicador IA</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="games">Jogos Educativos</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="investor">Área de Negócios 💼</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="admin" id="nav-admin-btn" style="display: none;">Admin ⚙️</button>
       </nav>
       
       <div class="nav-actions">
@@ -143,6 +144,10 @@
         </div>
       </div>
 
+      <div class="search-bar-container" style="margin-bottom: 25px;">
+        <input type="text" id="dashboard-search-input" placeholder="🔍 Procurar exames (ex: Matemática, Código, Cambridge, 12ª)..." style="width: 100%; padding: 12px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+      </div>
+
       <div class="dashboard-grid">
         <!-- Main Column: Select Level & Exams -->
         <div class="main-column">
@@ -242,8 +247,9 @@
         <div class="lessons-panel">
           <h3 class="uni-section-title"><span></span>Biblioteca de Explicações</h3>
           
-          <div class="lessons-filters" style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <select id="lesson-filter-subject" class="lesson-select">
+          <div class="lessons-filters" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="lessons-search-input" placeholder="🔍 Procurar explicações (ex: Frações, Sujeito)..." style="width: 100%; padding: 10px 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.9rem;">
+            <select id="lesson-filter-subject" class="lesson-select" style="width: 100%;">
               <option value="">Todas Disciplinas / Tópicos</option>
               <option value="matematica">Matemática (ESG/Primário)</option>
               <option value="portugues">Português</option>
@@ -633,6 +639,125 @@
       </div>
     </section>
 
+    <!-- 9. ADMIN PANEL SECTION -->
+    <section id="section-admin" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Consola Administrativa ⚙️</h2>
+          <p>Painel de controlo exclusivo de Vilhete Solutions para gestão da plataforma.</p>
+        </div>
+      </div>
+
+      <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 3fr; gap: 25px; margin-top: 20px;">
+        <!-- Sidebar: Tabs -->
+        <div class="admin-sidebar" style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn btn-outline admin-tab-btn active" data-tab="admin-users" style="text-align: left; width: 100%;">Utilizadores</button>
+          <button class="btn btn-outline admin-tab-btn" data-tab="admin-payments" style="text-align: left; width: 100%;">Pagamentos M-Pesa</button>
+          <button class="btn btn-outline admin-tab-btn" data-tab="admin-content" style="text-align: left; width: 100%;">Adicionar Conteúdo</button>
+        </div>
+
+        <!-- Main Admin Area -->
+        <div class="admin-content-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow); min-height: 400px;">
+          <!-- Tab 1: Users -->
+          <div id="tab-admin-users" class="admin-tab-content active">
+            <h3>Gestão de Utilizadores</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Utilizadores registados na base de dados do Supabase.</p>
+            
+            <div class="table-responsive" style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                    <th style="padding: 10px;">ID</th>
+                    <th style="padding: 10px;">Telefone</th>
+                    <th style="padding: 10px;">Estatuto</th>
+                    <th style="padding: 10px;">Admin?</th>
+                    <th style="padding: 10px; text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-tbody">
+                  <!-- Populated via API -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab 2: Payments -->
+          <div id="tab-admin-payments" class="admin-tab-content" style="display: none;">
+            <h3>Transações M-Pesa / e-Mola</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Histórico de tentativas e confirmações de micro-pagamentos.</p>
+            
+            <div class="table-responsive" style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                    <th style="padding: 10px;">Ref</th>
+                    <th style="padding: 10px;">Telefone</th>
+                    <th style="padding: 10px;">Valor</th>
+                    <th style="padding: 10px;">Estado</th>
+                    <th style="padding: 10px;">Data</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-payments-tbody">
+                  <!-- Populated via API -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab 3: Create Content -->
+          <div id="tab-admin-content" class="admin-tab-content" style="display: none;">
+            <h3>Gerir Conteúdo Premium</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Insira novos exames nacionais ou resumos teóricos no Supabase.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <!-- Add Exam Form -->
+              <form id="admin-add-exam-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 12px; background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <h4>Criar Novo Exame</h4>
+                <input type="text" id="admin-exam-id" placeholder="Código (ex: esg-quim-12-2025)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <input type="text" id="admin-exam-level-name" placeholder="Nome do Nível (ex: 12ª Classe)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <select id="admin-exam-level" required class="lesson-select" style="width: 100%; box-sizing: border-box; padding: 8px 12px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                  <option value="primario">7ª Classe (Primário)</option>
+                  <option value="10a">10ª Classe (Secundário)</option>
+                  <option value="12a">12ª Classe (Secundário)</option>
+                  <option value="superior">Ensino Superior</option>
+                  <option value="tecnico">Ensino Técnico</option>
+                  <option value="cambridge">Cambridge IGCSE / A-Level</option>
+                  <option value="conducao">Carta Condução</option>
+                </select>
+                <input type="text" id="admin-exam-subject-name" placeholder="Nome da Disciplina (ex: Química)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <input type="text" id="admin-exam-subject" placeholder="Slug da Disciplina (ex: quimica)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <input type="number" id="admin-exam-year" placeholder="Ano (ex: 2025)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <input type="number" id="admin-exam-duration" placeholder="Duração em Minutos (ex: 120)" class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <button type="submit" class="btn btn-primary" id="admin-submit-exam-btn" style="margin-top: 5px; width: 100%;">Criar Exame</button>
+              </form>
+
+              <!-- Add Lesson Form -->
+              <form id="admin-add-lesson-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 12px; background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <h4>Criar Nova Explicação</h4>
+                <input type="text" id="admin-lesson-title" placeholder="Título (ex: Equilíbrio Químico)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <input type="text" id="admin-lesson-summary" placeholder="Resumo curto" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <select id="admin-lesson-level" required class="lesson-select" style="width: 100%; box-sizing: border-box; padding: 8px 12px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                  <option value="primario">7ª Classe</option>
+                  <option value="10a">10ª Classe</option>
+                  <option value="12a">12ª Classe</option>
+                  <option value="superior">Ensino Superior</option>
+                  <option value="tecnico">Ensino Técnico</option>
+                  <option value="cambridge">Cambridge</option>
+                  <option value="conducao">Carta Condução</option>
+                </select>
+                <input type="text" id="admin-lesson-subject" placeholder="Disciplina (ex: quimica, codigo, portugues)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+                <textarea id="admin-lesson-content" placeholder="Conteúdo completo da lição (Markdown)..." required class="chat-input" style="padding: 8px 12px; min-height: 80px; resize: vertical; font-family: inherit; width: 100%; box-sizing: border-box;"></textarea>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                  <input type="checkbox" id="admin-lesson-premium"> Bloquear como Premium?
+                </label>
+                <button type="submit" class="btn btn-accent" id="admin-submit-lesson-btn" style="margin-top: 5px; width: 100%;">Criar Explicação</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Form/Modal de Autenticação Segura -->
@@ -716,8 +841,8 @@
   <!-- Footer -->
   <footer>
     <div class="container">
-      <p>&copy; 2026 ExamePronto. Todos os direitos reservados.</p>
-      <p style="font-size: 0.75rem; margin-top: 5px; opacity: 0.7;">Central de Preparação Estudantil Segura de Moçambique. Funciona em qualquer smartphone.</p>
+      <p>&copy; 2026 ExamePronto. Propriedade de <strong>Vilhete Solutions</strong>. Todos os direitos reservados.</p>
+      <p style="font-size: 0.75rem; margin-top: 5px; opacity: 0.7;">Central de Preparação Estudantil Segura de Moçambique. Desenvolvido por Vilhete Solutions. Funciona em qualquer smartphone.</p>
     </div>
   </footer>
 

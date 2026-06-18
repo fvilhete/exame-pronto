@@ -4,8 +4,12 @@
  */
 
 // --- ESTADOS DE SESSÃO, QUIZ E JOGOS ---
+// --- ESTADOS DE SESSÃO, QUIZ E JOGOS ---
 let jwtToken = localStorage.getItem("examepronto_token") || null;
-let userProfile = null; // { id, phone, isPremium, premiumExpires }
+let userProfile = null; // { id, phone, isPremium, premiumExpires, isAdmin }
+let userProgressCache = []; // Caching local do progresso para pesquisa instantânea
+let currentLevelExams = []; // Caching local dos exames da categoria ativa
+let currentLessons = []; // Caching local das lições carregadas
 
 let currentQuiz = {
   exam: null,
@@ -133,6 +137,11 @@ function updateAuthUI() {
     welcomeTitle.textContent = `Olá, Estudante (+258 ${userProfile.phone.substring(0,3)}***${userProfile.phone.substring(6)})! 👋`;
     mainNavMenu.style.display = "flex";
 
+    const adminBtn = document.getElementById("nav-admin-btn");
+    if (adminBtn) {
+      adminBtn.style.display = userProfile.isAdmin ? "inline-flex" : "none";
+    }
+
     if (userProfile.isPremium) {
       headerBadge.style.display = "block";
       headerUpgradeBtn.style.display = "none";
@@ -159,6 +168,11 @@ function updateAuthUI() {
     headerUpgradeBtn.style.display = "none";
     welcomeTitle.textContent = "Olá, Estudante! 👋";
     mainNavMenu.style.display = "none";
+
+    const adminBtn = document.getElementById("nav-admin-btn");
+    if (adminBtn) {
+      adminBtn.style.display = "none";
+    }
     
     dashboardPremiumBox.innerHTML = `
       <span class="badge" style="background: var(--text-secondary); color: white; padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; text-transform: uppercase;">GRÁTIS</span> 
@@ -237,6 +251,8 @@ function setupEventListeners() {
         runFinancialSimulation();
       } else if (target === "games") {
         openGamesLobby();
+      } else if (target === "admin") {
+        loadAdminTab();
       }
     });
   });
@@ -345,6 +361,59 @@ function setupEventListeners() {
   // Leaderboard toggles
   document.getElementById("btn-leaderboard-math").addEventListener("click", () => loadLeaderboard("math_rush"));
   document.getElementById("btn-leaderboard-quiz").addEventListener("click", () => loadLeaderboard("moz_quiz"));
+
+  // Admin Sidebar Tabs
+  document.querySelectorAll(".admin-tab-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".admin-tab-btn").forEach(b => b.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      
+      const tabId = e.currentTarget.getAttribute("data-tab");
+      document.querySelectorAll(".admin-tab-content").forEach(content => {
+        content.classList.remove("active");
+        content.style.display = "none";
+      });
+      
+      const activeContent = document.getElementById(`tab-${tabId}`);
+      if (activeContent) {
+        activeContent.classList.add("active");
+        activeContent.style.display = "block";
+      }
+      
+      if (tabId === "admin-users") {
+        fetchAdminUsers();
+      } else if (tabId === "admin-payments") {
+        fetchAdminPayments();
+      }
+    });
+  });
+
+  // Admin Forms
+  const addExamForm = document.getElementById("admin-add-exam-form");
+  if (addExamForm) {
+    addExamForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitAdminExam();
+    });
+  }
+
+  const addLessonForm = document.getElementById("admin-add-lesson-form");
+  if (addLessonForm) {
+    addLessonForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitAdminLesson();
+    });
+  }
+
+  // Search Inputs
+  const dbSearch = document.getElementById("dashboard-search-input");
+  if (dbSearch) {
+    dbSearch.addEventListener("input", filterAndRenderExams);
+  }
+  const lesSearch = document.getElementById("lessons-search-input");
+  if (lesSearch) {
+    lesSearch.addEventListener("input", filterAndRenderLessons);
+  }
 }
 
 function activateMenuTab(target) {
@@ -450,6 +519,7 @@ async function fetchUserProgress() {
 
     if (res.ok) {
       const progressList = await res.json();
+      userProgressCache = progressList; // Cache local do progresso
       updateProgressCardUI(progressList);
     }
   } catch (e) {
@@ -503,58 +573,18 @@ async function renderExamsList() {
     const res = await fetch(`/api/exams?level=${activeLevel}`);
     if (!res.ok) throw new Error();
 
-    const exams = await res.json();
-    container.innerHTML = "";
-
-    if (exams.length === 0) {
-      container.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">Simuladores brevemente disponíveis para esta categoria.</p>`;
-      return;
-    }
-
-    let completedExams = [];
-    if (jwtToken) {
+    currentLevelExams = await res.json(); // Caching local
+    
+    if (jwtToken && (!userProgressCache || userProgressCache.length === 0)) {
       const progressRes = await fetch("/api/user/progress", {
         headers: { "Authorization": `Bearer ${jwtToken}` }
       });
       if (progressRes.ok) {
-        completedExams = await progressRes.json();
+        userProgressCache = await progressRes.json();
       }
     }
 
-    exams.forEach(exam => {
-      const examItem = document.createElement("div");
-      examItem.className = "exam-item";
-      
-      const finished = completedExams.find(c => c.exam_id === exam.id);
-      const scoreHtml = finished ? `<span class="exam-tag" style="background: var(--success-light); color: #065f46; font-weight: 600;">Nota: ${finished.score}/${finished.total}</span>` : "";
-
-      const isPremium = userProfile ? userProfile.isPremium : false;
-
-      examItem.innerHTML = `
-        <div class="exam-info-main">
-          <h4>${exam.subject_name} - ${exam.year}</h4>
-          <div class="exam-tags">
-            <span class="exam-tag">${exam.level_name}</span>
-            <span class="exam-tag">${exam.duration_minutes} Minutos</span>
-            ${scoreHtml}
-            ${!isPremium ? `<span class="exam-tag premium-badge">Grátis (Parcial)</span>` : `<span class="exam-tag premium-badge" style="background: var(--success);">Premium Desbloqueado</span>`}
-          </div>
-        </div>
-        <div class="exam-actions">
-          <button class="btn btn-primary btn-sm start-exam-btn" data-exam-id="${exam.id}">
-            Iniciar
-          </button>
-        </div>
-      `;
-      container.appendChild(examItem);
-    });
-
-    document.querySelectorAll(".start-exam-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const examId = e.currentTarget.getAttribute("data-exam-id");
-        startExam(examId);
-      });
-    });
+    filterAndRenderExams();
 
   } catch (e) {
     container.innerHTML = `<p style="text-align: center; color: var(--error);">Erro ao ligar ao servidor.</p>`;
@@ -812,34 +842,8 @@ async function fetchLessons() {
     const res = await fetch(url);
     if (!res.ok) throw new Error();
 
-    const lessons = await res.json();
-    container.innerHTML = "";
-
-    if (lessons.length === 0) {
-      container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); width: 100%;">Nenhuma explicação encontrada.</p>`;
-      return;
-    }
-
-    lessons.forEach(l => {
-      const card = document.createElement("div");
-      card.className = "lesson-card";
-      
-      const badgeHtml = l.is_premium === 1 
-        ? `<span class="exam-tag premium-badge" style="margin-left: auto;">Premium</span>` 
-        : `<span class="exam-tag" style="margin-left: auto; background: var(--success-light); color: #065f46; border: none;">Grátis</span>`;
-
-      card.innerHTML = `
-        <h4>${l.title} ${badgeHtml}</h4>
-        <p>${l.summary}</p>
-        <div class="lesson-card-meta">
-          <span style="color: var(--primary); text-transform: uppercase;">${l.subject}</span>
-          <span style="color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">Nível: ${l.level.toUpperCase()}</span>
-        </div>
-      `;
-      
-      card.addEventListener("click", () => viewLesson(l.id));
-      container.appendChild(card);
-    });
+    currentLessons = await res.json(); // Caching local das lições
+    filterAndRenderLessons();
 
   } catch (e) {
     container.innerHTML = `<p style="text-align: center; color: var(--error); width: 100%;">Erro ao carregar explicações.</p>`;
@@ -1434,4 +1438,397 @@ async function activatePremiumAccess() {
 function closeUssdOverlay() {
   document.getElementById("mpesa-ussd-overlay").style.display = "none";
   activePayment = null;
+}
+
+// --- PESQUISA E FILTROS DE CONTEÚDO ---
+
+function filterAndRenderExams() {
+  const container = document.getElementById("exams-list-grid");
+  const query = (document.getElementById("dashboard-search-input").value || "").toLowerCase().trim();
+  
+  const filtered = currentLevelExams.filter(exam => {
+    return exam.subject_name.toLowerCase().includes(query) ||
+           exam.level_name.toLowerCase().includes(query) ||
+           exam.year.toString().includes(query);
+  });
+
+  container.innerHTML = "";
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">Nenhum simulador corresponde à sua pesquisa.</p>`;
+    return;
+  }
+
+  const completedExams = userProgressCache || [];
+  const isPremium = userProfile ? userProfile.isPremium : false;
+
+  filtered.forEach(exam => {
+    const examItem = document.createElement("div");
+    examItem.className = "exam-item";
+    
+    const finished = completedExams.find(c => c.exam_id === exam.id);
+    const scoreHtml = finished ? `<span class="exam-tag" style="background: var(--success-light); color: #065f46; font-weight: 600;">Nota: ${finished.score}/${finished.total}</span>` : "";
+
+    examItem.innerHTML = `
+      <div class="exam-info-main">
+        <h4>${exam.subject_name} - ${exam.year}</h4>
+        <div class="exam-tags">
+          <span class="exam-tag">${exam.level_name}</span>
+          <span class="exam-tag">${exam.duration_minutes} Minutos</span>
+          ${scoreHtml}
+          ${!isPremium ? `<span class="exam-tag premium-badge">Grátis (Parcial)</span>` : `<span class="exam-tag premium-badge" style="background: var(--success);">Premium Desbloqueado</span>`}
+        </div>
+      </div>
+      <div class="exam-actions">
+        <button class="btn btn-primary btn-sm start-exam-btn" data-exam-id="${exam.id}">
+          Iniciar
+        </button>
+      </div>
+    `;
+    container.appendChild(examItem);
+  });
+
+  document.querySelectorAll(".start-exam-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const examId = e.currentTarget.getAttribute("data-exam-id");
+      startExam(examId);
+    });
+  });
+}
+
+function filterAndRenderLessons() {
+  const container = document.getElementById("lessons-list-container");
+  const query = (document.getElementById("lessons-search-input").value || "").toLowerCase().trim();
+  
+  const filtered = currentLessons.filter(l => {
+    return l.title.toLowerCase().includes(query) ||
+           l.summary.toLowerCase().includes(query) ||
+           l.subject.toLowerCase().includes(query) ||
+           l.level.toLowerCase().includes(query);
+  });
+
+  container.innerHTML = "";
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); width: 100%;">Nenhuma explicação corresponde à sua pesquisa.</p>`;
+    return;
+  }
+
+  filtered.forEach(l => {
+    const card = document.createElement("div");
+    card.className = "lesson-card";
+    
+    const badgeHtml = l.is_premium === 1 
+      ? `<span class="exam-tag premium-badge" style="margin-left: auto;">Premium</span>` 
+      : `<span class="exam-tag" style="margin-left: auto; background: var(--success-light); color: #065f46; border: none;">Grátis</span>`;
+
+    card.innerHTML = `
+      <h4>${l.title} ${badgeHtml}</h4>
+      <p>${l.summary}</p>
+      <div class="lesson-card-meta">
+        <span style="color: var(--primary); text-transform: uppercase;">${l.subject}</span>
+        <span style="color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">Nível: ${l.level.toUpperCase()}</span>
+      </div>
+    `;
+    
+    card.addEventListener("click", () => viewLesson(l.id));
+    container.appendChild(card);
+  });
+}
+
+// --- CONSOLA ADMINISTRATIVA (ADMIN CONSOLE) ---
+
+async function loadAdminTab() {
+  if (!userProfile || !userProfile.isAdmin) {
+    showSection("dashboard");
+    activateMenuTab("dashboard");
+    return;
+  }
+  
+  const activeTabBtn = document.querySelector(".admin-tab-btn.active");
+  const tabId = activeTabBtn ? activeTabBtn.getAttribute("data-tab") : "admin-users";
+  
+  if (tabId === "admin-users") {
+    await fetchAdminUsers();
+  } else if (tabId === "admin-payments") {
+    await fetchAdminPayments();
+  }
+}
+
+async function fetchAdminUsers() {
+  const tbody = document.getElementById("admin-users-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">A carregar utilizadores...</td></tr>`;
+
+  try {
+    const res = await fetch("/api/admin/users", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro ao carregar (Acesso Negado).</td></tr>`;
+      return;
+    }
+
+    const users = await res.json();
+    tbody.innerHTML = "";
+
+    if (users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Nenhum utilizador encontrado.</td></tr>`;
+      return;
+    }
+
+    const now = new Date().getTime();
+
+    users.forEach(u => {
+      const tr = document.createElement("tr");
+
+      let statusText = "Grátis";
+      let statusClass = "free";
+      if (u.premium_until > now) {
+        const expires = new Date(parseInt(u.premium_until)).toLocaleDateString("pt-MZ");
+        statusText = `Premium (Até ${expires})`;
+        statusClass = "premium";
+      }
+
+      const adminBadge = u.is_admin === 1 
+        ? `<span class="admin-badge admin">ADMIN</span>`
+        : `<span class="admin-badge free">USER</span>`;
+
+      const toggleAdminLabel = u.is_admin === 1 ? "Remover Admin" : "Tornar Admin";
+
+      tr.innerHTML = `
+        <td style="padding: 10px;">${u.id}</td>
+        <td style="padding: 10px; font-weight: 600;">+258 ${u.phone}</td>
+        <td style="padding: 10px;"><span class="admin-badge ${statusClass}">${statusText}</span></td>
+        <td style="padding: 10px;">${adminBadge}</td>
+        <td style="padding: 10px; text-align: right; display: flex; gap: 5px; justify-content: flex-end;">
+          <button class="btn btn-sm btn-outline btn-grant-premium" data-user-id="${u.id}" data-phone="${u.phone}">+30 Dias Premium</button>
+          <button class="btn btn-sm btn-outline btn-toggle-admin" data-user-id="${u.id}" data-current="${u.is_admin}">
+            ${toggleAdminLabel}
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".btn-grant-premium").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const userId = e.currentTarget.getAttribute("data-user-id");
+        const phone = e.currentTarget.getAttribute("data-phone");
+        if (confirm(`Desejas conceder 30 dias de acesso Premium ao utilizador +258 ${phone}?`)) {
+          grantUserPremium(userId, 30);
+        }
+      });
+    });
+
+    tbody.querySelectorAll(".btn-toggle-admin").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const userId = e.currentTarget.getAttribute("data-user-id");
+        const currentVal = parseInt(e.currentTarget.getAttribute("data-current"));
+        const newVal = currentVal === 1 ? 0 : 1;
+        const actionText = newVal === 1 ? "tornar Administrador" : "remover estatuto de Administrador do";
+        if (confirm(`Tens a certeza de que desejas ${actionText} utilizador selecionado?`)) {
+          toggleUserAdmin(userId, newVal);
+        }
+      });
+    });
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro de conexão ao servidor.</td></tr>`;
+  }
+}
+
+async function grantUserPremium(userId, days) {
+  try {
+    const res = await fetch("/api/admin/users/premium", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ userId, days })
+    });
+
+    if (res.ok) {
+      alert("Acesso Premium concedido com sucesso!");
+      await fetchAdminUsers();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erro ao conceder premium.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+async function toggleUserAdmin(userId, isAdminVal) {
+  try {
+    const res = await fetch("/api/admin/users/toggle-admin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ userId, is_admin: isAdminVal === 1 })
+    });
+
+    if (res.ok) {
+      alert("Estatuto administrativo atualizado com sucesso!");
+      await fetchAdminUsers();
+      if (userProfile && userProfile.id == userId) {
+        userProfile.isAdmin = (isAdminVal === 1);
+        updateAuthUI();
+      }
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erro ao atualizar administrador.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+async function fetchAdminPayments() {
+  const tbody = document.getElementById("admin-payments-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">A carregar pagamentos...</td></tr>`;
+
+  try {
+    const res = await fetch("/api/admin/payments", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro ao carregar pagamentos.</td></tr>`;
+      return;
+    }
+
+    const payments = await res.json();
+    tbody.innerHTML = "";
+
+    if (payments.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Nenhum pagamento registado.</td></tr>`;
+      return;
+    }
+
+    payments.forEach(p => {
+      const tr = document.createElement("tr");
+
+      let statusHtml = `<span class="admin-badge free">${p.status}</span>`;
+      if (p.status === "SUCCESS") {
+        statusHtml = `<span class="admin-badge premium" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">${p.status}</span>`;
+      } else if (p.status === "PENDING") {
+        statusHtml = `<span class="admin-badge free" style="background: rgba(245, 158, 11, 0.15); color: var(--accent);">${p.status}</span>`;
+      }
+
+      const dateStr = p.created_at ? new Date(p.created_at).toLocaleString("pt-MZ") : "N/D";
+
+      tr.innerHTML = `
+        <td style="padding: 10px; font-weight: bold;">${p.transaction_ref}</td>
+        <td style="padding: 10px;">+258 ${p.phone}</td>
+        <td style="padding: 10px; font-weight: 600;">${p.amount.toFixed(2)} MT</td>
+        <td style="padding: 10px;">${statusHtml}</td>
+        <td style="padding: 10px; color: var(--text-secondary);">${dateStr}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro de conexão ao servidor.</td></tr>`;
+  }
+}
+
+async function submitAdminExam() {
+  const examId = document.getElementById("admin-exam-id").value.trim();
+  const levelName = document.getElementById("admin-exam-level-name").value.trim();
+  const level = document.getElementById("admin-exam-level").value;
+  const subjectName = document.getElementById("admin-exam-subject-name").value.trim();
+  const subject = document.getElementById("admin-exam-subject").value.trim();
+  const year = parseInt(document.getElementById("admin-exam-year").value);
+  const duration = parseInt(document.getElementById("admin-exam-duration").value) || 120;
+
+  if (!examId || !levelName || !level || !subjectName || !subject || !year) {
+    alert("Preencha todos os campos obrigatórios do exame.");
+    return;
+  }
+
+  const examData = {
+    id: examId,
+    level,
+    level_name: levelName,
+    subject,
+    subject_name: subjectName,
+    year,
+    duration_minutes: duration
+  };
+
+  try {
+    const res = await fetch("/api/admin/exams", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify(examData)
+    });
+
+    if (res.ok) {
+      alert("Exame criado com sucesso! Adicione agora as perguntas correspondentes na base de dados.");
+      document.getElementById("admin-add-exam-form").reset();
+      await renderExamsList();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erro ao criar exame.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+async function submitAdminLesson() {
+  const title = document.getElementById("admin-lesson-title").value.trim();
+  const summary = document.getElementById("admin-lesson-summary").value.trim();
+  const level = document.getElementById("admin-lesson-level").value;
+  const subject = document.getElementById("admin-lesson-subject").value.trim();
+  const content = document.getElementById("admin-lesson-content").value.trim();
+  const isPremium = document.getElementById("admin-lesson-premium").checked;
+
+  if (!title || !summary || !level || !subject || !content) {
+    alert("Preencha todos os campos obrigatórios da explicação.");
+    return;
+  }
+
+  const lessonData = {
+    level,
+    subject,
+    title,
+    summary,
+    content,
+    is_premium: isPremium
+  };
+
+  try {
+    const res = await fetch("/api/admin/lessons", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify(lessonData)
+    });
+
+    if (res.ok) {
+      alert("Explicação criada com sucesso!");
+      document.getElementById("admin-add-lesson-form").reset();
+      if (document.getElementById("section-explicador").classList.contains("active")) {
+        await fetchLessons();
+      }
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erro ao criar lição.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
 }

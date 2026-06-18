@@ -25,8 +25,12 @@ const schema = [
     id SERIAL PRIMARY KEY,
     phone TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    premium_until BIGINT DEFAULT 0
+    premium_until BIGINT DEFAULT 0,
+    is_admin INTEGER DEFAULT 0
   );`,
+
+  // Garante que a coluna de admin é adicionada se a tabela já existir no Supabase
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0;`,
 
   // 2. Tabela de Exames
   `CREATE TABLE IF NOT EXISTS exams (

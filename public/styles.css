@@ -1623,3 +1623,86 @@ footer {
     justify-content: center;
   }
 }
+
+/* --- EXAMEPRONTO 3.1: SEARCH & ADMIN PANEL STYLES --- */
+
+/* Search Inputs */
+#dashboard-search-input, #lessons-search-input {
+  transition: all 0.3s ease;
+}
+
+#dashboard-search-input:focus, #lessons-search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  outline: none;
+}
+
+/* Admin Panel */
+.admin-tab-btn {
+  text-align: left;
+  justify-content: flex-start;
+  padding: 12px 15px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.admin-tab-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.admin-tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.admin-tab-content.active {
+  display: block;
+}
+
+.admin-content-card table {
+  margin-top: 15px;
+}
+
+.admin-content-card th, .admin-content-card td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-content-card tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* User Plan badges */
+.admin-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.admin-badge.admin {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--error);
+}
+
+.admin-badge.premium {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent);
+}
+
+.admin-badge.free {
+  background: rgba(107, 114, 128, 0.15);
+  color: #9ca3af;
+}
+
+/* Responsive improvements for Admin */
+@media (max-width: 768px) {
+  .admin-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

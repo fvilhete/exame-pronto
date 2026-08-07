@@ -384,9 +384,28 @@ function setupEventListeners() {
         fetchAdminUsers();
       } else if (tabId === "admin-payments") {
         fetchAdminPayments();
+      } else if (tabId === "admin-content") {
+        fetchAdminContentExams();
       }
     });
   });
+
+  // Admin Content Sub-tabs (Exames / Lições)
+  const manageExamsBtn = document.getElementById("admin-manage-exams-tab-btn");
+  const manageLessonsBtn = document.getElementById("admin-manage-lessons-tab-btn");
+
+  if (manageExamsBtn && manageLessonsBtn) {
+    manageExamsBtn.addEventListener("click", () => {
+      manageExamsBtn.classList.add("active");
+      manageLessonsBtn.classList.remove("active");
+      fetchAdminContentExams();
+    });
+    manageLessonsBtn.addEventListener("click", () => {
+      manageLessonsBtn.classList.add("active");
+      manageExamsBtn.classList.remove("active");
+      fetchAdminContentLessons();
+    });
+  }
 
   // Admin Forms
   const addExamForm = document.getElementById("admin-add-exam-form");
@@ -1325,7 +1344,7 @@ function validatePhone() {
     payBtn.disabled = true;
     helperText.style.color = "var(--error)";
     if (number.length > 0 && !isCorrectPrefix) {
-      helperText.textContent = "Número deve iniciar com 84, 85 (M-Pesa) ou 86, 87 (e-Mola).";
+      helperText.textContent = "Número deve iniciar com 84, 85 (M-Pesa), 86, 87 (e-Mola) ou 82 (TMcel).";
     } else {
       helperText.textContent = "Insira os 9 dígitos do número.";
     }
@@ -1552,6 +1571,8 @@ async function loadAdminTab() {
     await fetchAdminUsers();
   } else if (tabId === "admin-payments") {
     await fetchAdminPayments();
+  } else if (tabId === "admin-content") {
+    await fetchAdminContentExams();
   }
 }
 
@@ -1821,12 +1842,149 @@ async function submitAdminLesson() {
     if (res.ok) {
       alert("Explicação criada com sucesso!");
       document.getElementById("admin-add-lesson-form").reset();
+      await fetchAdminContentLessons();
       if (document.getElementById("section-explicador").classList.contains("active")) {
         await fetchLessons();
       }
     } else {
       const data = await res.json();
       alert(data.error || "Erro ao criar lição.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+// --- GESTÃO E ELIMINAÇÃO DE CONTEÚDOS NO ADMIN ---
+
+async function fetchAdminContentExams() {
+  const tbody = document.getElementById("admin-content-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">A carregar exames...</td></tr>`;
+
+  try {
+    const res = await fetch("/api/exams");
+    if (!res.ok) throw new Error();
+
+    const exams = await res.json();
+    tbody.innerHTML = "";
+
+    if (exams.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Nenhum exame encontrado.</td></tr>`;
+      return;
+    }
+
+    exams.forEach(e => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="padding: 8px; font-weight: bold;">${e.id}</td>
+        <td style="padding: 8px;">${e.subject_name} (${e.year})</td>
+        <td style="padding: 8px;">${e.level_name}</td>
+        <td style="padding: 8px; text-align: right;">
+          <button class="btn btn-sm btn-outline btn-delete-exam" data-id="${e.id}" style="color: var(--error); border-color: var(--error);">
+            Eliminar
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".btn-delete-exam").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.getAttribute("data-id");
+        if (confirm(`Tens a certeza de que desejas eliminar o exame '${id}' e todas as suas perguntas?`)) {
+          deleteAdminExam(id);
+        }
+      });
+    });
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error);">Erro ao carregar exames.</td></tr>`;
+  }
+}
+
+async function fetchAdminContentLessons() {
+  const tbody = document.getElementById("admin-content-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">A carregar explicações...</td></tr>`;
+
+  try {
+    const res = await fetch("/api/lessons");
+    if (!res.ok) throw new Error();
+
+    const lessons = await res.json();
+    tbody.innerHTML = "";
+
+    if (lessons.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Nenhuma explicação encontrada.</td></tr>`;
+      return;
+    }
+
+    lessons.forEach(l => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="padding: 8px; font-weight: bold;">#${l.id}</td>
+        <td style="padding: 8px;">${l.title}</td>
+        <td style="padding: 8px; text-transform: uppercase;">${l.subject} / ${l.level}</td>
+        <td style="padding: 8px; text-align: right;">
+          <button class="btn btn-sm btn-outline btn-delete-lesson" data-id="${l.id}" style="color: var(--error); border-color: var(--error);">
+            Eliminar
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".btn-delete-lesson").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.getAttribute("data-id");
+        if (confirm(`Tens a certeza de que desejas eliminar a explicação #${id}?`)) {
+          deleteAdminLesson(id);
+        }
+      });
+    });
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error);">Erro ao carregar explicações.</td></tr>`;
+  }
+}
+
+async function deleteAdminExam(id) {
+  try {
+    const res = await fetch(`/api/admin/exams/${id}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+
+    if (res.ok) {
+      alert("Exame e perguntas eliminados com sucesso!");
+      await fetchAdminContentExams();
+      await renderExamsList();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erro ao eliminar exame.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+async function deleteAdminLesson(id) {
+  try {
+    const res = await fetch(`/api/admin/lessons/${id}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+
+    if (res.ok) {
+      alert("Explicação eliminada com sucesso!");
+      await fetchAdminContentLessons();
+      if (document.getElementById("section-explicador").classList.contains("active")) {
+        await fetchLessons();
+      }
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erro ao eliminar explicação.");
     }
   } catch (e) {
     alert("Erro de conexão ao servidor.");

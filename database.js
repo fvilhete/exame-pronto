@@ -13,7 +13,10 @@ const pool = new Pool({
   connectionString,
   ssl: {
     rejectUnauthorized: false
-  }
+  },
+  max: 4,
+  idleTimeoutMillis: 15000,
+  connectionTimeoutMillis: 5000
 });
 
 // Traduz placeholders do formato SQLite (?) para o formato PostgreSQL ($1, $2, ...)

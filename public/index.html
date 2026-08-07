@@ -753,6 +753,30 @@
                 <button type="submit" class="btn btn-accent" id="admin-submit-lesson-btn" style="margin-top: 5px; width: 100%;">Criar Explicação</button>
               </form>
             </div>
+
+            <!-- Manage & Delete Existing Content Area -->
+            <div style="margin-top: 30px; background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <h4 style="margin-bottom: 15px;">Eliminar Conteúdos Existentes</h4>
+              <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn btn-sm btn-outline active" id="admin-manage-exams-tab-btn">Exames Existentes</button>
+                <button class="btn btn-sm btn-outline" id="admin-manage-lessons-tab-btn">Explicações Existentes</button>
+              </div>
+              <div class="table-responsive" style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                      <th style="padding: 8px;">ID / Código</th>
+                      <th style="padding: 8px;">Nome / Título</th>
+                      <th style="padding: 8px;">Disciplina / Nível</th>
+                      <th style="padding: 8px; text-align: right;">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-content-tbody">
+                    <!-- Populated via AJAX -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

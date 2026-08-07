@@ -9,6 +9,14 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️ AVISO DE SEGURANÇA: JWT_SECRET não está definido nas Variáveis de Ambiente! A usar chave por omissão.');
+}
+if (!process.env.ADMIN_PHONE) {
+  console.warn('⚠️ AVISO DE SEGURANÇA: ADMIN_PHONE não está definido. Configure nas variáveis do Vercel.');
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'super_seguro_chave_secreta_mocambique_2026_examepronto';
 
 // --- MIDDLEWARE DE SEGURANÇA E CORS ---

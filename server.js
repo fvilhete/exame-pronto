@@ -31,6 +31,11 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Rota amigável para acesso direto ao CMS / Painel Admin
+app.get(['/admin', '/cms'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // --- RATE LIMITING EM MEMÓRIA (ANTISPAM / ANTIBOT) ---
 function rateLimiter(limit, windowMs) {
   const ipRequestCounts = {};

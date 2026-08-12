@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   
   await renderExamsList();
+  handleUrlRouting();
 });
 
 // --- VERIFICAÇÃO DE SESSÃO ---
@@ -362,6 +363,9 @@ function setupEventListeners() {
   document.getElementById("btn-leaderboard-math").addEventListener("click", () => loadLeaderboard("math_rush"));
   document.getElementById("btn-leaderboard-quiz").addEventListener("click", () => loadLeaderboard("moz_quiz"));
 
+  window.addEventListener("hashchange", handleUrlRouting);
+  window.addEventListener("popstate", handleUrlRouting);
+
   // Admin Sidebar Tabs
   document.querySelectorAll(".admin-tab-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
@@ -619,6 +623,37 @@ function showSection(sectionId) {
   if (targetSection) {
     targetSection.classList.add("active");
     window.scrollTo(0, 0);
+
+    if (sectionId === "admin") {
+      if (!window.location.pathname.includes("/admin") && !window.location.pathname.includes("/cms")) {
+        history.replaceState(null, "", "#admin");
+      }
+    } else if (window.location.hash === "#admin" || window.location.hash === "#cms") {
+      history.replaceState(null, "", window.location.pathname);
+    }
+  }
+}
+
+function handleUrlRouting() {
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+  const search = window.location.search.toLowerCase();
+
+  const isAdminRoute = path.includes("/admin") || path.includes("/cms") || hash.includes("admin") || hash.includes("cms") || search.includes("admin");
+
+  if (isAdminRoute) {
+    if (userProfile && userProfile.isAdmin) {
+      showSection("admin");
+      activateMenuTab("admin");
+      loadAdminTab();
+    } else {
+      openAuthModal();
+      const err = document.getElementById("auth-error-alert");
+      if (err) {
+        err.textContent = "🔒 Acesso reservado ao Painel CMS Administrativo. Inicie sessão como Administrador para continuar.";
+        err.style.display = "block";
+      }
+    }
   }
 }
 

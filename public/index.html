@@ -16,6 +16,13 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="ExamePronto">
   
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <meta name="theme-color" content="#2563eb">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ExamePronto">
+  
   <!-- Estilos -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -45,6 +52,9 @@
             <span class="badge">PREMIUM</span> Ativo
           </span>
         </div>
+        
+        <!-- Controlo de Efeitos Sonoros -->
+        <button class="btn btn-sm btn-outline" id="btn-sound-toggle" title="Ativar/Desativar Efeitos Sonoros" style="padding: 6px 10px; font-size: 0.8rem;">🔊 Som: ON</button>
         
         <button class="btn btn-sm btn-accent" id="header-upgrade-btn" style="display: none;">
           Adquirir Premium
@@ -227,6 +237,22 @@
               <div class="activity-list" id="dashboard-activity-list">
                 <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; font-style: italic;">Nenhum teste concluído. Inicia sessão para salvar o teu progresso.</p>
               </div>
+            </div>
+          </div>
+
+          <!-- Streak & Daily Goal Tracker -->
+          <div class="progress-card" style="margin-top: 15px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.05)); border: 1px solid rgba(245, 158, 11, 0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h4 style="margin: 0; font-size: 0.95rem; color: var(--accent);">🔥 Sequência de Estudo</h4>
+              <span id="streak-days-badge" style="background: var(--accent); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">1 Dia</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px;">Pratica diariamente para manteres a tua sequência de estudo!</p>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+              <span>🎯 Meta Diária:</span>
+              <strong id="daily-goal-text">0 / 2 Simulados</strong>
+            </div>
+            <div class="progress-bar-bg" style="height: 6px;">
+              <div class="progress-bar-fill" id="daily-goal-bar" style="background: var(--accent); width: 0%;"></div>
             </div>
           </div>
         </div>
@@ -526,7 +552,12 @@
       <div class="quiz-header">
         <div class="quiz-title-info">
           <h2 id="quiz-exam-title">Carregando Exame...</h2>
-          <span class="exam-tag" id="quiz-question-counter">Pergunta 1</span>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+            <span class="exam-tag" id="quiz-question-counter">Pergunta 1</span>
+            <button class="btn btn-sm btn-outline" id="quiz-tts-btn" title="Ouvir Pergunta em Voz Alta" style="padding: 3px 8px; font-size: 0.75rem;">
+              🔊 Ouvir Pergunta
+            </button>
+          </div>
         </div>
         <div class="quiz-timer-box" id="quiz-timer-container">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px;">
@@ -574,14 +605,38 @@
 
         <p id="results-feedback-message" style="font-weight: 600; margin-bottom: 30px;">Feedback.</p>
         
-        <div class="results-actions">
-          <button class="btn btn-whatsapp" id="results-share-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
-              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.504-5.729-1.465L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.59 2.003 14.12 1.025 11.99 1.025c-5.442 0-9.87 4.372-9.874 9.802-.001 1.968.528 3.888 1.533 5.607L2.645 20.9l4.002-1.046zM17.72 14.73c-.31-.155-1.833-.904-2.11-.998-.278-.1-.482-.154-.683.155-.202.308-.782.998-.958 1.198-.175.2-.35.226-.66.071-1.365-.678-2.39-1.189-3.21-2.585-.218-.37.218-.344.622-1.144.068-.135.034-.252-.017-.355-.052-.1-.482-1.159-.66-1.584-.173-.42-.347-.361-.482-.368h-.414c-.143 0-.376.053-.573.266-.197.213-.75.732-.75 1.785s.767 2.072.87 2.211c.104.14 1.51 2.3 3.657 3.224.51.22 1.08.354 1.45.47.51.162.97.139 1.34.084.41-.061 1.83-.748 2.09-1.432.26-.684.26-1.27.18-1.393-.08-.122-.3-.193-.61-.348z"/>
-            </svg>
-            Desafiar Colegas no WhatsApp
+        <div class="results-actions" style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn btn-outline" id="results-print-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            📄 Imprimir / Guardar Boletim de Notas (PDF)
           </button>
-          <button class="btn btn-primary" id="results-back-btn">Voltar ao Dashboard</button>
+          <div style="display: flex; gap: 10px; width: 100%;">
+            <button class="btn btn-whatsapp" id="results-share-btn" style="flex: 1;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.504-5.729-1.465L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.59 2.003 14.12 1.025 11.99 1.025c-5.442 0-9.87 4.372-9.874 9.802-.001 1.968.528 3.888 1.533 5.607L2.645 20.9l4.002-1.046zM17.72 14.73c-.31-.155-1.833-.904-2.11-.998-.278-.1-.482-.154-.683.155-.202.308-.782.998-.958 1.198-.175.2-.35.226-.66.071-1.365-.678-2.39-1.189-3.21-2.585-.218-.37.218-.344.622-1.144.068-.135.034-.252-.017-.355-.052-.1-.482-1.159-.66-1.584-.173-.42-.347-.361-.482-.368h-.414c-.143 0-.376.053-.573.266-.197.213-.75.732-.75 1.785s.767 2.072.87 2.211c.104.14 1.51 2.3 3.657 3.224.51.22 1.08.354 1.45.47.51.162.97.139 1.34.084.41-.061 1.83-.748 2.09-1.432.26-.684.26-1.27.18-1.393-.08-.122-.3-.193-.61-.348z"/>
+              </svg>
+              WhatsApp
+            </button>
+            <button class="btn btn-primary" id="results-back-btn" style="flex: 1;">Dashboard</button>
+          </div>
+        </div>
+
+        <!-- Formal Printable Certificate Container (Rendered on Print) -->
+        <div id="printable-certificate-container" class="printable-only" style="display: none;">
+          <div style="border: 4px double #1e3a8a; padding: 30px; text-align: center; background: white; color: #1e293b; font-family: serif; border-radius: 8px;">
+            <h1 style="color: #1e3a8a; font-size: 2rem; margin-bottom: 5px;">BOLETIM OFICIAL DE DESEMPENHO</h1>
+            <h3 style="color: #475569; font-size: 1.1rem; margin-top: 0; font-weight: normal;">ExamePronto | Vilhete Solutions - Moçambique</h3>
+            <hr style="margin: 20px auto; width: 60%; border-top: 2px solid #1e3a8a;">
+            <p style="font-size: 1.1rem; line-height: 1.6; margin: 20px 0;">
+              Certifica-se que o(a) estudante associado(a) ao contacto <strong id="print-user-phone">+258 ---</strong> realizou o simulador preparatório do exame de <strong id="print-exam-name">---</strong> na data de <strong id="print-exam-date">---</strong>.
+            </p>
+            <div style="margin: 25px auto; width: fit-content; padding: 15px 30px; border: 2px solid #1e3a8a; border-radius: 8px; background: #f8fafc;">
+              <div style="font-size: 1.8rem; font-weight: bold; color: #1e3a8a;" id="print-exam-score">0 / 0</div>
+              <div style="font-size: 1rem; color: #059669; font-weight: bold;" id="print-exam-percent">0% - APROVADO</div>
+            </div>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: 30px;">
+              Documento digital gerado pela plataforma ExamePronto 3.2. Válido para efeitos de autoavaliação académica em Moçambique.
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -756,7 +811,7 @@
 
             <!-- Manage & Delete Existing Content Area -->
             <div style="margin-top: 30px; background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-              <h4 style="margin-bottom: 15px;">Eliminar Conteúdos Existentes</h4>
+              <h4 style="margin-bottom: 15px;">Conteúdos Cadastrados</h4>
               <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <button class="btn btn-sm btn-outline active" id="admin-manage-exams-tab-btn">Exames Existentes</button>
                 <button class="btn btn-sm btn-outline" id="admin-manage-lessons-tab-btn">Explicações Existentes</button>
@@ -773,6 +828,62 @@
                   </thead>
                   <tbody id="admin-content-tbody">
                     <!-- Populated via AJAX -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Question Manager in CMS -->
+            <div style="margin-top: 30px; background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <h4>Gestor de Perguntas do Exame</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">Selecione um exame para listar e adicionar novas perguntas.</p>
+              
+              <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="admin-question-exam-select" class="lesson-select" style="flex: 1; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                  <option value="">-- Selecione o Exame --</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="admin-load-questions-btn">Carregar Perguntas</button>
+              </div>
+
+              <!-- Add Question Form -->
+              <form id="admin-add-question-form" onsubmit="return false;" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <h5>Adicionar Nova Pergunta</h5>
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px;">
+                  <input type="number" id="admin-q-number" placeholder="Nº (ex: 6)" required class="chat-input" style="padding: 6px 10px;">
+                  <input type="text" id="admin-q-text" placeholder="Enunciado da pergunta..." required class="chat-input" style="padding: 6px 10px;">
+                </div>
+                <input type="text" id="admin-q-opt1" placeholder="Opção A (ex: A) Texto da opção...)" required class="chat-input" style="padding: 6px 10px;">
+                <input type="text" id="admin-q-opt2" placeholder="Opção B..." required class="chat-input" style="padding: 6px 10px;">
+                <input type="text" id="admin-q-opt3" placeholder="Opção C..." required class="chat-input" style="padding: 6px 10px;">
+                <input type="text" id="admin-q-opt4" placeholder="Opção D..." required class="chat-input" style="padding: 6px 10px;">
+                <input type="text" id="admin-q-opt5" placeholder="Opção E (Opcional)..." class="chat-input" style="padding: 6px 10px;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
+                  <select id="admin-q-correct" required class="lesson-select" style="padding: 6px 10px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                    <option value="0">Opção A é Correta</option>
+                    <option value="1">Opção B é Correta</option>
+                    <option value="2">Opção C é Correta</option>
+                    <option value="3">Opção D é Correta</option>
+                    <option value="4">Opção E é Correta</option>
+                  </select>
+                  <input type="text" id="admin-q-explanation" placeholder="Explicação pedagógica da resolução..." required class="chat-input" style="padding: 6px 10px;">
+                </div>
+                <button type="submit" class="btn btn-sm btn-accent" id="admin-submit-question-btn">Guardar Pergunta no Supabase</button>
+              </form>
+
+              <!-- Exam Questions Table -->
+              <div class="table-responsive" style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                      <th style="padding: 6px;">Nº</th>
+                      <th style="padding: 6px;">Enunciado</th>
+                      <th style="padding: 6px;">Correta</th>
+                      <th style="padding: 6px; text-align: right;">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-questions-tbody">
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">Selecione um exame acima para carregar as perguntas.</td></tr>
                   </tbody>
                 </table>
               </div>

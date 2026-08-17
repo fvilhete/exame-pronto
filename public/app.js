@@ -75,6 +75,8 @@ const mozQuizQuestions = [
 document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   setupEventListeners();
+  initAudioSystem();
+  initStudyStreak();
   
   if (jwtToken) {
     await checkAuthStatus();
@@ -84,6 +86,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   await renderExamsList();
   handleUrlRouting();
+
+  // Registo PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
 });
 
 // --- VERIFICAÇÃO DE SESSÃO ---
@@ -359,9 +368,27 @@ function setupEventListeners() {
   });
   document.getElementById("game-over-lobby-btn").addEventListener("click", openGamesLobby);
 
-  // Leaderboard toggles
-  document.getElementById("btn-leaderboard-math").addEventListener("click", () => loadLeaderboard("math_rush"));
-  document.getElementById("btn-leaderboard-quiz").addEventListener("click", () => loadLeaderboard("moz_quiz"));
+  // Sound & Speech listeners
+  const soundBtn = document.getElementById("btn-sound-toggle");
+  if (soundBtn) soundBtn.addEventListener("click", toggleSound);
+
+  const quizTtsBtn = document.getElementById("quiz-tts-btn");
+  if (quizTtsBtn) quizTtsBtn.addEventListener("click", speakCurrentQuizQuestion);
+
+  const printCertBtn = document.getElementById("results-print-btn");
+  if (printCertBtn) printCertBtn.addEventListener("click", printOfficialCertificate);
+
+  // Question CMS Events
+  const loadQuestionsBtn = document.getElementById("admin-load-questions-btn");
+  if (loadQuestionsBtn) loadQuestionsBtn.addEventListener("click", fetchAdminExamQuestions);
+
+  const addQuestionForm = document.getElementById("admin-add-question-form");
+  if (addQuestionForm) {
+    addQuestionForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitAdminQuestion();
+    });
+  }
 
   window.addEventListener("hashchange", handleUrlRouting);
   window.addEventListener("popstate", handleUrlRouting);
@@ -774,6 +801,12 @@ function verifyAnswer() {
   const isCorrect = selectedObj.selectedOptionIndex === question.correct;
   currentQuiz.answers[index].isCorrect = isCorrect;
 
+  if (isCorrect) {
+    playAudioChime("correct");
+  } else {
+    playAudioChime("wrong");
+  }
+
   const options = document.querySelectorAll(".option-btn");
   options.forEach((optBtn, idx) => {
     optBtn.disabled = true;
@@ -855,6 +888,9 @@ async function finishQuiz(timeOut = false) {
     headline = "Passaste no Teste! 👍";
     feedback = "Obteve nota positiva, mas deve continuar a estudar.";
   }
+
+  playAudioChime("fanfare");
+  recordStreakAndDailyGoal();
 
   document.getElementById("results-headline").textContent = headline;
   document.getElementById("results-feedback-message").textContent = feedback;
@@ -1608,6 +1644,7 @@ async function loadAdminTab() {
     await fetchAdminPayments();
   } else if (tabId === "admin-content") {
     await fetchAdminContentExams();
+    await populateAdminExamDropdown();
   }
 }
 
@@ -2025,3 +2062,314 @@ async function deleteAdminLesson(id) {
     alert("Erro de conexão ao servidor.");
   }
 }
+
+// --- MÓDULOS DE ÁUDIO (WEB AUDIO E TEXT-TO-SPEECH) ---
+
+let soundEnabled = localStorage.getItem("ep_sound_enabled") !== "false";
+let audioCtx = null;
+
+function initAudioSystem() {
+  const btn = document.getElementById("btn-sound-toggle");
+  if (btn) {
+    btn.textContent = soundEnabled ? "🔊 Som: ON" : "🔇 Som: OFF";
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem("ep_sound_enabled", soundEnabled ? "true" : "false");
+  initAudioSystem();
+}
+
+function playAudioChime(type) {
+  if (!soundEnabled) return;
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+
+    if (type === "correct") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === "wrong") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(160, now + 0.2);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } else if (type === "fanfare") {
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.type = "triangle";
+        o.frequency.setValueAtTime(freq, now + i * 0.1);
+        g.gain.setValueAtTime(0.12, now + i * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+        o.start(now + i * 0.1);
+        o.stop(now + i * 0.1 + 0.4);
+      });
+    }
+  } catch (e) {}
+}
+
+function speakText(text) {
+  if (!('speechSynthesis' in window)) {
+    alert("O seu navegador não suporta leitura de voz.");
+    return;
+  }
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    return;
+  }
+  const clean = text.replace(/[*_#`[\]()]/g, '');
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = "pt-PT";
+  utter.rate = 0.95;
+  window.speechSynthesis.speak(utter);
+}
+
+function speakCurrentQuizQuestion() {
+  if (!currentQuiz.exam || !currentQuiz.exam.questions) return;
+  const q = currentQuiz.exam.questions[currentQuiz.currentIndex];
+  if (!q) return;
+  const fullText = `Questão ${q.number}. ${q.text}. Opções: ${q.options.join('. ')}`;
+  speakText(fullText);
+}
+
+// --- GAMIFICAÇÃO: STREAK & META DIÁRIA ---
+
+function initStudyStreak() {
+  const streakBadge = document.getElementById("streak-days-badge");
+  const goalText = document.getElementById("daily-goal-text");
+  const goalBar = document.getElementById("daily-goal-bar");
+
+  const today = new Date().toISOString().split('T')[0];
+  const lastDate = localStorage.getItem("ep_last_study_date");
+  let streak = parseInt(localStorage.getItem("ep_streak_count") || "1");
+  let dailyDone = parseInt(localStorage.getItem("ep_daily_done_" + today) || "0");
+
+  if (lastDate && lastDate !== today) {
+    const prevDay = new Date();
+    prevDay.setDate(prevDay.getDate() - 1);
+    const prevStr = prevDay.toISOString().split('T')[0];
+    if (lastDate !== prevStr) {
+      streak = 1;
+    }
+  }
+
+  if (streakBadge) streakBadge.textContent = `${streak} ${streak === 1 ? 'Dia' : 'Dias'}`;
+  if (goalText) goalText.textContent = `${dailyDone} / 2 Simulados`;
+  if (goalBar) goalBar.style.width = `${Math.min(100, (dailyDone / 2) * 100)}%`;
+}
+
+function recordStreakAndDailyGoal() {
+  const today = new Date().toISOString().split('T')[0];
+  const lastDate = localStorage.getItem("ep_last_study_date");
+  let streak = parseInt(localStorage.getItem("ep_streak_count") || "1");
+
+  if (lastDate !== today) {
+    if (lastDate) {
+      const prevDay = new Date();
+      prevDay.setDate(prevDay.getDate() - 1);
+      const prevStr = prevDay.toISOString().split('T')[0];
+      if (lastDate === prevStr) {
+        streak++;
+      } else {
+        streak = 1;
+      }
+    }
+    localStorage.setItem("ep_last_study_date", today);
+    localStorage.setItem("ep_streak_count", streak.toString());
+  }
+
+  let dailyDone = parseInt(localStorage.getItem("ep_daily_done_" + today) || "0") + 1;
+  localStorage.setItem("ep_daily_done_" + today, dailyDone.toString());
+  initStudyStreak();
+}
+
+// --- BOLETIM DE NOTAS E CERTIFICADO IMPRIMÍVEL ---
+
+function printOfficialCertificate() {
+  if (!currentQuiz.exam) return;
+  const userPhone = userProfile ? `+258 ${userProfile.phone}` : "Candidato Autônomo";
+  const examName = `${currentQuiz.exam.subject_name} (${currentQuiz.exam.level_name}, ${currentQuiz.exam.year})`;
+  const dateStr = new Date().toLocaleDateString("pt-MZ");
+  
+  let correctCount = 0;
+  const total = currentQuiz.exam.questions.length;
+  for (let i = 0; i < total; i++) {
+    if (currentQuiz.answers[i] && currentQuiz.answers[i].isCorrect) correctCount++;
+  }
+  const pct = Math.round((correctCount / total) * 100);
+  const statusText = pct >= 50 ? `${pct}% - APROVADO` : `${pct}% - REVISÃO RECOMENDADA`;
+
+  document.getElementById("print-user-phone").textContent = userPhone;
+  document.getElementById("print-exam-name").textContent = examName;
+  document.getElementById("print-exam-date").textContent = dateStr;
+  document.getElementById("print-exam-score").textContent = `${correctCount} / ${total} Valores`;
+  document.getElementById("print-exam-percent").textContent = statusText;
+
+  window.print();
+}
+
+// --- CMS QUESTION MANAGER (GESTOR DE PERGUNTAS) ---
+
+async function populateAdminExamDropdown() {
+  const select = document.getElementById("admin-question-exam-select");
+  if (!select) return;
+  try {
+    const res = await fetch("/api/exams");
+    if (!res.ok) return;
+    const exams = await res.json();
+    select.innerHTML = `<option value="">-- Selecione o Exame --</option>`;
+    exams.forEach(e => {
+      select.innerHTML += `<option value="${e.id}">${e.subject_name} (${e.year}) - ${e.level_name}</option>`;
+    });
+  } catch (e) {}
+}
+
+async function fetchAdminExamQuestions() {
+  const select = document.getElementById("admin-question-exam-select");
+  const examId = select ? select.value : "";
+  const tbody = document.getElementById("admin-questions-tbody");
+  const form = document.getElementById("admin-add-question-form");
+  if (!examId) {
+    alert("Por favor, selecione um exame na lista.");
+    return;
+  }
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">A carregar perguntas...</td></tr>`;
+  if (form) form.style.display = "flex";
+
+  try {
+    const res = await fetch(`/api/admin/exams/${examId}/questions`, {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (!res.ok) throw new Error();
+    const questions = await res.json();
+    tbody.innerHTML = "";
+
+    if (questions.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Nenhuma pergunta cadastrada para este exame. Adicione a primeira abaixo!</td></tr>`;
+      return;
+    }
+
+    questions.forEach(q => {
+      const tr = document.createElement("tr");
+      const correctOptLetter = String.fromCharCode(65 + q.correct_option);
+      tr.innerHTML = `
+        <td style="padding: 6px; font-weight: bold;">Q${q.number}</td>
+        <td style="padding: 6px;">${q.text.substring(0, 50)}...</td>
+        <td style="padding: 6px; font-weight: bold; color: var(--success);">${correctOptLetter}</td>
+        <td style="padding: 6px; text-align: right;">
+          <button class="btn btn-sm btn-outline btn-delete-question" data-id="${q.id}" style="color: var(--error); border-color: var(--error); padding: 2px 6px; font-size: 0.75rem;">
+            Eliminar
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".btn-delete-question").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const qId = e.currentTarget.getAttribute("data-id");
+        if (confirm(`Tens a certeza de que desejas eliminar a pergunta #${qId}?`)) {
+          deleteAdminQuestion(qId);
+        }
+      });
+    });
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error);">Erro ao carregar perguntas do exame.</td></tr>`;
+  }
+}
+
+async function submitAdminQuestion() {
+  const select = document.getElementById("admin-question-exam-select");
+  const examId = select ? select.value : "";
+  if (!examId) {
+    alert("Selecione um exame primeiro.");
+    return;
+  }
+
+  const qNum = parseInt(document.getElementById("admin-q-number").value);
+  const qText = document.getElementById("admin-q-text").value.trim();
+  const opt1 = document.getElementById("admin-q-opt1").value.trim();
+  const opt2 = document.getElementById("admin-q-opt2").value.trim();
+  const opt3 = document.getElementById("admin-q-opt3").value.trim();
+  const opt4 = document.getElementById("admin-q-opt4").value.trim();
+  const opt5 = document.getElementById("admin-q-opt5").value.trim();
+  const correctOpt = parseInt(document.getElementById("admin-q-correct").value);
+  const explanation = document.getElementById("admin-q-explanation").value.trim();
+
+  const optionsArray = [opt1, opt2, opt3, opt4];
+  if (opt5) optionsArray.push(opt5);
+
+  if (!qNum || !qText || !opt1 || !opt2 || !opt3 || !opt4 || !explanation) {
+    alert("Preencha todos os campos obrigatórios da pergunta.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/admin/questions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({
+        exam_id: examId,
+        number: qNum,
+        text: qText,
+        options: optionsArray,
+        correct_option: correctOpt,
+        explanation: explanation
+      })
+    });
+
+    if (res.ok) {
+      alert("Pergunta adicionada com sucesso ao exame!");
+      document.getElementById("admin-add-question-form").reset();
+      await fetchAdminExamQuestions();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erro ao adicionar pergunta.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+async function deleteAdminQuestion(questionId) {
+  try {
+    const res = await fetch(`/api/admin/questions/${questionId}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (res.ok) {
+      alert("Pergunta eliminada com sucesso!");
+      await fetchAdminExamQuestions();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erro ao eliminar pergunta.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+

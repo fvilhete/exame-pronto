@@ -1,0 +1,18 @@
+{
+  "name": "ExamePronto | Vilhete Solutions",
+  "short_name": "ExamePronto",
+  "description": "Preparação Escolar Nacional, Exames de Admissão, Código de Estrada e Explicações em Moçambique",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50' y='65' font-size='50' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>EP</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

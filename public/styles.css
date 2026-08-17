@@ -1706,3 +1706,27 @@ footer {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Print Styles for Official Report Cards / Certificates */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-certificate-container, #printable-certificate-container * {
+    visibility: visible;
+  }
+  #printable-certificate-container {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white !important;
+    color: #0f172a !important;
+  }
+  header, footer, nav, .nav-actions, .quiz-footer, .results-actions, #btn-sound-toggle, .theme-toggle {
+    display: none !important;
+  }
+}

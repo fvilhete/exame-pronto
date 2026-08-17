@@ -128,6 +128,44 @@ async function main() {
       console.log(`❌ TESTE 3 FALHOU: Retornou status ${premiumRes.status}`);
     }
 
+    // 6. Testar criação de pergunta por administrador
+    console.log('[TEST] Criando nova pergunta via CMS Admin...');
+    const createQRes = await request('/api/admin/questions', 'POST', {
+      exam_id: 'esg-bio-10-2025',
+      number: 99,
+      text: 'Pergunta de Teste Automatizado',
+      options: ['A) 1', 'B) 2', 'C) 3', 'D) 4'],
+      correct_option: 0,
+      explanation: 'Explicação de Teste'
+    }, adminToken);
+    console.log(`Status de Criação de Pergunta: ${createQRes.status}`);
+    const createdQId = createQRes.body.questionId;
+    if (createQRes.status === 201 && createdQId) {
+      console.log('✅ TESTE 4 PASSOU: Criação de pergunta no CMS autorizada e persistida.');
+    } else {
+      console.log(`❌ TESTE 4 FALHOU: Retornou status ${createQRes.status}`);
+    }
+
+    // 7. Listar perguntas do exame
+    console.log('[TEST] Listando perguntas do exame com admin...');
+    const listQRes = await request('/api/admin/exams/esg-bio-10-2025/questions', 'GET', null, adminToken);
+    if (listQRes.status === 200 && Array.isArray(listQRes.body)) {
+      console.log(`✅ TESTE 5 PASSOU: Listagem de ${listQRes.body.length} perguntas efetuada.`);
+    } else {
+      console.log(`❌ TESTE 5 FALHOU: Retornou status ${listQRes.status}`);
+    }
+
+    // 8. Eliminar pergunta criada
+    if (createdQId) {
+      console.log(`[TEST] Eliminando pergunta #${createdQId}...`);
+      const delQRes = await request(`/api/admin/questions/${createdQId}`, 'DELETE', null, adminToken);
+      if (delQRes.status === 200) {
+        console.log('✅ TESTE 6 PASSOU: Pergunta eliminada com sucesso via API Admin.');
+      } else {
+        console.log(`❌ TESTE 6 FALHOU: Retornou status ${delQRes.status}`);
+      }
+    }
+
     // Limpar banco
     console.log('[TEST] Limpando usuários de teste criados...');
     await client.query("DELETE FROM users WHERE phone IN ('841111111', '849999999')");

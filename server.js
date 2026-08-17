@@ -734,6 +734,50 @@ app.delete('/api/admin/lessons/:id', requireAdmin, (req, res) => {
   });
 });
 
+// 9. Listar perguntas de um exame para administração
+app.get('/api/admin/exams/:id/questions', requireAdmin, (req, res) => {
+  const examId = req.params.id;
+  db.all("SELECT id, exam_id, number, text, options, correct_option, explanation FROM questions WHERE exam_id = ? ORDER BY number ASC", [examId], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Erro ao listar perguntas do exame.' });
+    const parsedRows = rows.map(r => {
+      let opts = [];
+      try { opts = JSON.parse(r.options); } catch (e) { opts = []; }
+      return { ...r, options: opts };
+    });
+    res.json(parsedRows);
+  });
+});
+
+// 10. Criar uma nova pergunta num exame
+app.post('/api/admin/questions', requireAdmin, (req, res) => {
+  const { exam_id, number, text, options, correct_option, explanation } = req.body;
+  if (!exam_id || !number || !text || !options || correct_option === undefined || !explanation) {
+    return res.status(400).json({ error: 'Preencha todos os campos da pergunta.' });
+  }
+
+  const optionsStr = typeof options === 'string' ? options : JSON.stringify(options);
+  const correctOpt = parseInt(correct_option);
+  const qNum = parseInt(number);
+
+  db.run(
+    `INSERT INTO questions (exam_id, number, text, options, correct_option, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
+    [exam_id, qNum, text, optionsStr, correctOpt, explanation],
+    function(err) {
+      if (err) return res.status(500).json({ error: 'Erro ao adicionar pergunta: ' + err.message });
+      res.status(201).json({ message: 'Pergunta adicionada com sucesso ao exame.', questionId: this.lastID });
+    }
+  );
+});
+
+// 11. Eliminar uma pergunta
+app.delete('/api/admin/questions/:id', requireAdmin, (req, res) => {
+  const questionId = req.params.id;
+  db.run("DELETE FROM questions WHERE id = ?", [questionId], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao eliminar pergunta.' });
+    res.json({ message: 'Pergunta eliminada com sucesso.' });
+  });
+});
+
 
 // Exportar para a Vercel
 module.exports = app;

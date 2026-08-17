@@ -375,6 +375,9 @@ function setupEventListeners() {
   const quizTtsBtn = document.getElementById("quiz-tts-btn");
   if (quizTtsBtn) quizTtsBtn.addEventListener("click", speakCurrentQuizQuestion);
 
+  const quizFocusBtn = document.getElementById("quiz-focus-btn");
+  if (quizFocusBtn) quizFocusBtn.addEventListener("click", toggleFocusMode);
+
   const printCertBtn = document.getElementById("results-print-btn");
   if (printCertBtn) printCertBtn.addEventListener("click", printOfficialCertificate);
 
@@ -2372,4 +2375,41 @@ async function deleteAdminQuestion(questionId) {
     alert("Erro de conexão ao servidor.");
   }
 }
+
+// --- MODO FOCO (FULLSCREEN & PROCTORING) ---
+
+let focusModeActive = false;
+
+function toggleFocusMode() {
+  focusModeActive = !focusModeActive;
+  const btn = document.getElementById("quiz-focus-btn");
+  if (focusModeActive) {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    if (btn) {
+      btn.textContent = "🎯 Modo Foco: ON";
+      btn.style.background = "var(--accent)";
+      btn.style.color = "white";
+    }
+    alert("🎯 Modo Foco Ativado!\n\nO exame está agora em ecrã inteiro. Concentre-se nas suas respostas sem distrações.");
+  } else {
+    if (document.exitFullscreen && document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+    if (btn) {
+      btn.textContent = "🎯 Modo Foco: OFF";
+      btn.style.background = "";
+      btn.style.color = "";
+    }
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  const quizSection = document.getElementById("section-quiz");
+  if (quizSection && quizSection.classList.contains("active") && document.hidden && focusModeActive) {
+    playAudioChime("wrong");
+    console.warn("⚠️ Aviso de Foco: Saída da janela detetada durante o exame.");
+  }
+});
 

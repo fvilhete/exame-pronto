@@ -669,26 +669,64 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="checkout-phone-input">Número do Telemóvel (M-Pesa / e-Mola):</label>
-            <div class="input-phone-container">
-              <span class="phone-prefix">+258</span>
-              <input type="tel" id="checkout-phone-input" class="input-phone" placeholder="84 123 4567" max-length="9">
-            </div>
-            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;" id="phone-helper-text">Número Vodacom (84/85) ou Movitel (86/87).</p>
+          <!-- Payment Method Toggle -->
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button class="btn btn-sm btn-primary active" id="btn-pay-method-auto" style="flex: 1; font-size: 0.85rem;">⚡ Pagamento Automático</button>
+            <button class="btn btn-sm btn-outline" id="btn-pay-method-manual" style="flex: 1; font-size: 0.85rem;">📝 Transferência Manual</button>
           </div>
 
-          <ul class="benefits-list">
+          <!-- Method 1: Automatic Push -->
+          <div id="pay-panel-auto">
+            <div class="form-group">
+              <label for="checkout-phone-input">Número do Telemóvel (M-Pesa / e-Mola):</label>
+              <div class="input-phone-container">
+                <span class="phone-prefix">+258</span>
+                <input type="tel" id="checkout-phone-input" class="input-phone" placeholder="84 123 4567" max-length="9">
+              </div>
+              <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;" id="phone-helper-text">Número Vodacom (84/85), Movitel (86/87) ou TMcel (82).</p>
+            </div>
+
+            <button class="btn btn-mpesa" id="checkout-pay-btn" style="width: 100%; font-size: 1.1rem;" disabled>
+              Pagar com M-Pesa / e-Mola
+            </button>
+          </div>
+
+          <!-- Method 2: Manual Direct Transfer (M-Pesa & mKesh) -->
+          <div id="pay-panel-manual" style="display: none; background: var(--bg-primary); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
+            <h4 style="color: var(--accent); margin-bottom: 10px;">Contas Oficiais Vilhete Solutions:</h4>
+            <div style="font-size: 0.85rem; line-height: 1.6; margin-bottom: 15px;">
+              <div style="padding: 6px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; margin-bottom: 6px;">
+                🔴 <strong>Vodacom M-Pesa:</strong> <span style="font-size: 1rem; font-weight: bold; color: #ef4444;">849517984</span> (Vilhete Solutions)
+              </div>
+              <div style="padding: 6px 10px; background: rgba(245, 158, 11, 0.1); border-radius: 6px;">
+                🟡 <strong>TMcel mKesh:</strong> <span style="font-size: 1rem; font-weight: bold; color: #d97706;">826727204</span> (Vilhete Solutions)
+              </div>
+            </div>
+            
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
+              Transfira o valor do plano selecionado para uma das contas acima e submeta a referência da mensagem SMS:
+            </p>
+
+            <form id="manual-payment-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 10px;">
+              <select id="manual-method-select" class="lesson-select" style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                <option value="MPESA_849517984">M-Pesa (849517984)</option>
+                <option value="MKESH_826727204">mKesh (826727204)</option>
+              </select>
+              <input type="tel" id="manual-sender-phone" placeholder="O seu número de telemóvel (ex: 841234567)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+              <input type="text" id="manual-ref-input" placeholder="Código / Ref. da transação SMS (ex: 8HJ992KA)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+              <button type="submit" class="btn btn-accent" id="checkout-manual-submit-btn" style="width: 100%; font-size: 0.95rem;">
+                Submeter Comprovativo de Pagamento
+              </button>
+            </form>
+          </div>
+
+          <ul class="benefits-list" style="margin-top: 15px;">
             <li>✓ Resoluções passo-a-passo exclusivas de todas as perguntas.</li>
             <li>✓ Desbloqueio de todas as aulas de 7ª classe, 10ª/12ª classe, Técnico e Superior.</li>
             <li>✓ Aulas de Código de Estrada (INATRO) e currículo Cambridge IGCSE.</li>
             <li>✓ Tira-dúvidas ILIMITADO com o Explicador Virtual IA.</li>
             <li>✓ Histórico de notas e recordes de jogos encriptados.</li>
           </ul>
-
-          <button class="btn btn-mpesa" id="checkout-pay-btn" style="width: 100%; font-size: 1.1rem;" disabled>
-            Pagar com M-Pesa / e-Mola
-          </button>
           
           <button class="btn btn-outline" id="checkout-back-btn" style="width: 100%; margin-top: 10px;">
             Voltar
@@ -753,6 +791,7 @@
                     <th style="padding: 10px;">Valor</th>
                     <th style="padding: 10px;">Estado</th>
                     <th style="padding: 10px;">Data</th>
+                    <th style="padding: 10px; text-align: right;">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="admin-payments-tbody">

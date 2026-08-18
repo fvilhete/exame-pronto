@@ -583,6 +583,37 @@ app.post('/api/payments/callback', (req, res) => {
   });
 });
 
+// Submissão de Pagamento Manual (M-Pesa / mKesh)
+app.post('/api/payments/manual', requireAuth, (req, res) => {
+  const { plan, method, senderPhone, transactionRef } = req.body;
+
+  if (!plan || !method || !transactionRef) {
+    return res.status(400).json({ error: 'Plano, método e referência/código da transação são obrigatórios.' });
+  }
+
+  const cleanPhone = (senderPhone || req.user.phone).replace(/\D/g, '');
+  const amount = plan === 'semanal' ? 49.00 : 119.00;
+  const prefix = method.includes('MKESH') ? 'MKESH-' : 'MPESA-';
+  const finalRef = prefix + transactionRef.trim().toUpperCase();
+
+  db.run(
+    `INSERT INTO payments (user_id, transaction_ref, amount, status) VALUES (?, ?, ?, ?)`,
+    [req.user.id, finalRef, amount, 'PENDING_APPROVAL'],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Erro ao registar comprovativo de pagamento: ' + err.message });
+      }
+
+      res.status(201).json({
+        message: 'Comprovativo de pagamento submetido com sucesso! O Administrador irá verificar e ativar a sua conta brevemente.',
+        paymentId: this.lastID,
+        transactionRef: finalRef,
+        amount
+      });
+    }
+  );
+});
+
 
 // --- ROTAS DO PAINEL DE INVESTIDORES ---
 app.get('/api/investor/metrics', (req, res) => {
@@ -681,6 +712,56 @@ app.get('/api/admin/payments', requireAdmin, (req, res) => {
   db.all("SELECT p.*, u.phone FROM payments p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC", [], (err, rows) => {
     if (err) return res.status(500).json({ error: 'Erro ao obter pagamentos.' });
     res.json(rows);
+  });
+});
+
+// 4.1. Aprovar pagamento manual
+app.post('/api/admin/payments/approve', requireAdmin, (req, res) => {
+  const { paymentId } = req.body;
+  if (!paymentId) {
+    return res.status(400).json({ error: 'ID do pagamento é obrigatório.' });
+  }
+
+  db.get("SELECT * FROM payments WHERE id = ?", [paymentId], (err, payment) => {
+    if (err || !payment) {
+      return res.status(404).json({ error: 'Pagamento não encontrado.' });
+    }
+
+    db.get("SELECT * FROM users WHERE id = ?", [payment.user_id], (err, user) => {
+      if (err || !user) {
+        return res.status(404).json({ error: 'Utilizador associado não encontrado.' });
+      }
+
+      const days = payment.amount >= 100 ? 30 : 7;
+      const now = Date.now();
+      const currentExpiry = parseInt(user.premium_until) || 0;
+      const baseTime = currentExpiry > now ? currentExpiry : now;
+      const newExpiry = baseTime + (days * 24 * 60 * 60 * 1000);
+
+      db.serialize(() => {
+        db.run("UPDATE payments SET status = 'SUCCESS' WHERE id = ?", [paymentId]);
+        db.run("UPDATE users SET premium_until = ? WHERE id = ?", [newExpiry, user.id], (err) => {
+          if (err) return res.status(500).json({ error: 'Erro ao ativar premium do utilizador.' });
+          res.json({
+            message: `Pagamento aprovado com sucesso! +${days} dias de Premium concedidos ao utilizador +258 ${user.phone}.`,
+            premiumExpires: newExpiry
+          });
+        });
+      });
+    });
+  });
+});
+
+// 4.2. Recusar pagamento manual
+app.post('/api/admin/payments/reject', requireAdmin, (req, res) => {
+  const { paymentId } = req.body;
+  if (!paymentId) {
+    return res.status(400).json({ error: 'ID do pagamento é obrigatório.' });
+  }
+
+  db.run("UPDATE payments SET status = 'REJECTED' WHERE id = ?", [paymentId], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao recusar pagamento.' });
+    res.json({ message: 'Pagamento recusado com sucesso.' });
   });
 });
 

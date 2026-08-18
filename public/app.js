@@ -393,6 +393,36 @@ function setupEventListeners() {
     });
   }
 
+  // Payment Method Toggles
+  const btnPayAuto = document.getElementById("btn-pay-method-auto");
+  const btnPayManual = document.getElementById("btn-pay-method-manual");
+  if (btnPayAuto && btnPayManual) {
+    btnPayAuto.addEventListener("click", () => {
+      btnPayAuto.classList.add("active", "btn-primary");
+      btnPayAuto.classList.remove("btn-outline");
+      btnPayManual.classList.remove("active", "btn-primary");
+      btnPayManual.classList.add("btn-outline");
+      document.getElementById("pay-panel-auto").style.display = "block";
+      document.getElementById("pay-panel-manual").style.display = "none";
+    });
+    btnPayManual.addEventListener("click", () => {
+      btnPayManual.classList.add("active", "btn-primary");
+      btnPayManual.classList.remove("btn-outline");
+      btnPayAuto.classList.remove("active", "btn-primary");
+      btnPayAuto.classList.add("btn-outline");
+      document.getElementById("pay-panel-manual").style.display = "block";
+      document.getElementById("pay-panel-auto").style.display = "none";
+    });
+  }
+
+  const manualPayForm = document.getElementById("manual-payment-form");
+  if (manualPayForm) {
+    manualPayForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitManualPayment();
+    });
+  }
+
   window.addEventListener("hashchange", handleUrlRouting);
   window.addEventListener("popstate", handleUrlRouting);
 
@@ -1533,6 +1563,54 @@ function closeUssdOverlay() {
   activePayment = null;
 }
 
+// --- SUBMISSÃO DE COMPROVATIVO DE PAGAMENTO MANUAL ---
+
+async function submitManualPayment() {
+  if (!jwtToken) {
+    alert("Inicie sessão antes de submeter o comprovativo de pagamento.");
+    openAuthModal();
+    return;
+  }
+
+  const method = document.getElementById("manual-method-select").value;
+  const senderPhone = document.getElementById("manual-sender-phone").value.trim();
+  const transactionRef = document.getElementById("manual-ref-input").value.trim();
+
+  if (!senderPhone || !transactionRef) {
+    alert("Por favor, preencha o número de telemóvel e a referência SMS da transação.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/payments/manual", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({
+        plan: selectedPlan,
+        method: method,
+        senderPhone: senderPhone,
+        transactionRef: transactionRef
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("✅ Comprovativo submetido com sucesso!\n\nO Administrador da Vilhete Solutions irá verificar o depósito e ativar o seu Acesso Premium brevemente.");
+      document.getElementById("manual-payment-form").reset();
+      showSection("dashboard");
+      activateMenuTab("dashboard");
+    } else {
+      alert(data.error || "Erro ao submeter comprovativo.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
 // --- PESQUISA E FILTROS DE CONTEÚDO ---
 
 function filterAndRenderExams() {
@@ -1788,7 +1866,7 @@ async function toggleUserAdmin(userId, isAdminVal) {
 async function fetchAdminPayments() {
   const tbody = document.getElementById("admin-payments-tbody");
   if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">A carregar pagamentos...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">A carregar pagamentos...</td></tr>`;
 
   try {
     const res = await fetch("/api/admin/payments", {
@@ -1796,7 +1874,7 @@ async function fetchAdminPayments() {
     });
 
     if (!res.ok) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro ao carregar pagamentos.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error);">Erro ao carregar pagamentos.</td></tr>`;
       return;
     }
 
@@ -1804,7 +1882,7 @@ async function fetchAdminPayments() {
     tbody.innerHTML = "";
 
     if (payments.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Nenhum pagamento registado.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Nenhum pagamento registado.</td></tr>`;
       return;
     }
 
@@ -1812,10 +1890,29 @@ async function fetchAdminPayments() {
       const tr = document.createElement("tr");
 
       let statusHtml = `<span class="admin-badge free">${p.status}</span>`;
+      let actionsHtml = `<span style="color: var(--text-secondary); font-size: 0.75rem;">Concluído</span>`;
+
       if (p.status === "SUCCESS") {
-        statusHtml = `<span class="admin-badge premium" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">${p.status}</span>`;
+        statusHtml = `<span class="admin-badge premium" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">APROVADO</span>`;
+        actionsHtml = `<span style="color: var(--success); font-weight: bold; font-size: 0.8rem;">✓ Ativo</span>`;
+      } else if (p.status === "PENDING_APPROVAL") {
+        statusHtml = `<span class="admin-badge premium" style="background: rgba(245, 158, 11, 0.2); color: var(--accent); font-weight: bold;">AGUARDA APROVAÇÃO</span>`;
+        actionsHtml = `
+          <div style="display: flex; gap: 5px; justify-content: flex-end;">
+            <button class="btn btn-sm btn-primary btn-approve-payment" data-id="${p.id}" style="padding: 3px 8px; font-size: 0.75rem;">Aprovar</button>
+            <button class="btn btn-sm btn-outline btn-reject-payment" data-id="${p.id}" style="padding: 3px 8px; font-size: 0.75rem; color: var(--error); border-color: var(--error);">Recusar</button>
+          </div>
+        `;
       } else if (p.status === "PENDING") {
-        statusHtml = `<span class="admin-badge free" style="background: rgba(245, 158, 11, 0.15); color: var(--accent);">${p.status}</span>`;
+        statusHtml = `<span class="admin-badge free" style="background: rgba(245, 158, 11, 0.15); color: var(--accent);">PENDENTE USSD</span>`;
+        actionsHtml = `
+          <div style="display: flex; gap: 5px; justify-content: flex-end;">
+            <button class="btn btn-sm btn-outline btn-approve-payment" data-id="${p.id}" style="padding: 3px 8px; font-size: 0.75rem;">Aprovar Manual</button>
+          </div>
+        `;
+      } else if (p.status === "REJECTED") {
+        statusHtml = `<span class="admin-badge free" style="background: rgba(239, 68, 68, 0.15); color: var(--error);">RECUSADO</span>`;
+        actionsHtml = `<span style="color: var(--error); font-size: 0.8rem;">✗ Recusado</span>`;
       }
 
       const dateStr = p.created_at ? new Date(p.created_at).toLocaleString("pt-MZ") : "N/D";
@@ -1826,12 +1923,80 @@ async function fetchAdminPayments() {
         <td style="padding: 10px; font-weight: 600;">${p.amount.toFixed(2)} MT</td>
         <td style="padding: 10px;">${statusHtml}</td>
         <td style="padding: 10px; color: var(--text-secondary);">${dateStr}</td>
+        <td style="padding: 10px; text-align: right;">${actionsHtml}</td>
       `;
       tbody.appendChild(tr);
     });
 
+    tbody.querySelectorAll(".btn-approve-payment").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.getAttribute("data-id");
+        if (confirm(`Deseja aprovar o pagamento #${id} e conceder acesso Premium ao utilizador?`)) {
+          approveAdminPayment(id);
+        }
+      });
+    });
+
+    tbody.querySelectorAll(".btn-reject-payment").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.getAttribute("data-id");
+        if (confirm(`Deseja recusar o pagamento #${id}?`)) {
+          rejectAdminPayment(id);
+        }
+      });
+    });
+
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro de conexão ao servidor.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error);">Erro de conexão ao servidor.</td></tr>`;
+  }
+}
+
+async function approveAdminPayment(paymentId) {
+  try {
+    const res = await fetch("/api/admin/payments/approve", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ paymentId })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || "Pagamento aprovado com sucesso!");
+      await fetchAdminPayments();
+      if (document.getElementById("section-investor").classList.contains("active")) {
+        await fetchInvestorMetrics();
+      }
+    } else {
+      alert(data.error || "Erro ao aprovar pagamento.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+async function rejectAdminPayment(paymentId) {
+  try {
+    const res = await fetch("/api/admin/payments/reject", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ paymentId })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || "Pagamento recusado.");
+      await fetchAdminPayments();
+    } else {
+      alert(data.error || "Erro ao recusar pagamento.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
   }
 }
 

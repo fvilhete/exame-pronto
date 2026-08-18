@@ -614,6 +614,51 @@ app.post('/api/payments/manual', requireAuth, (req, res) => {
   );
 });
 
+// --- ATIVAÇÃO DE VOUCHER / CÓDIGO FÍSICO ---
+app.post('/api/vouchers/redeem', requireAuth, (req, res) => {
+  const { code } = req.body;
+  if (!code) {
+    return res.status(400).json({ error: 'Insira o código do voucher.' });
+  }
+
+  const cleanCode = code.trim().toUpperCase().replace(/[\s-]/g, '');
+
+  db.get("SELECT * FROM vouchers WHERE REPLACE(REPLACE(code, '-', ''), ' ', '') = ?", [cleanCode], (err, voucher) => {
+    if (err || !voucher) {
+      return res.status(404).json({ error: 'Código de voucher inválido ou não encontrado.' });
+    }
+
+    if (voucher.is_used === 1) {
+      return res.status(400).json({ error: 'Este código de voucher já foi utilizado.' });
+    }
+
+    db.get("SELECT * FROM users WHERE id = ?", [req.user.id], (err, user) => {
+      if (err || !user) {
+        return res.status(404).json({ error: 'Utilizador não encontrado.' });
+      }
+
+      const days = voucher.days || 30;
+      const now = Date.now();
+      const currentExpiry = parseInt(user.premium_until) || 0;
+      const baseTime = currentExpiry > now ? currentExpiry : now;
+      const newExpiry = baseTime + (days * 24 * 60 * 60 * 1000);
+
+      db.serialize(() => {
+        db.run("UPDATE vouchers SET is_used = 1, used_by = ?, used_at = CURRENT_TIMESTAMP WHERE id = ?", [user.id, voucher.id]);
+        db.run("UPDATE users SET premium_until = ? WHERE id = ?", [newExpiry, user.id], (err) => {
+          if (err) return res.status(500).json({ error: 'Erro ao ativar o plano premium.' });
+          
+          res.json({
+            message: `🎉 Parabéns! Código ativado com sucesso. Ganhou +${days} dias de Acesso Premium!`,
+            premiumExpires: newExpiry,
+            daysAdded: days
+          });
+        });
+      });
+    });
+  });
+});
+
 
 // --- ROTAS DO PAINEL DE INVESTIDORES ---
 app.get('/api/investor/metrics', (req, res) => {
@@ -762,6 +807,44 @@ app.post('/api/admin/payments/reject', requireAdmin, (req, res) => {
   db.run("UPDATE payments SET status = 'REJECTED' WHERE id = ?", [paymentId], function(err) {
     if (err) return res.status(500).json({ error: 'Erro ao recusar pagamento.' });
     res.json({ message: 'Pagamento recusado com sucesso.' });
+  });
+});
+
+// 4.3. Listar todos os vouchers no CMS
+app.get('/api/admin/vouchers', requireAdmin, (req, res) => {
+  db.all("SELECT v.*, u.phone AS used_by_phone FROM vouchers v LEFT JOIN users u ON v.used_by = u.id ORDER BY v.id DESC", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Erro ao listar vouchers.' });
+    res.json(rows);
+  });
+});
+
+// 4.4. Gerar lote de vouchers para venda física (raspadinhas)
+app.post('/api/admin/vouchers/generate', requireAdmin, (req, res) => {
+  const { count, days } = req.body;
+  const numVouchers = Math.min(Math.max(parseInt(count) || 10, 1), 100);
+  const voucherDays = parseInt(days) === 7 ? 7 : 30;
+
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const generatedCodes = [];
+
+  for (let i = 0; i < numVouchers; i++) {
+    let part1 = '';
+    let part2 = '';
+    for (let j = 0; j < 4; j++) part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let j = 0; j < 4; j++) part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+    const code = `VILH-${part1}-${part2}`;
+    generatedCodes.push(code);
+  }
+
+  db.serialize(() => {
+    generatedCodes.forEach(code => {
+      db.run("INSERT INTO vouchers (code, days, is_used) VALUES (?, ?, 0)", [code, voucherDays]);
+    });
+
+    res.status(201).json({
+      message: `${numVouchers} vouchers de ${voucherDays} dias gerados com sucesso!`,
+      codes: generatedCodes
+    });
   });
 });
 

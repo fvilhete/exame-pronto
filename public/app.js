@@ -396,22 +396,32 @@ function setupEventListeners() {
   // Payment Method Toggles
   const btnPayAuto = document.getElementById("btn-pay-method-auto");
   const btnPayManual = document.getElementById("btn-pay-method-manual");
-  if (btnPayAuto && btnPayManual) {
+  const btnPayVoucher = document.getElementById("btn-pay-method-voucher");
+  
+  if (btnPayAuto && btnPayManual && btnPayVoucher) {
     btnPayAuto.addEventListener("click", () => {
-      btnPayAuto.classList.add("active", "btn-primary");
-      btnPayAuto.classList.remove("btn-outline");
-      btnPayManual.classList.remove("active", "btn-primary");
-      btnPayManual.classList.add("btn-outline");
+      btnPayAuto.className = "btn btn-sm btn-primary active";
+      btnPayManual.className = "btn btn-sm btn-outline";
+      btnPayVoucher.className = "btn btn-sm btn-outline";
       document.getElementById("pay-panel-auto").style.display = "block";
       document.getElementById("pay-panel-manual").style.display = "none";
+      document.getElementById("pay-panel-voucher").style.display = "none";
     });
     btnPayManual.addEventListener("click", () => {
-      btnPayManual.classList.add("active", "btn-primary");
-      btnPayManual.classList.remove("btn-outline");
-      btnPayAuto.classList.remove("active", "btn-primary");
-      btnPayAuto.classList.add("btn-outline");
+      btnPayManual.className = "btn btn-sm btn-primary active";
+      btnPayAuto.className = "btn btn-sm btn-outline";
+      btnPayVoucher.className = "btn btn-sm btn-outline";
       document.getElementById("pay-panel-manual").style.display = "block";
       document.getElementById("pay-panel-auto").style.display = "none";
+      document.getElementById("pay-panel-voucher").style.display = "none";
+    });
+    btnPayVoucher.addEventListener("click", () => {
+      btnPayVoucher.className = "btn btn-sm btn-primary active";
+      btnPayAuto.className = "btn btn-sm btn-outline";
+      btnPayManual.className = "btn btn-sm btn-outline";
+      document.getElementById("pay-panel-voucher").style.display = "block";
+      document.getElementById("pay-panel-auto").style.display = "none";
+      document.getElementById("pay-panel-manual").style.display = "none";
     });
   }
 
@@ -421,6 +431,33 @@ function setupEventListeners() {
       e.preventDefault();
       submitManualPayment();
     });
+  }
+
+  const voucherRedeemForm = document.getElementById("voucher-redeem-form");
+  if (voucherRedeemForm) {
+    voucherRedeemForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      redeemVoucherCode();
+    });
+  }
+
+  const downloadPaperBtn = document.getElementById("quiz-download-paper-btn");
+  if (downloadPaperBtn) {
+    downloadPaperBtn.addEventListener("click", downloadExamPaperPdf);
+  }
+
+  // Admin Vouchers events
+  const generateVouchersForm = document.getElementById("admin-generate-vouchers-form");
+  if (generateVouchersForm) {
+    generateVouchersForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      generateAdminVouchers();
+    });
+  }
+
+  const printVouchersBtn = document.getElementById("admin-print-vouchers-btn");
+  if (printVouchersBtn) {
+    printVouchersBtn.addEventListener("click", printAdminVouchers);
   }
 
   window.addEventListener("hashchange", handleUrlRouting);
@@ -448,6 +485,8 @@ function setupEventListeners() {
         fetchAdminUsers();
       } else if (tabId === "admin-payments") {
         fetchAdminPayments();
+      } else if (tabId === "admin-vouchers") {
+        fetchAdminVouchers();
       } else if (tabId === "admin-content") {
         fetchAdminContentExams();
       }
@@ -1599,7 +1638,16 @@ async function submitManualPayment() {
     const data = await res.json();
 
     if (res.ok) {
-      alert("✅ Comprovativo submetido com sucesso!\n\nO Administrador da Vilhete Solutions irá verificar o depósito e ativar o seu Acesso Premium brevemente.");
+      const channelLabel = method.includes("MKESH") ? "mKesh (826727204)" : "M-Pesa (849517984)";
+      const amountVal = selectedPlan === "semanal" ? "49.00" : "119.00";
+      const planLabel = selectedPlan === "semanal" ? "Semanal (7 dias)" : "Mensal (30 dias)";
+      const waMsg = encodeURIComponent(`Olá Vilhete Solutions! Acabei de efetuar o depósito de ${amountVal} MT (${planLabel}) via ${channelLabel}.\n\nRef/Código: ${transactionRef}\nContacto: ${senderPhone}\n\nPodem aprovar o meu Acesso Premium no ExamePronto?`);
+      const waUrl = `https://wa.me/258849517984?text=${waMsg}`;
+
+      const openWa = confirm(`✅ Comprovativo submetido com sucesso no sistema!\n\nDeseja enviar agora a confirmação pelo WhatsApp (+258 849517984) à Vilhete Solutions para ativação imediata?`);
+      if (openWa) {
+        window.open(waUrl, "_blank");
+      }
       document.getElementById("manual-payment-form").reset();
       showSection("dashboard");
       activateMenuTab("dashboard");
@@ -2577,4 +2625,254 @@ document.addEventListener("visibilitychange", () => {
     console.warn("⚠️ Aviso de Foco: Saída da janela detetada durante o exame.");
   }
 });
+
+
+// --- RESGATE DE CÓDIGO DE VOUCHER / RASPADINHA ---
+
+async function redeemVoucherCode() {
+  if (!jwtToken) {
+    alert("Inicie sessão antes de ativar o código de voucher.");
+    openAuthModal();
+    return;
+  }
+
+  const codeInput = document.getElementById("voucher-code-input");
+  const code = (codeInput ? codeInput.value : "").trim();
+
+  if (!code) {
+    alert("Por favor, digite o código do voucher.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/vouchers/redeem", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ code })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(data.message || "🎉 Código ativado com sucesso!");
+      codeInput.value = "";
+      await checkAuthStatus();
+      await renderExamsList();
+      showSection("dashboard");
+      activateMenuTab("dashboard");
+    } else {
+      alert(data.error || "Código de voucher inválido.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+
+// --- GERAÇÃO DE CADERNO DE EXAME EM PDF PARA IMPRESSÃO ---
+
+function downloadExamPaperPdf() {
+  if (!currentQuiz.exam) return;
+  const exam = currentQuiz.exam;
+  const container = document.getElementById("printable-exam-paper-container");
+  if (!container) return;
+
+  const title = `${exam.subject_name} - ${exam.level_name} (${exam.year})`;
+  
+  let questionsHtml = "";
+  exam.questions.forEach((q, idx) => {
+    let optionsHtml = "";
+    q.options.forEach((opt, oIdx) => {
+      const letter = String.fromCharCode(65 + oIdx);
+      optionsHtml += `<div style="margin-left: 20px; margin-top: 4px;"><strong>${letter})</strong> ${opt}</div>`;
+    });
+
+    questionsHtml += `
+      <div style="margin-bottom: 20px; page-break-inside: avoid;">
+        <div style="font-weight: bold; margin-bottom: 6px;">Questão ${idx + 1}. ${q.text}</div>
+        ${optionsHtml}
+      </div>
+    `;
+  });
+
+  // Grelha de respostas
+  let gridBubbles = "";
+  for (let i = 1; i <= exam.questions.length; i++) {
+    gridBubbles += `
+      <div style="display: inline-block; width: 85px; margin: 4px; padding: 4px; border: 1px solid #94a3b8; text-align: center; font-size: 0.75rem;">
+        <strong>Q${i}:</strong> [A] [B] [C] [D]
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div style="border-bottom: 3px double #1e3a8a; padding-bottom: 15px; margin-bottom: 20px; text-align: center;">
+      <h2 style="margin: 0; color: #1e3a8a; font-size: 1.4rem;">REPÚBLICA DE MOÇAMBIQUE</h2>
+      <h3 style="margin: 4px 0; font-size: 1.1rem; color: #334155;">MINISTÉRIO DA EDUCAÇÃO E DESENVOLVIMENTO HUMANO / INATRO</h3>
+      <h4 style="margin: 4px 0; color: #475569; font-weight: normal;">ExamePronto | Vilhete Solutions</h4>
+      <div style="margin-top: 10px; padding: 8px; background: #f1f5f9; border-radius: 4px; font-weight: bold;">
+        CADERNO OFICIAL DE EXAME: ${title.toUpperCase()} (Duração: ${exam.duration_minutes || 120} Minutos)
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px; font-size: 0.85rem; font-style: italic; color: #475569;">
+      <strong>Instruções ao Candidato:</strong> Leia atentamente todas as perguntas. Cada questão possui apenas uma resposta correta. Preencha a grelha de respostas no final a tinta azul ou preta.
+    </div>
+
+    <div style="font-size: 0.95rem; line-height: 1.5;">
+      ${questionsHtml}
+    </div>
+
+    <div style="margin-top: 30px; border-top: 2px dashed #1e3a8a; padding-top: 15px; page-break-inside: avoid;">
+      <h4 style="text-align: center; margin-bottom: 10px;">GRELHA OFICIAL DE RESPOSTAS</h4>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;">
+        ${gridBubbles}
+      </div>
+      <p style="text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 15px;">
+        Caderno emitido por ExamePronto 3.2 | Propriedade de Vilhete Solutions - Moçambique.
+      </p>
+    </div>
+  `;
+
+  document.body.className = "print-paper";
+  window.print();
+  setTimeout(() => {
+    document.body.className = "";
+  }, 1000);
+}
+
+
+// --- ADMIN VOUCHERS MANAGEMENT ---
+
+async function fetchAdminVouchers() {
+  const tbody = document.getElementById("admin-vouchers-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">A carregar vouchers...</td></tr>`;
+
+  try {
+    const res = await fetch("/api/admin/vouchers", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro ao carregar vouchers.</td></tr>`;
+      return;
+    }
+
+    const vouchers = await res.json();
+    tbody.innerHTML = "";
+
+    if (vouchers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Nenhum voucher gerado ainda. Crie o primeiro lote acima!</td></tr>`;
+      return;
+    }
+
+    vouchers.forEach(v => {
+      const tr = document.createElement("tr");
+      const statusHtml = v.is_used === 1
+        ? `<span class="admin-badge free" style="background: rgba(239, 68, 68, 0.15); color: var(--error);">UTILIZADO</span>`
+        : `<span class="admin-badge premium" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: bold;">DISPONÍVEL</span>`;
+
+      const userText = v.used_by_phone ? `+258 ${v.used_by_phone}` : "-";
+      const dateStr = v.created_at ? new Date(v.created_at).toLocaleDateString("pt-MZ") : "N/D";
+
+      tr.innerHTML = `
+        <td style="padding: 10px; font-weight: bold; font-family: monospace; font-size: 0.95rem; color: var(--primary);">${v.code}</td>
+        <td style="padding: 10px;">${v.days} Dias</td>
+        <td style="padding: 10px;">${statusHtml}</td>
+        <td style="padding: 10px;">${userText}</td>
+        <td style="padding: 10px; color: var(--text-secondary);">${dateStr}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro de conexão ao servidor.</td></tr>`;
+  }
+}
+
+async function generateAdminVouchers() {
+  const count = parseInt(document.getElementById("gen-vouchers-count").value) || 10;
+  const days = parseInt(document.getElementById("gen-vouchers-days").value) || 30;
+
+  try {
+    const res = await fetch("/api/admin/vouchers/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ count, days })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || "Vouchers gerados com sucesso!");
+      await fetchAdminVouchers();
+    } else {
+      alert(data.error || "Erro ao gerar vouchers.");
+    }
+  } catch (e) {
+    alert("Erro de conexão ao servidor.");
+  }
+}
+
+async function printAdminVouchers() {
+  try {
+    const res = await fetch("/api/admin/vouchers", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (!res.ok) return alert("Erro ao carregar vouchers.");
+    const vouchers = await res.json();
+
+    const available = vouchers.filter(v => v.is_used === 0);
+    if (available.length === 0) {
+      alert("Não há vouchers disponíveis para impressão. Gere um novo lote primeiro.");
+      return;
+    }
+
+    const container = document.getElementById("printable-vouchers-container");
+    if (!container) return;
+
+    let cardsHtml = "";
+    available.forEach(v => {
+      const priceText = v.days === 7 ? "49 MT" : "119 MT";
+      cardsHtml += `
+        <div style="border: 2px dashed #1e3a8a; padding: 12px; text-align: center; border-radius: 6px; background: #f8fafc; break-inside: avoid;">
+          <div style="font-size: 0.7rem; font-weight: bold; color: #1e3a8a; text-transform: uppercase;">EXAMEPRONTO | VILHETE SOLUTIONS</div>
+          <div style="font-size: 0.8rem; font-weight: bold; color: #334155; margin: 4px 0;">CARTÃO DE ATIVAÇÃO (${v.days} DIAS)</div>
+          <div style="font-size: 0.75rem; color: #059669; font-weight: bold;">PREÇO: ${priceText}</div>
+          <div style="margin: 8px 0; padding: 6px; background: white; border: 1px solid #cbd5e1; font-family: monospace; font-size: 1.05rem; font-weight: bold; letter-spacing: 2px; color: #1e3a8a;">
+            ${v.code}
+          </div>
+          <div style="font-size: 0.65rem; color: #64748b; line-height: 1.2;">
+            Aceda a <strong>exame-pronto.vercel.app</strong>, crie a sua conta e ative o código no checkout.
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = `
+      <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px;">
+        <h2 style="margin: 0; color: #1e3a8a;">FOLHA DE CARTÕES / RASPADINHAS PARA VENDA</h2>
+        <p style="margin: 5px 0; font-size: 0.85rem; color: #475569;">Vilhete Solutions | Imprima e corte nas linhas tracejadas para venda em papelarias e escolas.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+        ${cardsHtml}
+      </div>
+    `;
+
+    document.body.className = "print-vouchers-mode";
+    window.print();
+    setTimeout(() => {
+      document.body.className = "";
+    }, 1000);
+
+  } catch (e) {
+    alert("Erro ao preparar impressão de vouchers.");
+  }
+}
 

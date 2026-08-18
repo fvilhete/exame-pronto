@@ -1707,15 +1707,17 @@ footer {
   }
 }
 
-/* Print Styles for Official Report Cards / Certificates */
+/* Print Styles for Official Report Cards, Full Exam Papers & Vouchers */
 @media print {
   body * {
     visibility: hidden;
   }
-  #printable-certificate-container, #printable-certificate-container * {
+  
+  body.print-cert #printable-certificate-container,
+  body.print-cert #printable-certificate-container * {
     visibility: visible;
   }
-  #printable-certificate-container {
+  body.print-cert #printable-certificate-container {
     display: block !important;
     position: absolute;
     left: 0;
@@ -1726,7 +1728,41 @@ footer {
     background: white !important;
     color: #0f172a !important;
   }
-  header, footer, nav, .nav-actions, .quiz-footer, .results-actions, #btn-sound-toggle, .theme-toggle {
+
+  body.print-paper #printable-exam-paper-container,
+  body.print-paper #printable-exam-paper-container * {
+    visibility: visible;
+  }
+  body.print-paper #printable-exam-paper-container {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 25px;
+    background: white !important;
+    color: #0f172a !important;
+    font-family: serif;
+  }
+
+  body.print-vouchers-mode #printable-vouchers-container,
+  body.print-vouchers-mode #printable-vouchers-container * {
+    visibility: visible;
+  }
+  body.print-vouchers-mode #printable-vouchers-container {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white !important;
+    color: #0f172a !important;
+  }
+
+  header, footer, nav, .nav-actions, .quiz-footer, .results-actions, #btn-sound-toggle, .theme-toggle, .sidebar {
     display: none !important;
   }
 }

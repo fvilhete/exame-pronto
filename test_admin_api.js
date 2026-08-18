@@ -166,9 +166,52 @@ async function main() {
       }
     }
 
+    // 9. Submeter e aprovar pagamento manual
+    console.log('[TEST] Submetendo pagamento manual de estudante...');
+    const manualPayRes = await request('/api/payments/manual', 'POST', {
+      plan: 'mensal',
+      method: 'MPESA_849517984',
+      senderPhone: '841111111',
+      transactionRef: 'TESTREF992'
+    }, normalToken);
+    console.log(`Status de Pagamento Manual: ${manualPayRes.status}`);
+    const paymentId = manualPayRes.body.paymentId;
+
+    if (manualPayRes.status === 201 && paymentId) {
+      console.log('✅ TESTE 7 PASSOU: Submissão de pagamento manual registada.');
+      
+      console.log(`[TEST] Aprovando pagamento manual #${paymentId} pelo administrador...`);
+      const approveRes = await request('/api/admin/payments/approve', 'POST', { paymentId }, adminToken);
+      if (approveRes.status === 200) {
+        console.log('✅ TESTE 8 PASSOU: Pagamento manual aprovado e Premium concedido.');
+      } else {
+        console.log(`❌ TESTE 8 FALHOU: Retornou status ${approveRes.status}`);
+      }
+    }
+
+    // 10. Gerar e resgatar voucher de ativação
+    console.log('[TEST] Gerando lote de vouchers no CMS...');
+    const genVoucherRes = await request('/api/admin/vouchers/generate', 'POST', { count: 3, days: 30 }, adminToken);
+    console.log(`Status de Geração de Vouchers: ${genVoucherRes.status}`);
+    const generatedCodes = genVoucherRes.body.codes;
+
+    if (genVoucherRes.status === 201 && generatedCodes && generatedCodes.length > 0) {
+      console.log(`✅ TESTE 9 PASSOU: ${generatedCodes.length} vouchers gerados.`);
+      const testCode = generatedCodes[0];
+
+      console.log(`[TEST] Resgatando voucher ${testCode} com o estudante...`);
+      const redeemRes = await request('/api/vouchers/redeem', 'POST', { code: testCode }, normalToken);
+      if (redeemRes.status === 200) {
+        console.log('✅ TESTE 10 PASSOU: Voucher validado e ativado com sucesso.');
+      } else {
+        console.log(`❌ TESTE 10 FALHOU: Retornou status ${redeemRes.status}`);
+      }
+    }
+
     // Limpar banco
-    console.log('[TEST] Limpando usuários de teste criados...');
+    console.log('[TEST] Limpando dados de teste criados...');
     await client.query("DELETE FROM users WHERE phone IN ('841111111', '849999999')");
+    await client.query("DELETE FROM vouchers WHERE code LIKE 'VILH-%'");
 
     console.log('\n--- TODOS OS TESTES DE INTEGRAÇÃO ADMINISTRATIVA CONCLUÍDOS ---');
   } catch (err) {

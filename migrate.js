@@ -92,6 +92,17 @@ const schema = [
     game_name TEXT NOT NULL,
     score INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );`,
+
+  // 8. Tabela de Vouchers / Códigos de Ativação Físicos
+  `CREATE TABLE IF NOT EXISTS vouchers (
+    id SERIAL PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    days INTEGER NOT NULL,
+    is_used INTEGER DEFAULT 0,
+    used_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );`
 ];
 

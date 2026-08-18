@@ -560,6 +560,9 @@
             <button class="btn btn-sm btn-outline" id="quiz-focus-btn" title="Modo Foco em Ecrã Inteiro" style="padding: 3px 8px; font-size: 0.75rem;">
               🎯 Modo Foco: OFF
             </button>
+            <button class="btn btn-sm btn-outline" id="quiz-download-paper-btn" title="Descarregar Caderno de Exame Completo em PDF" style="padding: 3px 8px; font-size: 0.75rem;">
+              📥 Baixar Caderno PDF
+            </button>
           </div>
         </div>
         <div class="quiz-timer-box" id="quiz-timer-container">
@@ -670,9 +673,10 @@
           </div>
 
           <!-- Payment Method Toggle -->
-          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button class="btn btn-sm btn-primary active" id="btn-pay-method-auto" style="flex: 1; font-size: 0.85rem;">⚡ Pagamento Automático</button>
-            <button class="btn btn-sm btn-outline" id="btn-pay-method-manual" style="flex: 1; font-size: 0.85rem;">📝 Transferência Manual</button>
+          <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button class="btn btn-sm btn-primary active" id="btn-pay-method-auto" style="flex: 1; min-width: 100px; font-size: 0.8rem;">⚡ Automático</button>
+            <button class="btn btn-sm btn-outline" id="btn-pay-method-manual" style="flex: 1; min-width: 100px; font-size: 0.8rem;">📝 Transferência</button>
+            <button class="btn btn-sm btn-outline" id="btn-pay-method-voucher" style="flex: 1; min-width: 100px; font-size: 0.8rem;">🎟️ Voucher / Cartão</button>
           </div>
 
           <!-- Method 1: Automatic Push -->
@@ -720,6 +724,21 @@
             </form>
           </div>
 
+          <!-- Method 3: Voucher Code Redemption -->
+          <div id="pay-panel-voucher" style="display: none; background: var(--bg-primary); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
+            <h4 style="color: var(--primary); margin-bottom: 10px;">Ativar com Cartão / Raspadinha</h4>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
+              Comprou um cartão de ativação ou voucher numa papelaria parceira da <strong>Vilhete Solutions</strong>? Digite o código de 8 caracteres:
+            </p>
+
+            <form id="voucher-redeem-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 10px;">
+              <input type="text" id="voucher-code-input" placeholder="Ex: VILH-8492-9102" required class="chat-input" style="padding: 10px 12px; font-size: 1.1rem; text-align: center; text-transform: uppercase; font-family: monospace; letter-spacing: 2px; width: 100%; box-sizing: border-box;">
+              <button type="submit" class="btn btn-primary" id="checkout-voucher-submit-btn" style="width: 100%; font-size: 0.95rem;">
+                🎟️ Validar e Ativar Código
+              </button>
+            </form>
+          </div>
+
           <ul class="benefits-list" style="margin-top: 15px;">
             <li>✓ Resoluções passo-a-passo exclusivas de todas as perguntas.</li>
             <li>✓ Desbloqueio de todas as aulas de 7ª classe, 10ª/12ª classe, Técnico e Superior.</li>
@@ -749,6 +768,7 @@
         <div class="admin-sidebar" style="display: flex; flex-direction: column; gap: 10px;">
           <button class="btn btn-outline admin-tab-btn active" data-tab="admin-users" style="text-align: left; width: 100%;">Utilizadores</button>
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-payments" style="text-align: left; width: 100%;">Pagamentos M-Pesa</button>
+          <button class="btn btn-outline admin-tab-btn" data-tab="admin-vouchers" style="text-align: left; width: 100%;">🎟️ Vouchers & Raspadinhas</button>
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-content" style="text-align: left; width: 100%;">Adicionar Conteúdo</button>
         </div>
 
@@ -931,9 +951,62 @@
               </div>
             </div>
           </div>
+
+          <!-- Tab 4: Vouchers & Raspadinhas -->
+          <div id="tab-admin-vouchers" class="admin-tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3>Gestão de Vouchers & Raspadinhas 🎟️</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">Gere lotes de códigos para venda impressa em escolas e papelarias parceiras.</p>
+              </div>
+              <button class="btn btn-outline" id="admin-print-vouchers-btn" style="display: flex; align-items: center; gap: 6px;">
+                🖨️ Imprimir Folha de Raspadinhas
+              </button>
+            </div>
+
+            <!-- Generate Vouchers Form -->
+            <form id="admin-generate-vouchers-form" onsubmit="return false;" style="display: flex; gap: 10px; background: var(--bg-primary); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end;">
+              <div style="flex: 1; min-width: 120px;">
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Quantidade:</label>
+                <input type="number" id="gen-vouchers-count" value="10" min="1" max="100" class="chat-input" style="width: 100%; padding: 8px;">
+              </div>
+              <div style="flex: 1; min-width: 140px;">
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Duração do Plano:</label>
+                <select id="gen-vouchers-days" class="lesson-select" style="width: 100%; padding: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                  <option value="7">7 Dias (Semanal - 49 MT)</option>
+                  <option value="30" selected>30 Dias (Mensal - 119 MT)</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary" style="height: 38px;">
+                + Gerar Lote de Códigos
+              </button>
+            </form>
+
+            <!-- Vouchers Table -->
+            <div class="table-responsive" style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                    <th style="padding: 10px;">Código</th>
+                    <th style="padding: 10px;">Duração</th>
+                    <th style="padding: 10px;">Estado</th>
+                    <th style="padding: 10px;">Utilizador</th>
+                    <th style="padding: 10px;">Data de Criação</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-vouchers-tbody">
+                  <!-- Populated via API -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </section>
+
+    <!-- Printable Containers (Hidden by default, rendered on print) -->
+    <div id="printable-exam-paper-container" class="printable-only" style="display: none;"></div>
+    <div id="printable-vouchers-container" class="printable-only" style="display: none;"></div>
 
   </main>
 

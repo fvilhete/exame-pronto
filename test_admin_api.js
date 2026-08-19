@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 dotenv.config();
 
 const app = require('./server');
-const PORT = 4001;
+const PORT = 4050 + Math.floor(Math.random() * 500);
 
 // Configurar o process.env.ADMIN_PHONE para o teste
 process.env.ADMIN_PHONE = '849999999';
@@ -207,6 +207,37 @@ async function main() {
         console.log(`❌ TESTE 10 FALHOU: Retornou status ${redeemRes.status}`);
       }
     }
+
+    // 11. Testar importação em lote de perguntas (CSV/JSON/TXT)
+    console.log('[TEST] Testando importação em lote de perguntas...');
+    const bulkQRes = await request('/api/admin/questions/bulk', 'POST', {
+      exam_id: 'esg-bio-10-2025',
+      questions: [
+        {
+          number: 101,
+          text: 'Pergunta em lote 1',
+          options: ['A) 1', 'B) 2', 'C) 3', 'D) 4'],
+          correct_option: 0,
+          explanation: 'Explicação lote 1'
+        },
+        {
+          number: 102,
+          text: 'Pergunta em lote 2',
+          options: ['A) Sim', 'B) Não', 'C) Talvez', 'D) Sempre'],
+          correct_option: 1,
+          explanation: 'Explicação lote 2'
+        }
+      ]
+    }, adminToken);
+    console.log(`Status de Importação em Lote: ${bulkQRes.status}`);
+    if (bulkQRes.status === 201 && bulkQRes.body.count === 2) {
+      console.log('✅ TESTE 11 PASSOU: Importação em lote de perguntas realizada.');
+    } else {
+      console.log(`❌ TESTE 11 FALHOU: Retornou status ${bulkQRes.status}`);
+    }
+
+    // 12. Limpar perguntas de teste em lote
+    await client.query("DELETE FROM questions WHERE number IN (101, 102)");
 
     // Limpar banco
     console.log('[TEST] Limpando dados de teste criados...');

@@ -460,6 +460,22 @@ function setupEventListeners() {
     printVouchersBtn.addEventListener("click", printAdminVouchers);
   }
 
+  // Smart File Importer Events
+  const fileUploadInput = document.getElementById("admin-file-upload-input");
+  if (fileUploadInput) fileUploadInput.addEventListener("change", handleAdminFileUpload);
+
+  const parseTextBtn = document.getElementById("admin-parse-text-btn");
+  if (parseTextBtn) parseTextBtn.addEventListener("click", parsePastedText);
+
+  const executeImportBtn = document.getElementById("admin-execute-import-btn");
+  if (executeImportBtn) executeImportBtn.addEventListener("click", executeBulkImport);
+
+  const btnDlCsv = document.getElementById("btn-download-csv-template");
+  if (btnDlCsv) btnDlCsv.addEventListener("click", downloadCsvTemplate);
+
+  const btnDlJson = document.getElementById("btn-download-json-template");
+  if (btnDlJson) btnDlJson.addEventListener("click", downloadJsonTemplate);
+
   window.addEventListener("hashchange", handleUrlRouting);
   window.addEventListener("popstate", handleUrlRouting);
 
@@ -2448,16 +2464,17 @@ function printOfficialCertificate() {
 // --- CMS QUESTION MANAGER (GESTOR DE PERGUNTAS) ---
 
 async function populateAdminExamDropdown() {
-  const select = document.getElementById("admin-question-exam-select");
-  if (!select) return;
+  const select1 = document.getElementById("admin-question-exam-select");
+  const select2 = document.getElementById("admin-import-exam-select");
   try {
     const res = await fetch("/api/exams");
     if (!res.ok) return;
     const exams = await res.json();
-    select.innerHTML = `<option value="">-- Selecione o Exame --</option>`;
-    exams.forEach(e => {
-      select.innerHTML += `<option value="${e.id}">${e.subject_name} (${e.year}) - ${e.level_name}</option>`;
-    });
+    const optionsHtml = `<option value="">-- Selecione o Exame --</option>` + 
+      exams.map(e => `<option value="${e.id}">${e.subject_name} (${e.year}) - ${e.level_name}</option>`).join("");
+    
+    if (select1) select1.innerHTML = optionsHtml;
+    if (select2) select2.innerHTML = optionsHtml;
   } catch (e) {}
 }
 
@@ -2875,4 +2892,319 @@ async function printAdminVouchers() {
     alert("Erro ao preparar impressão de vouchers.");
   }
 }
+
+
+// --- IMPORTADOR INTELIGENTE POR FICHEIRO (JSON, CSV, TXT, MD) ---
+
+let pendingImportData = null;
+
+function handleAdminFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  reader.onload = function(evt) {
+    const content = evt.target.result;
+    if (ext === 'json') {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.exams || parsed.questions || parsed.lessons) {
+          pendingImportData = { type: 'full_dataset', data: parsed };
+          displayImportPreview({
+            type: 'full_dataset',
+            exams: parsed.exams ? parsed.exams.length : 0,
+            questions: parsed.questions ? parsed.questions.length : 0,
+            lessons: parsed.lessons ? parsed.lessons.length : 0
+          });
+        } else if (Array.isArray(parsed)) {
+          pendingImportData = { type: 'questions_array', data: parsed };
+          displayImportPreview({ type: 'questions_array', questions: parsed });
+        } else {
+          alert("Estrutura JSON não reconhecida.");
+        }
+      } catch (err) {
+        alert("Ficheiro JSON com formatação inválida.");
+      }
+    } else if (ext === 'csv') {
+      const questions = parseCsvQuestions(content);
+      pendingImportData = { type: 'questions_array', data: questions };
+      displayImportPreview({ type: 'questions_array', questions: questions });
+    } else {
+      // .txt or .md text formats
+      const questions = parseRawQuestionsText(content);
+      pendingImportData = { type: 'questions_array', data: questions };
+      displayImportPreview({ type: 'questions_array', questions: questions });
+    }
+  };
+
+  reader.readAsText(file, "UTF-8");
+}
+
+function parsePastedText() {
+  const text = document.getElementById("admin-paste-text-input").value.trim();
+  if (!text) {
+    alert("Por favor, cole primeiro o texto com as perguntas.");
+    return;
+  }
+  const questions = parseRawQuestionsText(text);
+  if (questions.length === 0) {
+    alert("Nenhuma pergunta reconhecida. Verifique se as perguntas têm números (ex: 1. Pergunta) e opções (A) ... B) ...).");
+    return;
+  }
+  pendingImportData = { type: 'questions_array', data: questions };
+  displayImportPreview({ type: 'questions_array', questions: questions });
+}
+
+function parseRawQuestionsText(rawText) {
+  const lines = rawText.split(/\r?\n/);
+  const questions = [];
+  let currentQ = null;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // Detect new question: "1. Texto", "Questão 1: Texto", "1) Texto"
+    const qMatch = trimmed.match(/^(\d+)[\.\)\:\-]\s*(.*)$/i) || trimmed.match(/^Quest[aã]o\s*(\d+)[\.\)\:\-]\s*(.*)$/i);
+    
+    if (qMatch && !trimmed.match(/^[A-E][\.\)\:\-]/i) && !trimmed.toLowerCase().startsWith('resposta') && !trimmed.toLowerCase().startsWith('gabarito')) {
+      if (currentQ && currentQ.text && currentQ.options.length > 0) {
+        questions.push(currentQ);
+      }
+      currentQ = {
+        number: parseInt(qMatch[1]) || (questions.length + 1),
+        text: qMatch[2] || '',
+        options: [],
+        correct_option: 0,
+        explanation: 'Resolução oficial standard.'
+      };
+      return;
+    }
+
+    if (!currentQ) {
+      currentQ = {
+        number: questions.length + 1,
+        text: trimmed,
+        options: [],
+        correct_option: 0,
+        explanation: 'Resolução oficial standard.'
+      };
+      return;
+    }
+
+    // Detect options: "A) ...", "B) ...", "a. ..."
+    const optMatch = trimmed.match(/^([A-Ea-e])[\.\)\:\-]\s*(.*)$/);
+    if (optMatch) {
+      currentQ.options.push(`${optMatch[1].toUpperCase()}) ${optMatch[2]}`);
+      return;
+    }
+
+    // Detect correct answer: "Resposta: B", "Gabarito: C", "Correct: A"
+    const ansMatch = trimmed.match(/^(?:Resposta|Gabarito|Correta|Chave|Correct)[\s\:\-]+([A-Ea-e])/i);
+    if (ansMatch) {
+      const letter = ansMatch[1].toUpperCase();
+      currentQ.correct_option = letter.charCodeAt(0) - 65;
+      return;
+    }
+
+    // Detect explanation: "Explicação: ...", "Resolução: ..."
+    const expMatch = trimmed.match(/^(?:Explica[çc][aã]o|Resolu[çc][aã]o|Nota)[\s\:\-]+(.*)$/i);
+    if (expMatch) {
+      currentQ.explanation = expMatch[1].trim();
+      return;
+    }
+
+    // Continuation of text or explanation
+    if (currentQ.options.length === 0) {
+      currentQ.text += ' ' + trimmed;
+    } else {
+      currentQ.explanation += ' ' + trimmed;
+    }
+  });
+
+  if (currentQ && currentQ.text && currentQ.options.length > 0) {
+    questions.push(currentQ);
+  }
+
+  return questions;
+}
+
+function parseCsvQuestions(csvText) {
+  const lines = csvText.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+
+  const delimiter = lines[0].includes(';') ? ';' : ',';
+  const questions = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, ''));
+    if (cols.length >= 6) {
+      const qNum = parseInt(cols[0]) || i;
+      const qText = cols[1];
+      const optA = cols[2].startsWith('A)') ? cols[2] : `A) ${cols[2]}`;
+      const optB = cols[3].startsWith('B)') ? cols[3] : `B) ${cols[3]}`;
+      const optC = cols[4].startsWith('C)') ? cols[4] : `C) ${cols[4]}`;
+      const optD = cols[5].startsWith('D)') ? cols[5] : `D) ${cols[5]}`;
+      const rawAns = cols[6] ? cols[6].toUpperCase() : 'A';
+      let correctOpt = 0;
+      if (['A', 'B', 'C', 'D'].includes(rawAns)) {
+        correctOpt = rawAns.charCodeAt(0) - 65;
+      } else if (!isNaN(parseInt(rawAns))) {
+        correctOpt = parseInt(rawAns);
+      }
+      const explanation = cols[7] || 'Resolução oficial standard.';
+
+      questions.push({
+        number: qNum,
+        text: qText,
+        options: [optA, optB, optC, optD],
+        correct_option: correctOpt,
+        explanation: explanation
+      });
+    }
+  }
+
+  return questions;
+}
+
+function displayImportPreview(info) {
+  const box = document.getElementById("admin-import-preview-box");
+  const title = document.getElementById("admin-preview-title");
+  const itemsContainer = document.getElementById("admin-preview-items");
+  if (!box || !title || !itemsContainer) return;
+
+  box.style.display = "block";
+
+  if (info.type === 'full_dataset') {
+    title.textContent = `Ficheiro Completo Detetado: ${info.exams} Exames, ${info.questions} Perguntas, ${info.lessons} Aulas`;
+    itemsContainer.innerHTML = `
+      <p style="color: var(--success); font-weight: bold;">✓ O ficheiro contém uma estrutura completa de dados da plataforma.</p>
+      <p>Clique no botão <strong>"🚀 Gravar no Supabase"</strong> para sincronizar tudo na base de dados.</p>
+    `;
+  } else {
+    const qList = info.questions || [];
+    title.textContent = `Perguntas Válidas Detetadas: ${qList.length}`;
+    
+    let html = `<ul style="margin: 0; padding-left: 20px;">`;
+    qList.slice(0, 5).forEach((q, idx) => {
+      const correctLetter = String.fromCharCode(65 + (q.correct_option || 0));
+      html += `
+        <li style="margin-bottom: 8px;">
+          <strong>Q${q.number}:</strong> ${q.text.substring(0, 70)}...<br>
+          <span style="color: var(--text-secondary); font-size: 0.75rem;">${q.options.length} Opções | Gabarito: <strong>${correctLetter}</strong></span>
+        </li>
+      `;
+    });
+    if (qList.length > 5) {
+      html += `<li style="color: var(--primary); font-weight: bold;">... e mais ${qList.length - 5} perguntas preparadas para importação.</li>`;
+    }
+    html += `</ul>`;
+    itemsContainer.innerHTML = html;
+  }
+}
+
+async function executeBulkImport() {
+  if (!pendingImportData) {
+    alert("Nenhum dado preparado para importação.");
+    return;
+  }
+
+  if (pendingImportData.type === 'full_dataset') {
+    try {
+      const res = await fetch("/api/admin/exams/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${jwtToken}`
+        },
+        body: JSON.stringify(pendingImportData.data)
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ SUCESSO!\n\n${data.message}\n${data.examsCount} Exames, ${data.questionsCount} Perguntas e ${data.lessonsCount} Lições sincronizadas no Supabase.`);
+        document.getElementById("admin-import-preview-box").style.display = "none";
+        pendingImportData = null;
+        await populateAdminExamDropdown();
+        await fetchAdminContentExams();
+      } else {
+        alert(data.error || "Erro ao importar dados.");
+      }
+    } catch (e) {
+      alert("Erro de conexão ao servidor.");
+    }
+  } else if (pendingImportData.type === 'questions_array') {
+    const examSelect = document.getElementById("admin-import-exam-select");
+    const examId = examSelect ? examSelect.value : "";
+
+    if (!examId) {
+      alert("Por favor, selecione o Exame de Destino no seletor (Passo 1) antes de gravar.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/questions/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${jwtToken}`
+        },
+        body: JSON.stringify({
+          exam_id: examId,
+          questions: pendingImportData.data
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ SUCESSO!\n\n${data.message}`);
+        document.getElementById("admin-import-preview-box").style.display = "none";
+        document.getElementById("admin-paste-text-input").value = "";
+        document.getElementById("admin-file-upload-input").value = "";
+        pendingImportData = null;
+        await fetchAdminExamQuestions();
+      } else {
+        alert(data.error || "Erro ao importar perguntas.");
+      }
+    } catch (e) {
+      alert("Erro de conexão ao servidor.");
+    }
+  }
+}
+
+function downloadCsvTemplate() {
+  const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(
+    "numero;pergunta;opcaoA;opcaoB;opcaoC;opcaoD;resposta;explicacao\n" +
+    "1;Qual é a capital de Moçambique?;Beira;Maputo;Nampula;Matola;B;Maputo é a capital oficial e centro administrativo de Moçambique.\n" +
+    "2;Qual é o órgão responsável pela fotossíntese nas plantas?;Raiz;Folha;Caule;Flor;B;As folhas possuem cloroplastos ricos em clorofila que captam a luz solar.\n"
+  );
+  const a = document.createElement("a");
+  a.setAttribute("href", csvContent);
+  a.setAttribute("download", "modelo_perguntas_examepronto.csv");
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function downloadJsonTemplate() {
+  const sampleJson = [
+    {
+      "number": 1,
+      "text": "Exemplo de enunciado da questão...",
+      "options": ["A) Opção 1", "B) Opção 2", "C) Opção 3", "D) Opção 4"],
+      "correct_option": 0,
+      "explanation": "Explicação detalhada passo a passo."
+    }
+  ];
+  const jsonContent = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sampleJson, null, 2));
+  const a = document.createElement("a");
+  a.setAttribute("href", jsonContent);
+  a.setAttribute("download", "modelo_perguntas_examepronto.json");
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 

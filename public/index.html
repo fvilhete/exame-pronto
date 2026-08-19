@@ -895,10 +895,55 @@
               </div>
             </div>
 
+            <!-- Smart File Importer (JSON, CSV, TXT, MD) -->
+            <div style="margin-top: 30px; background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 2px dashed var(--primary);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <h4 style="margin: 0; color: var(--primary);">📂 Importador Inteligente por Ficheiro (JSON, CSV, TXT, MD)</h4>
+                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 4px 0 0 0;">
+                    Importe dezenas de perguntas ou exames inteiros instantaneamente a partir de ficheiros de texto, Excel/CSV ou JSON.
+                  </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-sm btn-outline" id="btn-download-csv-template" style="font-size: 0.75rem;">📥 Modelo CSV</button>
+                  <button class="btn btn-sm btn-outline" id="btn-download-json-template" style="font-size: 0.75rem;">📥 Modelo JSON</button>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">1. Selecione o Exame de Destino (para CSV/TXT):</label>
+                  <select id="admin-import-exam-select" class="lesson-select" style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                    <option value="">-- Selecione o Exame --</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">2. Carregar Ficheiro (.json, .csv, .txt, .md):</label>
+                  <input type="file" id="admin-file-upload-input" accept=".json,.csv,.txt,.md" style="width: 100%; padding: 6px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                </div>
+              </div>
+
+              <!-- Or Paste Text Area -->
+              <div style="margin-top: 15px;">
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Ou cole aqui o texto com perguntas (formato 1. Pergunta / A) ... B) ... Resposta: B):</label>
+                <textarea id="admin-paste-text-input" rows="3" class="chat-input" placeholder="1. Qual é a fórmula da velocidade?&#10;A) v = d / t&#10;B) v = d * t&#10;C) v = m * a&#10;D) v = F / m&#10;Resposta: A&#10;Explicação: A velocidade média calcula-se dividindo a distância pelo tempo." style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 0.85rem;"></textarea>
+                <button class="btn btn-sm btn-outline" id="admin-parse-text-btn" style="margin-top: 5px;">🔍 Processar Texto Colado</button>
+              </div>
+
+              <!-- Preview Area -->
+              <div id="admin-import-preview-box" style="display: none; margin-top: 20px; background: var(--bg-secondary); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <h5 id="admin-preview-title" style="margin: 0; color: var(--success);">Perguntas Detetadas: 0</h5>
+                  <button class="btn btn-sm btn-primary" id="admin-execute-import-btn">🚀 Gravar no Supabase</button>
+                </div>
+                <div id="admin-preview-items" style="max-height: 200px; overflow-y: auto; font-size: 0.8rem; line-height: 1.5;"></div>
+              </div>
+            </div>
+
             <!-- Question Manager in CMS -->
             <div style="margin-top: 30px; background: var(--bg-primary); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-              <h4>Gestor de Perguntas do Exame</h4>
-              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">Selecione um exame para listar e adicionar novas perguntas.</p>
+              <h4>Gestor Individual de Perguntas</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">Selecione um exame para listar e adicionar novas perguntas manualmente.</p>
               
               <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <select id="admin-question-exam-select" class="lesson-select" style="flex: 1; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">

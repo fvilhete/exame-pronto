@@ -942,6 +942,82 @@ app.delete('/api/admin/questions/:id', requireAdmin, (req, res) => {
   });
 });
 
+// 12. Importação em Lote de Perguntas para um Exame
+app.post('/api/admin/questions/bulk', requireAdmin, (req, res) => {
+  const { exam_id, questions } = req.body;
+  if (!exam_id || !Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ error: 'exam_id e array de perguntas são obrigatórios.' });
+  }
+
+  db.serialize(() => {
+    questions.forEach((q, idx) => {
+      const qNum = parseInt(q.number) || (idx + 1);
+      const qText = q.text || '';
+      const optionsStr = typeof q.options === 'string' ? q.options : JSON.stringify(q.options || []);
+      const correctOpt = parseInt(q.correct_option) || 0;
+      const explanation = q.explanation || 'Resolução oficial standard.';
+
+      if (qText) {
+        db.run(
+          `INSERT INTO questions (exam_id, number, text, options, correct_option, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
+          [exam_id, qNum, qText, optionsStr, correctOpt, explanation]
+        );
+      }
+    });
+
+    res.status(201).json({
+      message: `${questions.length} perguntas importadas e persistidas com sucesso no Supabase!`,
+      count: questions.length
+    });
+  });
+});
+
+// 13. Importação em Lote Completa (Exames, Perguntas, Lições)
+app.post('/api/admin/exams/bulk', requireAdmin, (req, res) => {
+  const { exams, questions, lessons } = req.body;
+  
+  if (!exams && !questions && !lessons) {
+    return res.status(400).json({ error: 'Ficheiro sem dados estruturados de exames, perguntas ou lições.' });
+  }
+
+  db.serialize(() => {
+    if (Array.isArray(exams)) {
+      exams.forEach(e => {
+        db.run(
+          `INSERT INTO exams (id, level, level_name, subject, subject_name, year, duration_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [e.id, e.level, e.level_name, e.subject, e.subject_name, parseInt(e.year), parseInt(e.duration_minutes) || 120]
+        );
+      });
+    }
+
+    if (Array.isArray(questions)) {
+      questions.forEach(q => {
+        const optionsStr = typeof q.options === 'string' ? q.options : JSON.stringify(q.options || []);
+        db.run(
+          `INSERT INTO questions (exam_id, number, text, options, correct_option, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
+          [q.exam_id, parseInt(q.number), q.text, optionsStr, parseInt(q.correct_option) || 0, q.explanation || '']
+        );
+      });
+    }
+
+    if (Array.isArray(lessons)) {
+      lessons.forEach(l => {
+        db.run(
+          `INSERT INTO lessons (level, subject, title, summary, content, is_premium) VALUES (?, ?, ?, ?, ?, ?)`,
+          [l.level, l.subject, l.title, l.summary, l.content, parseInt(l.is_premium) || 0]
+        );
+      });
+    }
+
+    res.status(201).json({
+      message: 'Ficheiro de dados importado com sucesso no Supabase!',
+      examsCount: Array.isArray(exams) ? exams.length : 0,
+      questionsCount: Array.isArray(questions) ? questions.length : 0,
+      lessonsCount: Array.isArray(lessons) ? lessons.length : 0
+    });
+  });
+});
+
 
 // Exportar para a Vercel
 module.exports = app;

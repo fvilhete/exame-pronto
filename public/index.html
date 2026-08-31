@@ -255,6 +255,44 @@
               <div class="progress-bar-fill" id="daily-goal-bar" style="background: var(--accent); width: 0%;"></div>
             </div>
           </div>
+
+          <!-- Subject Mastery & Performance Card -->
+          <div class="progress-card" style="margin-top: 15px; background: var(--bg-secondary); border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h4 style="margin: 0; font-size: 0.95rem; color: var(--primary);">📊 Domínio por Disciplina</h4>
+              <span style="font-size: 0.75rem; color: var(--text-secondary);">Média Geral</span>
+            </div>
+            <div id="subject-mastery-list" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem;">
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                  <span>Matemática / Física</span>
+                  <strong style="color: var(--primary);" id="mastery-mat-val">80%</strong>
+                </div>
+                <div class="progress-bar-bg" style="height: 6px;"><div class="progress-bar-fill" id="mastery-mat-bar" style="width: 80%;"></div></div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                  <span>Português / História</span>
+                  <strong style="color: var(--success);" id="mastery-port-val">85%</strong>
+                </div>
+                <div class="progress-bar-bg" style="height: 6px;"><div class="progress-bar-fill" id="mastery-port-bar" style="background: var(--success); width: 85%;"></div></div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                  <span>Biologia / Química</span>
+                  <strong style="color: var(--accent);" id="mastery-bio-val">70%</strong>
+                </div>
+                <div class="progress-bar-bg" style="height: 6px;"><div class="progress-bar-fill" id="mastery-bio-bar" style="background: var(--accent); width: 70%;"></div></div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                  <span>Código de Estrada (INATRO)</span>
+                  <strong style="color: #6366f1;" id="mastery-cond-val">90%</strong>
+                </div>
+                <div class="progress-bar-bg" style="height: 6px;"><div class="progress-bar-fill" id="mastery-cond-bar" style="background: #6366f1; width: 90%;"></div></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -673,42 +711,27 @@
           </div>
 
           <!-- Payment Method Toggle -->
-          <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
-            <button class="btn btn-sm btn-primary active" id="btn-pay-method-auto" style="flex: 1; min-width: 100px; font-size: 0.8rem;">⚡ Automático</button>
-            <button class="btn btn-sm btn-outline" id="btn-pay-method-manual" style="flex: 1; min-width: 100px; font-size: 0.8rem;">📝 Transferência</button>
-            <button class="btn btn-sm btn-outline" id="btn-pay-method-voucher" style="flex: 1; min-width: 100px; font-size: 0.8rem;">🎟️ Voucher / Cartão</button>
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button class="btn btn-sm btn-primary active" id="btn-pay-method-manual" style="flex: 1; font-size: 0.85rem;">📝 Transferência M-Pesa / mKesh</button>
+            <button class="btn btn-sm btn-outline" id="btn-pay-method-voucher" style="flex: 1; font-size: 0.85rem;">🎟️ Ativar com Raspadinha</button>
           </div>
 
-          <!-- Method 1: Automatic Push -->
-          <div id="pay-panel-auto">
-            <div class="form-group">
-              <label for="checkout-phone-input">Número do Telemóvel (M-Pesa / e-Mola):</label>
-              <div class="input-phone-container">
-                <span class="phone-prefix">+258</span>
-                <input type="tel" id="checkout-phone-input" class="input-phone" placeholder="84 123 4567" max-length="9">
-              </div>
-              <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;" id="phone-helper-text">Número Vodacom (84/85), Movitel (86/87) ou TMcel (82).</p>
-            </div>
-
-            <button class="btn btn-mpesa" id="checkout-pay-btn" style="width: 100%; font-size: 1.1rem;" disabled>
-              Pagar com M-Pesa / e-Mola
-            </button>
-          </div>
-
-          <!-- Method 2: Manual Direct Transfer (M-Pesa & mKesh) -->
-          <div id="pay-panel-manual" style="display: none; background: var(--bg-primary); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
-            <h4 style="color: var(--accent); margin-bottom: 10px;">Contas Oficiais Vilhete Solutions:</h4>
+          <!-- Method 1: Manual Direct Transfer (M-Pesa & mKesh) -->
+          <div id="pay-panel-manual" style="display: block; background: var(--bg-primary); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
+            <h4 style="color: var(--accent); margin-bottom: 12px; font-size: 1rem;">Contas Oficiais Vilhete Solutions:</h4>
             <div style="font-size: 0.85rem; line-height: 1.6; margin-bottom: 15px;">
-              <div style="padding: 6px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; margin-bottom: 6px;">
-                🔴 <strong>Vodacom M-Pesa:</strong> <span style="font-size: 1rem; font-weight: bold; color: #ef4444;">849517984</span> (Vilhete Solutions)
+              <div style="padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #ef4444;">
+                🔴 <strong>Vodacom M-Pesa:</strong> <span style="font-size: 1.1rem; font-weight: bold; color: #ef4444; font-family: monospace;">849517984</span> (Vilhete Solutions)
               </div>
-              <div style="padding: 6px 10px; background: rgba(245, 158, 11, 0.1); border-radius: 6px;">
-                🟡 <strong>TMcel mKesh:</strong> <span style="font-size: 1rem; font-weight: bold; color: #d97706;">826727204</span> (Vilhete Solutions)
+              <div style="padding: 8px 12px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; border-left: 4px solid #d97706;">
+                🟡 <strong>TMcel mKesh:</strong> <span style="font-size: 1.1rem; font-weight: bold; color: #d97706; font-family: monospace;">826727204</span> (Vilhete Solutions)
               </div>
             </div>
             
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
-              Transfira o valor do plano selecionado para uma das contas acima e submeta a referência da mensagem SMS:
+              1. Transfira o valor do plano (<strong>49 MT</strong> ou <strong>119 MT</strong>) para uma das contas acima.<br>
+              2. Preencha o seu contacto e o código da mensagem SMS de confirmação:<br>
+              3. Submeta para ativação instantânea pela equipa.
             </p>
 
             <form id="manual-payment-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 10px;">
@@ -718,14 +741,14 @@
               </select>
               <input type="tel" id="manual-sender-phone" placeholder="O seu número de telemóvel (ex: 841234567)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
               <input type="text" id="manual-ref-input" placeholder="Código / Ref. da transação SMS (ex: 8HJ992KA)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
-              <button type="submit" class="btn btn-accent" id="checkout-manual-submit-btn" style="width: 100%; font-size: 0.95rem;">
+              <button type="submit" class="btn btn-accent" id="checkout-manual-submit-btn" style="width: 100%; font-size: 0.95rem; font-weight: bold;">
                 Submeter Comprovativo de Pagamento
               </button>
             </form>
           </div>
 
-          <!-- Method 3: Voucher Code Redemption -->
-          <div id="pay-panel-voucher" style="display: none; background: var(--bg-primary); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
+          <!-- Method 2: Voucher Code Redemption -->
+          <div id="pay-panel-voucher" style="display: none; background: var(--bg-primary); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
             <h4 style="color: var(--primary); margin-bottom: 10px;">Ativar com Cartão / Raspadinha</h4>
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
               Comprou um cartão de ativação ou voucher numa papelaria parceira da <strong>Vilhete Solutions</strong>? Digite o código de 8 caracteres:
@@ -733,7 +756,7 @@
 
             <form id="voucher-redeem-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 10px;">
               <input type="text" id="voucher-code-input" placeholder="Ex: VILH-8492-9102" required class="chat-input" style="padding: 10px 12px; font-size: 1.1rem; text-align: center; text-transform: uppercase; font-family: monospace; letter-spacing: 2px; width: 100%; box-sizing: border-box;">
-              <button type="submit" class="btn btn-primary" id="checkout-voucher-submit-btn" style="width: 100%; font-size: 0.95rem;">
+              <button type="submit" class="btn btn-primary" id="checkout-voucher-submit-btn" style="width: 100%; font-size: 0.95rem; font-weight: bold;">
                 🎟️ Validar e Ativar Código
               </button>
             </form>

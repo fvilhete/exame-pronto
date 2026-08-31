@@ -394,33 +394,20 @@ function setupEventListeners() {
   }
 
   // Payment Method Toggles
-  const btnPayAuto = document.getElementById("btn-pay-method-auto");
   const btnPayManual = document.getElementById("btn-pay-method-manual");
   const btnPayVoucher = document.getElementById("btn-pay-method-voucher");
   
-  if (btnPayAuto && btnPayManual && btnPayVoucher) {
-    btnPayAuto.addEventListener("click", () => {
-      btnPayAuto.className = "btn btn-sm btn-primary active";
-      btnPayManual.className = "btn btn-sm btn-outline";
-      btnPayVoucher.className = "btn btn-sm btn-outline";
-      document.getElementById("pay-panel-auto").style.display = "block";
-      document.getElementById("pay-panel-manual").style.display = "none";
-      document.getElementById("pay-panel-voucher").style.display = "none";
-    });
+  if (btnPayManual && btnPayVoucher) {
     btnPayManual.addEventListener("click", () => {
       btnPayManual.className = "btn btn-sm btn-primary active";
-      btnPayAuto.className = "btn btn-sm btn-outline";
       btnPayVoucher.className = "btn btn-sm btn-outline";
       document.getElementById("pay-panel-manual").style.display = "block";
-      document.getElementById("pay-panel-auto").style.display = "none";
       document.getElementById("pay-panel-voucher").style.display = "none";
     });
     btnPayVoucher.addEventListener("click", () => {
       btnPayVoucher.className = "btn btn-sm btn-primary active";
-      btnPayAuto.className = "btn btn-sm btn-outline";
       btnPayManual.className = "btn btn-sm btn-outline";
       document.getElementById("pay-panel-voucher").style.display = "block";
-      document.getElementById("pay-panel-auto").style.display = "none";
       document.getElementById("pay-panel-manual").style.display = "none";
     });
   }
@@ -2409,6 +2396,51 @@ function initStudyStreak() {
   if (streakBadge) streakBadge.textContent = `${streak} ${streak === 1 ? 'Dia' : 'Dias'}`;
   if (goalText) goalText.textContent = `${dailyDone} / 2 Simulados`;
   if (goalBar) goalBar.style.width = `${Math.min(100, (dailyDone / 2) * 100)}%`;
+  updateSubjectMasteryWidget();
+}
+
+function updateSubjectMasteryWidget() {
+  try {
+    const history = JSON.parse(localStorage.getItem("ep_exam_history") || "[]");
+    if (history.length > 0) {
+      let matScores = [], portScores = [], bioScores = [], condScores = [];
+      history.forEach(h => {
+        const pct = Math.round((h.score / h.total) * 100);
+        const examId = (h.examId || "").toLowerCase();
+        if (examId.includes("mat") || examId.includes("fis")) matScores.push(pct);
+        else if (examId.includes("port") || examId.includes("hist")) portScores.push(pct);
+        else if (examId.includes("bio") || examId.includes("quim")) bioScores.push(pct);
+        else if (examId.includes("cond") || examId.includes("sinais")) condScores.push(pct);
+      });
+
+      const avg = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+      const matAvg = avg(matScores);
+      const portAvg = avg(portScores);
+      const bioAvg = avg(bioScores);
+      const condAvg = avg(condScores);
+
+      if (matAvg !== null) {
+        const valEl = document.getElementById("mastery-mat-val");
+        const barEl = document.getElementById("mastery-mat-bar");
+        if (valEl && barEl) { valEl.textContent = `${matAvg}%`; barEl.style.width = `${matAvg}%`; }
+      }
+      if (portAvg !== null) {
+        const valEl = document.getElementById("mastery-port-val");
+        const barEl = document.getElementById("mastery-port-bar");
+        if (valEl && barEl) { valEl.textContent = `${portAvg}%`; barEl.style.width = `${portAvg}%`; }
+      }
+      if (bioAvg !== null) {
+        const valEl = document.getElementById("mastery-bio-val");
+        const barEl = document.getElementById("mastery-bio-bar");
+        if (valEl && barEl) { valEl.textContent = `${bioAvg}%`; barEl.style.width = `${bioAvg}%`; }
+      }
+      if (condAvg !== null) {
+        const valEl = document.getElementById("mastery-cond-val");
+        const barEl = document.getElementById("mastery-cond-bar");
+        if (valEl && barEl) { valEl.textContent = `${condAvg}%`; barEl.style.width = `${condAvg}%`; }
+      }
+    }
+  } catch (e) {}
 }
 
 function recordStreakAndDailyGoal() {

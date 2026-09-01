@@ -197,18 +197,22 @@ function initTheme() {
   document.body.setAttribute("data-theme", savedTheme);
   updateThemeIcons(savedTheme);
 
-  document.getElementById("theme-toggle-btn").addEventListener("click", () => {
-    const currentTheme = document.body.getAttribute("data-theme");
-    const newTheme = currentTheme === "dark" ? "light" : "dark";
-    document.body.setAttribute("data-theme", newTheme);
-    localStorage.setItem("examepronto_theme", newTheme);
-    updateThemeIcons(newTheme);
-  });
+  const themeBtn = document.getElementById("theme-toggle-btn");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      const currentTheme = document.body.getAttribute("data-theme");
+      const newTheme = currentTheme === "dark" ? "light" : "dark";
+      document.body.setAttribute("data-theme", newTheme);
+      localStorage.setItem("examepronto_theme", newTheme);
+      updateThemeIcons(newTheme);
+    });
+  }
 }
 
 function updateThemeIcons(theme) {
   const sunIcon = document.getElementById("theme-sun");
   const moonIcon = document.getElementById("theme-moon");
+  if (!sunIcon || !moonIcon) return;
   if (theme === "dark") {
     sunIcon.style.display = "none";
     moonIcon.style.display = "block";
@@ -218,9 +222,16 @@ function updateThemeIcons(theme) {
   }
 }
 
+function safeAddListener(idOrEl, event, handler) {
+  const el = typeof idOrEl === "string" ? document.getElementById(idOrEl) : idOrEl;
+  if (el) {
+    el.addEventListener(event, handler);
+  }
+}
+
 // --- CONFIGURAR NAVEGAÇÃO E EVENTOS ---
 function setupEventListeners() {
-  document.getElementById("nav-logo-btn").addEventListener("click", (e) => {
+  safeAddListener("nav-logo-btn", "click", (e) => {
     e.preventDefault();
     if (userProfile) {
       showSection("dashboard");
@@ -230,7 +241,7 @@ function setupEventListeners() {
     }
   });
   
-  document.getElementById("landing-start-btn").addEventListener("click", () => {
+  safeAddListener("landing-start-btn", "click", () => {
     if (userProfile) {
       showSection("dashboard");
       activateMenuTab("dashboard");
@@ -239,11 +250,11 @@ function setupEventListeners() {
     }
   });
   
-  document.getElementById("landing-plans-btn").addEventListener("click", () => {
+  safeAddListener("landing-plans-btn", "click", () => {
     showSection("checkout");
   });
 
-  document.getElementById("header-upgrade-btn").addEventListener("click", () => {
+  safeAddListener("header-upgrade-btn", "click", () => {
     showSection("checkout");
   });
 
@@ -269,15 +280,15 @@ function setupEventListeners() {
 
   // Modal Autenticação
   const authOverlay = document.getElementById("auth-overlay");
-  document.getElementById("header-auth-btn").addEventListener("click", openAuthModal);
+  safeAddListener("header-auth-btn", "click", openAuthModal);
   
-  document.getElementById("auth-close-btn").addEventListener("click", () => {
-    authOverlay.style.display = "none";
+  safeAddListener("auth-close-btn", "click", () => {
+    if (authOverlay) authOverlay.style.display = "none";
   });
 
-  document.getElementById("auth-toggle-link").addEventListener("click", toggleAuthMode);
-  document.getElementById("auth-submit-btn").addEventListener("click", submitAuth);
-  document.getElementById("header-logout-btn").addEventListener("click", logout);
+  safeAddListener("auth-toggle-link", "click", toggleAuthMode);
+  safeAddListener("auth-submit-btn", "click", submitAuth);
+  safeAddListener("header-logout-btn", "click", logout);
 
   // Tabs de Filtro de Ensino (ESG 10ª/12ª, Superior, Técnico, Cambridge, Condução)
   document.querySelectorAll("#education-level-grid .uni-card").forEach(card => {
@@ -291,107 +302,33 @@ function setupEventListeners() {
   });
 
   // Quiz Arena
-  document.getElementById("quiz-quit-btn").addEventListener("click", () => {
+  safeAddListener("quiz-quit-btn", "click", () => {
     if (confirm("Desejas sair do simulador? O progresso deste teste será perdido.")) {
-      clearInterval(currentQuiz.timerInterval);
+      if (currentQuiz.timerInterval) clearInterval(currentQuiz.timerInterval);
       showSection("dashboard");
       activateMenuTab("dashboard");
     }
   });
 
-  document.getElementById("quiz-verify-btn").addEventListener("click", verifyAnswer);
-  document.getElementById("quiz-next-btn").addEventListener("click", nextQuestion);
+  safeAddListener("quiz-verify-btn", "click", verifyAnswer);
+  safeAddListener("quiz-next-btn", "click", nextQuestion);
 
   // Results Buttons
-  document.getElementById("results-back-btn").addEventListener("click", () => {
+  safeAddListener("results-back-btn", "click", () => {
     showSection("dashboard");
     activateMenuTab("dashboard");
   });
-  document.getElementById("results-share-btn").addEventListener("click", shareResultsOnWhatsApp);
+  safeAddListener("results-share-btn", "click", shareResultsOnWhatsApp);
+  safeAddListener("results-print-btn", "click", printOfficialCertificate);
 
-  // Checkout
-  document.getElementById("checkout-back-btn").addEventListener("click", () => {
+  // Checkout Buttons
+  safeAddListener("checkout-back-btn", "click", () => {
     showSection("dashboard");
     activateMenuTab("dashboard");
   });
   
-  document.getElementById("plan-weekly").addEventListener("click", () => selectPlan("semanal"));
-  document.getElementById("plan-monthly").addEventListener("click", () => selectPlan("mensal"));
-
-  const phoneInput = document.getElementById("checkout-phone-input");
-  phoneInput.addEventListener("input", validatePhone);
-
-  document.getElementById("checkout-pay-btn").addEventListener("click", startMpesaSimulation);
-
-  // USSD simulation
-  document.getElementById("ussd-cancel-btn").addEventListener("click", closeUssdOverlay);
-  
-  const pinInput = document.getElementById("ussd-pin-input");
-  pinInput.addEventListener("input", () => {
-    const sendBtn = document.getElementById("ussd-send-btn");
-    sendBtn.disabled = pinInput.value.length !== 4;
-  });
-
-  document.getElementById("ussd-send-btn").addEventListener("click", processUssdPayment);
-  document.getElementById("ussd-success-close-btn").addEventListener("click", activatePremiumAccess);
-
-  // Explicador Events
-  document.getElementById("lesson-close-viewer-btn").addEventListener("click", () => {
-    document.getElementById("lesson-viewer").style.display = "none";
-    document.getElementById("lessons-list-container").style.display = "flex";
-  });
-  
-  document.getElementById("lesson-filter-subject").addEventListener("change", fetchLessons);
-  
-  document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
-  document.getElementById("chat-user-input").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") sendChatMessage();
-  });
-
-  // Investor Sliders
-  document.getElementById("sim-slider-users").addEventListener("input", runFinancialSimulation);
-  document.getElementById("sim-slider-rate").addEventListener("input", runFinancialSimulation);
-  document.getElementById("sim-slider-price").addEventListener("input", runFinancialSimulation);
-
-  // Game Lobby Buttons
-  document.getElementById("game-card-math").addEventListener("click", startMathRush);
-  document.getElementById("game-card-quiz").addEventListener("click", startMozQuiz);
-  
-  document.querySelectorAll(".btn-game-back").forEach(btn => {
-    btn.addEventListener("click", openGamesLobby);
-  });
-  
-  document.getElementById("game-over-retry-btn").addEventListener("click", () => {
-    const lastGame = document.getElementById("game-over-points").getAttribute("data-last-game");
-    if (lastGame === "math_rush") startMathRush();
-    else if (lastGame === "moz_quiz") startMozQuiz();
-  });
-  document.getElementById("game-over-lobby-btn").addEventListener("click", openGamesLobby);
-
-  // Sound & Speech listeners
-  const soundBtn = document.getElementById("btn-sound-toggle");
-  if (soundBtn) soundBtn.addEventListener("click", toggleSound);
-
-  const quizTtsBtn = document.getElementById("quiz-tts-btn");
-  if (quizTtsBtn) quizTtsBtn.addEventListener("click", speakCurrentQuizQuestion);
-
-  const quizFocusBtn = document.getElementById("quiz-focus-btn");
-  if (quizFocusBtn) quizFocusBtn.addEventListener("click", toggleFocusMode);
-
-  const printCertBtn = document.getElementById("results-print-btn");
-  if (printCertBtn) printCertBtn.addEventListener("click", printOfficialCertificate);
-
-  // Question CMS Events
-  const loadQuestionsBtn = document.getElementById("admin-load-questions-btn");
-  if (loadQuestionsBtn) loadQuestionsBtn.addEventListener("click", fetchAdminExamQuestions);
-
-  const addQuestionForm = document.getElementById("admin-add-question-form");
-  if (addQuestionForm) {
-    addQuestionForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      submitAdminQuestion();
-    });
-  }
+  safeAddListener("plan-weekly", "click", () => selectPlan("semanal"));
+  safeAddListener("plan-monthly", "click", () => selectPlan("mensal"));
 
   // Payment Method Toggles
   const btnPayManual = document.getElementById("btn-pay-method-manual");
@@ -401,14 +338,18 @@ function setupEventListeners() {
     btnPayManual.addEventListener("click", () => {
       btnPayManual.className = "btn btn-sm btn-primary active";
       btnPayVoucher.className = "btn btn-sm btn-outline";
-      document.getElementById("pay-panel-manual").style.display = "block";
-      document.getElementById("pay-panel-voucher").style.display = "none";
+      const manualP = document.getElementById("pay-panel-manual");
+      const voucherP = document.getElementById("pay-panel-voucher");
+      if (manualP) manualP.style.display = "block";
+      if (voucherP) voucherP.style.display = "none";
     });
     btnPayVoucher.addEventListener("click", () => {
       btnPayVoucher.className = "btn btn-sm btn-primary active";
       btnPayManual.className = "btn btn-sm btn-outline";
-      document.getElementById("pay-panel-voucher").style.display = "block";
-      document.getElementById("pay-panel-manual").style.display = "none";
+      const voucherP = document.getElementById("pay-panel-voucher");
+      const manualP = document.getElementById("pay-panel-manual");
+      if (voucherP) voucherP.style.display = "block";
+      if (manualP) manualP.style.display = "none";
     });
   }
 
@@ -428,9 +369,60 @@ function setupEventListeners() {
     });
   }
 
-  const downloadPaperBtn = document.getElementById("quiz-download-paper-btn");
-  if (downloadPaperBtn) {
-    downloadPaperBtn.addEventListener("click", downloadExamPaperPdf);
+  // Explicador Events
+  safeAddListener("lesson-close-viewer-btn", "click", () => {
+    const lViewer = document.getElementById("lesson-viewer");
+    const lList = document.getElementById("lessons-list-container");
+    if (lViewer) lViewer.style.display = "none";
+    if (lList) lList.style.display = "flex";
+  });
+  
+  safeAddListener("lesson-filter-subject", "change", fetchLessons);
+  safeAddListener("chat-send-btn", "click", sendChatMessage);
+  
+  const chatInput = document.getElementById("chat-user-input");
+  if (chatInput) {
+    chatInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendChatMessage();
+    });
+  }
+
+  // Investor Sliders
+  safeAddListener("sim-slider-users", "input", runFinancialSimulation);
+  safeAddListener("sim-slider-rate", "input", runFinancialSimulation);
+  safeAddListener("sim-slider-price", "input", runFinancialSimulation);
+
+  // Game Lobby Buttons
+  safeAddListener("game-card-math", "click", startMathRush);
+  safeAddListener("game-card-quiz", "click", startMozQuiz);
+  
+  document.querySelectorAll(".btn-game-back").forEach(btn => {
+    btn.addEventListener("click", openGamesLobby);
+  });
+  
+  safeAddListener("game-over-retry-btn", "click", () => {
+    const pts = document.getElementById("game-over-points");
+    const lastGame = pts ? pts.getAttribute("data-last-game") : "math_rush";
+    if (lastGame === "math_rush") startMathRush();
+    else if (lastGame === "moz_quiz") startMozQuiz();
+  });
+  safeAddListener("game-over-lobby-btn", "click", openGamesLobby);
+
+  // Sound, Speech & Proctoring listeners
+  safeAddListener("btn-sound-toggle", "click", toggleSound);
+  safeAddListener("quiz-tts-btn", "click", speakCurrentQuizQuestion);
+  safeAddListener("quiz-focus-btn", "click", toggleFocusMode);
+  safeAddListener("quiz-download-paper-btn", "click", downloadExamPaperPdf);
+
+  // Question CMS Events
+  safeAddListener("admin-load-questions-btn", "click", fetchAdminExamQuestions);
+
+  const addQuestionForm = document.getElementById("admin-add-question-form");
+  if (addQuestionForm) {
+    addQuestionForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitAdminQuestion();
+    });
   }
 
   // Admin Vouchers events
@@ -442,26 +434,14 @@ function setupEventListeners() {
     });
   }
 
-  const printVouchersBtn = document.getElementById("admin-print-vouchers-btn");
-  if (printVouchersBtn) {
-    printVouchersBtn.addEventListener("click", printAdminVouchers);
-  }
+  safeAddListener("admin-print-vouchers-btn", "click", printAdminVouchers);
 
   // Smart File Importer Events
-  const fileUploadInput = document.getElementById("admin-file-upload-input");
-  if (fileUploadInput) fileUploadInput.addEventListener("change", handleAdminFileUpload);
-
-  const parseTextBtn = document.getElementById("admin-parse-text-btn");
-  if (parseTextBtn) parseTextBtn.addEventListener("click", parsePastedText);
-
-  const executeImportBtn = document.getElementById("admin-execute-import-btn");
-  if (executeImportBtn) executeImportBtn.addEventListener("click", executeBulkImport);
-
-  const btnDlCsv = document.getElementById("btn-download-csv-template");
-  if (btnDlCsv) btnDlCsv.addEventListener("click", downloadCsvTemplate);
-
-  const btnDlJson = document.getElementById("btn-download-json-template");
-  if (btnDlJson) btnDlJson.addEventListener("click", downloadJsonTemplate);
+  safeAddListener("admin-file-upload-input", "change", handleAdminFileUpload);
+  safeAddListener("admin-parse-text-btn", "click", parsePastedText);
+  safeAddListener("admin-execute-import-btn", "click", executeBulkImport);
+  safeAddListener("btn-download-csv-template", "click", downloadCsvTemplate);
+  safeAddListener("btn-download-json-template", "click", downloadJsonTemplate);
 
   window.addEventListener("hashchange", handleUrlRouting);
   window.addEventListener("popstate", handleUrlRouting);
@@ -531,14 +511,8 @@ function setupEventListeners() {
   }
 
   // Search Inputs
-  const dbSearch = document.getElementById("dashboard-search-input");
-  if (dbSearch) {
-    dbSearch.addEventListener("input", filterAndRenderExams);
-  }
-  const lesSearch = document.getElementById("lessons-search-input");
-  if (lesSearch) {
-    lesSearch.addEventListener("input", filterAndRenderLessons);
-  }
+  safeAddListener("dashboard-search-input", "input", filterAndRenderExams);
+  safeAddListener("lessons-search-input", "input", filterAndRenderLessons);
 }
 
 function activateMenuTab(target) {
@@ -714,6 +688,82 @@ async function renderExamsList() {
   } catch (e) {
     container.innerHTML = `<p style="text-align: center; color: var(--error);">Erro ao ligar ao servidor.</p>`;
   }
+}
+
+function filterAndRenderExams() {
+  const container = document.getElementById("exams-list-grid");
+  if (!container) return;
+
+  const searchInput = document.getElementById("dashboard-search-input");
+  const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : "";
+  let list = currentLevelExams || [];
+
+  if (searchVal) {
+    list = list.filter(e => 
+      (e.subject_name || "").toLowerCase().includes(searchVal) ||
+      (e.level_name || "").toLowerCase().includes(searchVal) ||
+      (e.year || "").toString().includes(searchVal) ||
+      (e.id || "").toLowerCase().includes(searchVal)
+    );
+  }
+
+  container.innerHTML = "";
+
+  if (list.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); width: 100%;">Nenhum exame encontrado com os critérios de pesquisa.</p>`;
+    return;
+  }
+
+  list.forEach(exam => {
+    let completedInfo = null;
+    if (userProgressCache) {
+      completedInfo = userProgressCache.find(p => p.exam_id === exam.id);
+    }
+
+    const card = document.createElement("div");
+    card.className = "exam-card";
+
+    let badgeHtml = `<span class="exam-tag free">Grátis</span>`;
+    let scoreBadge = "";
+    if (completedInfo) {
+      const pct = Math.round((completedInfo.score / completedInfo.total) * 100);
+      const isApproved = pct >= 50;
+      scoreBadge = `
+        <div style="margin-top: 10px; padding: 6px 10px; background: ${isApproved ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 6px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: ${isApproved ? 'var(--success)' : 'var(--error)'}; font-weight: bold;">
+            ${isApproved ? '✓ Feito:' : '⚠ Feito:'} ${completedInfo.score}/${completedInfo.total} (${pct}%)
+          </span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">
+            ${new Date(completedInfo.completed_at).toLocaleDateString('pt-MZ')}
+          </span>
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+        <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">${exam.subject_name}</h4>
+        ${badgeHtml}
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+        <div>📚 ${exam.level_name} (${exam.year})</div>
+        <div>⏱️ Duração: ${exam.duration_minutes || 120} Minutos</div>
+      </div>
+      <button class="btn btn-sm btn-primary btn-start-exam" data-id="${exam.id}" style="width: 100%;">
+        Começar Simulado
+      </button>
+      ${scoreBadge}
+    `;
+
+    container.appendChild(card);
+  });
+
+  container.querySelectorAll(".btn-start-exam").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const examId = e.currentTarget.getAttribute("data-id");
+      startExam(examId);
+    });
+  });
 }
 
 // --- SISTEMA DE SEÇÃO ---
@@ -1013,6 +1063,62 @@ async function fetchLessons() {
   } catch (e) {
     container.innerHTML = `<p style="text-align: center; color: var(--error); width: 100%;">Erro ao carregar explicações.</p>`;
   }
+}
+
+function filterAndRenderLessons() {
+  const container = document.getElementById("lessons-list-container");
+  if (!container) return;
+
+  const searchInput = document.getElementById("lessons-search-input");
+  const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : "";
+  const filterSelect = document.getElementById("lesson-filter-subject");
+  const filterSubj = filterSelect ? filterSelect.value.toLowerCase().trim() : "";
+  let list = currentLessons || [];
+
+  if (filterSubj) {
+    list = list.filter(l => (l.subject || "").toLowerCase().includes(filterSubj) || (l.level || "").toLowerCase().includes(filterSubj));
+  }
+
+  if (searchVal) {
+    list = list.filter(l => 
+      (l.title || "").toLowerCase().includes(searchVal) ||
+      (l.summary || "").toLowerCase().includes(searchVal) ||
+      (l.subject || "").toLowerCase().includes(searchVal)
+    );
+  }
+
+  container.innerHTML = "";
+
+  if (list.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); width: 100%;">Nenhuma explicação encontrada.</p>`;
+    return;
+  }
+
+  list.forEach(lesson => {
+    const card = document.createElement("div");
+    card.className = "lesson-card";
+    card.style.cursor = "pointer";
+
+    let badge = `<span class="exam-tag" style="background: var(--success-light); color: #065f46; border: none;">Grátis</span>`;
+    if (lesson.is_premium === 1) {
+      badge = `<span class="exam-tag premium-badge">Premium</span>`;
+    }
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary);">${lesson.title}</h4>
+        ${badge}
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.4;">${lesson.summary}</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-secondary);">
+        <span>📖 ${lesson.level.toUpperCase()} - ${lesson.subject.toUpperCase()}</span>
+        <span style="color: var(--primary); font-weight: bold;">Ler Aula &rarr;</span>
+      </div>
+    `;
+
+    card.addEventListener("click", () => viewLesson(lesson.id));
+    container.appendChild(card);
+  });
 }
 
 async function viewLesson(id) {

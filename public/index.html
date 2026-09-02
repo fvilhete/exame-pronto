@@ -793,6 +793,7 @@
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-payments" style="text-align: left; width: 100%;">Pagamentos M-Pesa</button>
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-vouchers" style="text-align: left; width: 100%;">🎟️ Vouchers & Raspadinhas</button>
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-content" style="text-align: left; width: 100%;">Adicionar Conteúdo</button>
+          <button class="btn btn-outline admin-tab-btn" data-tab="admin-generator" style="text-align: left; width: 100%;">🤖 Gerador Automático & Logs</button>
         </div>
 
         <!-- Main Admin Area -->
@@ -1066,6 +1067,70 @@
                   <!-- Populated via API -->
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- Tab 5: Autonomous Generator & Logs -->
+          <div id="tab-admin-generator" class="admin-tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="margin: 0; color: var(--primary);">🤖 Gerador Autónomo de Conteúdo & Logs</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+                  Gera questões curriculares oficiais de Moçambique, insere diretamente na base de dados e exibe o histórico nos logs.
+                </p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-sm btn-outline" id="admin-refresh-gen-logs-btn">🔄 Atualizar Logs</button>
+              </div>
+            </div>
+
+            <!-- Control Box -->
+            <div style="background: var(--bg-primary); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px;">
+              <h4 style="margin-bottom: 10px; font-size: 0.95rem;">⚡ Disparo Imediato de Geração</h4>
+              <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; align-items: center;">
+                <select id="admin-gen-curriculum-select" class="lesson-select" style="padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                  <option value="">-- Aleatório (Todas as Disciplinas) --</option>
+                  <option value="esg-mat-12-2025">Matemática (12ª Classe)</option>
+                  <option value="inatro-cod-2025">Código de Estrada (INATRO)</option>
+                  <option value="esg-bio-12-2025">Biologia (12ª Classe)</option>
+                  <option value="esg-fis-10-2025">Física (10ª Classe)</option>
+                  <option value="adm-mat-uem-2025">Matemática Admissão (UEM/UP)</option>
+                </select>
+                <select id="admin-gen-count-select" class="lesson-select" style="padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                  <option value="1">1 Questão</option>
+                  <option value="3">3 Questões</option>
+                  <option value="5">5 Questões</option>
+                  <option value="10">10 Questões</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="admin-trigger-gen-btn">🚀 Gerar e Publicar Agora</button>
+              </div>
+
+              <!-- Continuous Background Worker Toggle -->
+              <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="font-size: 0.85rem;">
+                  <strong>Modo Contínuo em Background:</strong>
+                  <span id="admin-worker-status-badge" style="margin-left: 8px; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; background: var(--border-color); color: var(--text-secondary);">Desativado</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <select id="admin-worker-interval-select" class="lesson-select" style="padding: 6px 10px; font-size: 0.8rem; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                    <option value="15">A cada 15 Minutos</option>
+                    <option value="30" selected>A cada 30 Minutos</option>
+                    <option value="60">A cada 1 Hora</option>
+                  </select>
+                  <button class="btn btn-sm btn-outline" id="admin-toggle-worker-btn">Ligar Modo Contínuo</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real-time Generated Logs Console -->
+            <div style="background: #0f172a; color: #38bdf8; padding: 15px; border-radius: var(--radius-md); font-family: monospace; font-size: 0.8rem; max-height: 350px; overflow-y: auto;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 10px; color: #94a3b8;">
+                <span>TERMINAL DE LOGS DE CONTEÚDO GERADO</span>
+                <span id="admin-logs-count">0 registos</span>
+              </div>
+              <div id="admin-generator-logs-container">
+                <div style="color: #64748b;">A carregar histórico de geração...</div>
+              </div>
             </div>
           </div>
         </div>

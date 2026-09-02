@@ -236,7 +236,42 @@ async function main() {
       console.log(`❌ TESTE 11 FALHOU: Retornou status ${bulkQRes.status}`);
     }
 
-    // 12. Limpar perguntas de teste em lote
+    // 12. Teste do Gerador Automático - Trigger
+    console.log('\n[TESTE 12] Disparo do Gerador Autónomo de Conteúdo...');
+    const triggerRes = await request('/api/admin/generator/trigger', 'POST', {
+      exam_id: 'esg-mat-12-2025',
+      count: 1
+    }, adminToken);
+    console.log(`Status do Trigger Gerador: ${triggerRes.status}`);
+    if (triggerRes.status === 201 && triggerRes.body.generated && triggerRes.body.generated.length === 1) {
+      console.log('✅ TESTE 12 PASSOU: Questão gerada e inserida automaticamente.');
+    } else {
+      console.log(`❌ TESTE 12 FALHOU: Retornou status ${triggerRes.status}`);
+    }
+
+    // 13. Teste do Gerador Automático - Logs
+    console.log('\n[TESTE 13] Consulta de Logs do Gerador...');
+    const logsRes = await request('/api/admin/generator/logs', 'GET', null, adminToken);
+    console.log(`Status da Consulta de Logs: ${logsRes.status}`);
+    if (logsRes.status === 200 && Array.isArray(logsRes.body) && logsRes.body.length > 0) {
+      console.log(`✅ TESTE 13 PASSOU: Logs recuperados com sucesso (${logsRes.body.length} registos).`);
+    } else {
+      console.log(`❌ TESTE 13 FALHOU: Retornou status ${logsRes.status}`);
+    }
+
+    // 14. Teste do Gerador Automático - Toggle
+    console.log('\n[TESTE 14] Toggle do Agendador Contínuo...');
+    const toggleRes = await request('/api/admin/generator/toggle', 'POST', {
+      enable: false
+    }, adminToken);
+    console.log(`Status do Toggle: ${toggleRes.status}`);
+    if (toggleRes.status === 200 && toggleRes.body.isActive === false) {
+      console.log('✅ TESTE 14 PASSOU: Agendador pausado com sucesso.');
+    } else {
+      console.log(`❌ TESTE 14 FALHOU: Retornou status ${toggleRes.status}`);
+    }
+
+    // Limpar perguntas de teste em lote
     await client.query("DELETE FROM questions WHERE number IN (101, 102)");
 
     // Limpar banco

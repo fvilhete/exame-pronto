@@ -479,9 +479,16 @@ function setupEventListeners() {
         fetchAdminVouchers();
       } else if (tabId === "admin-content") {
         fetchAdminContentExams();
+      } else if (tabId === "admin-generator") {
+        fetchAdminGeneratorLogs();
+        fetchAdminGeneratorStatus();
       }
     });
   });
+
+  safeAddListener("admin-trigger-gen-btn", "click", triggerAdminContentGeneration);
+  safeAddListener("admin-toggle-worker-btn", "click", toggleAdminContentWorker);
+  safeAddListener("admin-refresh-gen-logs-btn", "click", fetchAdminGeneratorLogs);
 
   // Admin Content Sub-tabs (Exames / Lições)
   const manageExamsBtn = document.getElementById("admin-manage-exams-tab-btn");
@@ -3351,5 +3358,142 @@ function downloadJsonTemplate() {
   a.click();
   document.body.removeChild(a);
 }
+
+// --- GERADOR AUTÓNOMO DE CONTEÚDO & LOGS (ADMIN) ---
+
+async function fetchAdminGeneratorLogs() {
+  const container = document.getElementById("admin-generator-logs-container");
+  const countSpan = document.getElementById("admin-logs-count");
+  if (!container) return;
+
+  try {
+    const res = await fetch("/api/admin/generator/logs", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (!res.ok) throw new Error();
+    const logs = await res.json();
+
+    if (countSpan) countSpan.textContent = `${logs.length} registos`;
+
+    if (logs.length === 0) {
+      container.innerHTML = `<div style="color: #64748b;">Nenhum registo de geração encontrado. Dispare uma geração acima!</div>`;
+      return;
+    }
+
+    container.innerHTML = logs.map(l => {
+      const date = new Date(l.created_at).toLocaleTimeString('pt-MZ');
+      return `
+        <div style="margin-bottom: 8px; border-bottom: 1px dashed #1e293b; padding-bottom: 6px;">
+          <span style="color: #64748b;">[${date}]</span> 
+          <span style="color: #10b981; font-weight: bold;">[${l.type}]</span> 
+          <span style="color: #f8fafc;">${l.title}</span><br>
+          <span style="color: #94a3b8; font-size: 0.75rem;">↪ ${l.details || ''}</span>
+        </div>
+      `;
+    }).join("");
+  } catch (e) {
+    container.innerHTML = `<div style="color: #ef4444;">Erro ao carregar logs do servidor.</div>`;
+  }
+}
+
+async function fetchAdminGeneratorStatus() {
+  const badge = document.getElementById("admin-worker-status-badge");
+  const toggleBtn = document.getElementById("admin-toggle-worker-btn");
+  if (!badge || !toggleBtn) return;
+
+  try {
+    const res = await fetch("/api/admin/generator/status", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (!res.ok) return;
+    const status = await res.json();
+
+    if (status.isActive) {
+      badge.textContent = `Ativo (${status.intervalMinutes} min)`;
+      badge.style.background = "rgba(16, 185, 129, 0.2)";
+      badge.style.color = "var(--success)";
+      toggleBtn.textContent = "Pausar Modo Contínuo";
+      toggleBtn.className = "btn btn-sm btn-outline";
+      toggleBtn.style.color = "var(--error)";
+      toggleBtn.style.borderColor = "var(--error)";
+    } else {
+      badge.textContent = "Desativado";
+      badge.style.background = "var(--border-color)";
+      badge.style.color = "var(--text-secondary)";
+      toggleBtn.textContent = "Ligar Modo Contínuo";
+      toggleBtn.className = "btn btn-sm btn-outline";
+      toggleBtn.style.color = "var(--primary)";
+      toggleBtn.style.borderColor = "var(--primary)";
+    }
+  } catch (e) {}
+}
+
+async function triggerAdminContentGeneration() {
+  const examSelect = document.getElementById("admin-gen-curriculum-select");
+  const countSelect = document.getElementById("admin-gen-count-select");
+  const btn = document.getElementById("admin-trigger-gen-btn");
+
+  const examId = examSelect ? examSelect.value : "";
+  const count = countSelect ? parseInt(countSelect.value) || 1 : 1;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "A Gerar...";
+  }
+
+  try {
+    const res = await fetch("/api/admin/generator/trigger", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ exam_id: examId, count })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      showToast(`🤖 ${data.message}`, "success");
+      await fetchAdminGeneratorLogs();
+      await renderExamsList();
+    } else {
+      showToast(data.error || "Erro ao gerar conteúdo.", "error");
+    }
+  } catch (e) {
+    showToast("Erro de conexão ao servidor.", "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🚀 Gerar e Publicar Agora";
+    }
+  }
+}
+
+async function toggleAdminContentWorker() {
+  const badge = document.getElementById("admin-worker-status-badge");
+  const intervalSelect = document.getElementById("admin-worker-interval-select");
+  const isCurrentlyActive = badge && badge.textContent.includes("Ativo");
+  const intervalMinutes = intervalSelect ? parseInt(intervalSelect.value) || 30 : 30;
+
+  try {
+    const res = await fetch("/api/admin/generator/toggle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ enable: !isCurrentlyActive, intervalMinutes })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message, "info");
+      await fetchAdminGeneratorStatus();
+    }
+  } catch (e) {
+    showToast("Erro ao alternar modo contínuo.", "error");
+  }
+}
+
 
 

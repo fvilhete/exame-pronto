@@ -1019,6 +1019,56 @@ app.post('/api/admin/exams/bulk', requireAdmin, (req, res) => {
 });
 
 
+// 14. Gerador Automático - Disparo Manual
+const contentEngine = require('./content_engine');
+
+app.post('/api/admin/generator/trigger', requireAdmin, async (req, res) => {
+  const { exam_id, count } = req.body;
+  const numItems = Math.min(Math.max(parseInt(count) || 1, 1), 10);
+  const results = [];
+
+  try {
+    for (let i = 0; i < numItems; i++) {
+      const item = await contentEngine.generateAndInsertQuestion(exam_id || null);
+      results.push(item);
+    }
+    res.status(201).json({
+      message: `${numItems} pergunta(s) gerada(s) e inserida(s) com sucesso na base de dados!`,
+      generated: results
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao gerar conteúdo automático: ' + err.message });
+  }
+});
+
+// 15. Gerador Automático - Obter Logs
+app.get('/api/admin/generator/logs', requireAdmin, async (req, res) => {
+  try {
+    const logs = await contentEngine.getGeneratorLogs(40);
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao consultar logs: ' + err.message });
+  }
+});
+
+// 16. Gerador Automático - Estado do Agendador
+app.get('/api/admin/generator/status', requireAdmin, (req, res) => {
+  res.json(contentEngine.getWorkerStatus());
+});
+
+// 17. Gerador Automático - Ligar / Desligar Modo Contínuo
+app.post('/api/admin/generator/toggle', requireAdmin, (req, res) => {
+  const { enable, intervalMinutes } = req.body;
+  if (enable) {
+    contentEngine.startAutoGeneratorWorker(parseInt(intervalMinutes) || 30);
+    res.json({ message: 'Agendador de conteúdo contínuo ATIVADO!', isActive: true });
+  } else {
+    contentEngine.stopAutoGeneratorWorker();
+    res.json({ message: 'Agendador de conteúdo contínuo PAUSADO.', isActive: false });
+  }
+});
+
+
 // Exportar para a Vercel
 module.exports = app;
 

@@ -103,6 +103,16 @@ const schema = [
     used_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     used_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );`,
+
+  // 9. Tabela de Logs do Gerador Automático de Conteúdo
+  `CREATE TABLE IF NOT EXISTS content_generator_logs (
+    id SERIAL PRIMARY KEY,
+    type TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );`
 ];
 

@@ -199,6 +199,47 @@ header {
   border-radius: var(--radius-sm);
 }
 
+.btn:active, .nav-menu-item:active, .uni-card:active, .exam-card:active {
+  transform: scale(0.96) !important;
+  opacity: 0.92;
+}
+
+/* Toast Notifications */
+.toast-msg {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: auto;
+  min-width: 260px;
+  max-width: 380px;
+}
+.toast-msg.success { border-left: 4px solid var(--success); }
+.toast-msg.error { border-left: 4px solid var(--error); }
+.toast-msg.info { border-left: 4px solid var(--primary); }
+
+@keyframes toastSlideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes toastSlideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+#floating-whatsapp-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 12px 28px rgba(37, 211, 102, 0.6);
+}
+
 .btn-primary {
   background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
   color: white;

@@ -23,8 +23,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ExamePronto">
   
-  <!-- Estilos -->
-  <link rel="stylesheet" href="styles.css">
+  <!-- Estilos com Cache Busting -->
+  <link rel="stylesheet" href="styles.css?v=3.7">
 </head>
 <body>
 
@@ -36,8 +36,8 @@
         <span>ExamePronto</span>
       </a>
       
-      <!-- Menu de Navegação Superior -->
-      <nav class="nav-menu" id="main-nav-menu" style="display: none; gap: 10px;">
+      <!-- Menu de Navegação Superior (Sempre Acessível) -->
+      <nav class="nav-menu" id="main-nav-menu" style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="btn btn-sm btn-outline nav-menu-item active" data-target="dashboard">Simulador</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="explicador">Explicador IA</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="games">Jogos Educativos</button>
@@ -1156,6 +1156,14 @@
     </div>
   </div>
 
+  <!-- Floating WhatsApp & Support Button -->
+  <a href="https://wa.me/258849517984?text=Ol%C3%A1%20Vilhete%20Solutions!%20Preciso%20de%20ajuda%20com%20o%20ExamePronto." target="_blank" rel="noopener noreferrer" id="floating-whatsapp-btn" style="position: fixed; bottom: 25px; right: 25px; background: #25D366; color: white; padding: 12px 18px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4); text-decoration: none; z-index: 9998; transition: transform 0.2s ease;">
+    <span>💬 WhatsApp Ajuda</span>
+  </a>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+
   <!-- Footer -->
   <footer>
     <div class="container">
@@ -1164,7 +1172,7 @@
     </div>
   </footer>
 
-  <!-- Scripts -->
-  <script src="app.js"></script>
+  <!-- Scripts com Cache Busting -->
+  <script src="app.js?v=3.7"></script>
 </body>
 </html>

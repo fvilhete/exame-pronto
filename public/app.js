@@ -168,7 +168,7 @@ function updateAuthUI() {
         <span style="font-size: 0.9rem; margin-left: 8px; font-weight: 500;">Conta Limitada (3 perguntas)</span>
         <button class="btn btn-sm btn-accent" id="dashboard-upgrade-btn" style="margin-left: 15px;">Ativar Premium</button>
       `;
-      document.getElementById("dashboard-upgrade-btn").addEventListener("click", () => showSection("checkout"));
+      safeAddListener("dashboard-upgrade-btn", "click", () => showSection("checkout"));
     }
   } else {
     authBtn.style.display = "inline-flex";
@@ -177,7 +177,7 @@ function updateAuthUI() {
     headerBadge.style.display = "none";
     headerUpgradeBtn.style.display = "none";
     welcomeTitle.textContent = "Olá, Estudante! 👋";
-    mainNavMenu.style.display = "none";
+    mainNavMenu.style.display = "flex";
 
     const adminBtn = document.getElementById("nav-admin-btn");
     if (adminBtn) {
@@ -222,6 +222,21 @@ function updateThemeIcons(theme) {
   }
 }
 
+// --- NOTIFICAÇÕES TOAST MODERNAS ---
+function showToast(message, type = "info") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast-msg ${type}`;
+  const icon = type === "success" ? "✓" : type === "error" ? "✕" : "ℹ";
+  toast.innerHTML = `<span style="font-weight: bold; font-size: 1.1rem;">${icon}</span><span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = "toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards";
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
 function safeAddListener(idOrEl, event, handler) {
   const el = typeof idOrEl === "string" ? document.getElementById(idOrEl) : idOrEl;
   if (el) {
@@ -233,21 +248,13 @@ function safeAddListener(idOrEl, event, handler) {
 function setupEventListeners() {
   safeAddListener("nav-logo-btn", "click", (e) => {
     e.preventDefault();
-    if (userProfile) {
-      showSection("dashboard");
-      activateMenuTab("dashboard");
-    } else {
-      showSection("landing");
-    }
+    showSection("dashboard");
+    activateMenuTab("dashboard");
   });
   
   safeAddListener("landing-start-btn", "click", () => {
-    if (userProfile) {
-      showSection("dashboard");
-      activateMenuTab("dashboard");
-    } else {
-      openAuthModal();
-    }
+    showSection("dashboard");
+    activateMenuTab("dashboard");
   });
   
   safeAddListener("landing-plans-btn", "click", () => {

@@ -19,8 +19,9 @@ if (!process.env.ADMIN_PHONE) {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super_seguro_chave_secreta_mocambique_2026_examepronto';
 
-// --- MIDDLEWARE DE SEGURANÇA E CORS ---
+// --- MIDDLEWARE DE SEGURANÇA, CHARSET UTF-8 E CORS ---
 app.use((req, res, next) => {
+  res.charset = 'utf-8';
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -28,8 +29,18 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.json') || filePath.endsWith('.css')) {
+      const currentType = res.getHeader('Content-Type');
+      if (currentType && !currentType.includes('charset')) {
+        res.setHeader('Content-Type', `${currentType}; charset=utf-8`);
+      }
+    }
+  }
+}));
 
 // Rota amigável para acesso direto ao CMS / Painel Admin
 app.get(['/admin', '/cms'], (req, res) => {

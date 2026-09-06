@@ -313,6 +313,17 @@ function updateThemeIcons(theme) {
   }
 }
 
+// --- HIGIENIZAÇÃO SEGURA DE HTML & CARACTERES ESPECIAIS (MATEMÁTICA, QUÍMICA, ACENTOS) ---
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // --- NOTIFICAÇÕES TOAST MODERNAS ---
 function showToast(message, type = "info") {
   const container = document.getElementById("toast-container");
@@ -1013,7 +1024,7 @@ function renderQuestion() {
   question.options.forEach((opt, idx) => {
     const optBtn = document.createElement("button");
     optBtn.className = "option-btn";
-    optBtn.innerHTML = `<span>${opt}</span>`;
+    optBtn.innerHTML = `<span>${escapeHtml(opt)}</span>`;
     optBtn.addEventListener("click", () => selectOption(idx));
     optionsContainer.appendChild(optBtn);
   });
@@ -1534,7 +1545,7 @@ function renderQuizQuestion() {
   q.options.forEach((opt, idx) => {
     const btn = document.createElement("button");
     btn.className = "option-btn";
-    btn.innerHTML = `<span>${opt}</span>`;
+    btn.innerHTML = `<span>${escapeHtml(opt)}</span>`;
     btn.addEventListener("click", () => verifyQuizChoice(idx));
     container.appendChild(btn);
   });
@@ -1629,7 +1640,7 @@ function loadDuelRound() {
   q.options.forEach((opt, idx) => {
     const btn = document.createElement("button");
     btn.className = "option-btn";
-    btn.innerHTML = `<span>${opt}</span>`;
+    btn.innerHTML = `<span>${escapeHtml(opt)}</span>`;
     btn.addEventListener("click", () => handleDuelAnswer(idx));
     container.appendChild(btn);
   });
@@ -3048,7 +3059,7 @@ async function fetchAdminExamQuestions() {
       const correctOptLetter = String.fromCharCode(65 + q.correct_option);
       tr.innerHTML = `
         <td style="padding: 6px; font-weight: bold;">Q${q.number}</td>
-        <td style="padding: 6px;">${q.text.substring(0, 50)}...</td>
+        <td style="padding: 6px;">${escapeHtml(q.text.substring(0, 50))}...</td>
         <td style="padding: 6px; font-weight: bold; color: var(--success);">${correctOptLetter}</td>
         <td style="padding: 6px; text-align: right;">
           <button class="btn btn-sm btn-outline btn-delete-question" data-id="${q.id}" style="color: var(--error); border-color: var(--error); padding: 2px 6px; font-size: 0.75rem;">
@@ -3493,22 +3504,40 @@ function printResellerVoucherSheet() {
 
 let pendingImportData = null;
 
+function normalizeExamText(rawText) {
+  if (!rawText) return '';
+  return rawText
+    .replace(/^\uFEFF/, '') // Remover UTF-8 BOM inicial
+    .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remover caracteres invisíveis de formatação
+    .replace(/\u00A0/g, ' ') // Converter espaços não-quebráveis (NBSP) em espaços comuns
+    .replace(/[\u2018\u2019]/g, "'") // Normalizar aspas simples tipográficas
+    .replace(/[\u201C\u201D\u00AB\u00BB]/g, '"') // Normalizar aspas duplas tipográficas e chavetas francesas
+    .normalize('NFC'); // Normalização canónica Unicode para acentuação e diacríticos (ã, ç, é, ô)
+}
+
+function cleanQuestionHeading(text) {
+  if (!text) return '';
+  return text
+    // Remove apenas prefixos formais de numeração, mantendo preposições naturais ("No Código...", "No triângulo...")
+    .replace(/^(?:Quest[aã]o|Pergunta|Exerc[ií]cio|Problema|Item|(?:N[º°\.]|N\.º|No\.))\s*[\:\-\u2013\u2014\.]*\s*/i, '')
+    .replace(/^[\:\-\u2013\u2014\.]+\s*/, '')
+    .trim();
+}
+
 function handleAdminFileUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
   const ext = file.name.split('.').pop().toLowerCase();
 
   if (ext === 'pdf') {
     showToast(`📄 Ficheiro PDF "${file.name}" detetado. Para garantir extração 100% fiel, abra o PDF, copie o texto das perguntas (Ctrl+A e Ctrl+C) e cole no campo abaixo!`, "info");
   }
 
-  reader.onload = function(evt) {
-    const content = evt.target.result;
+  function processFileContent(content) {
     if (ext === 'json') {
       try {
-        const parsed = JSON.parse(content);
+        const parsed = JSON.parse(normalizeExamText(content));
         if (parsed.exams || parsed.questions || parsed.lessons) {
           pendingImportData = { type: 'full_dataset', data: parsed };
           displayImportPreview({
@@ -3528,14 +3557,39 @@ function handleAdminFileUpload(e) {
       }
     } else if (ext === 'csv') {
       const questions = parseCsvQuestions(content);
+      if (questions.length === 0) {
+        alert("Nenhuma pergunta reconhecida no ficheiro CSV. Verifique os cabeçalhos e a estrutura das colunas.");
+        return;
+      }
       pendingImportData = { type: 'questions_array', data: questions };
       displayImportPreview({ type: 'questions_array', questions: questions });
     } else {
-      // .txt or .md text formats
+      // Formatos de texto .txt ou .md
       const questions = parseRawQuestionsText(content);
+      if (questions.length === 0) {
+        alert("Nenhuma pergunta reconhecida no ficheiro de texto. Verifique a numeração das perguntas e opções.");
+        return;
+      }
       pendingImportData = { type: 'questions_array', data: questions };
       displayImportPreview({ type: 'questions_array', questions: questions });
     }
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    let content = evt.target.result;
+    // Deteção inteligente de codificação Windows ANSI / ISO-8859-1:
+    // Se a leitura em UTF-8 originar caracteres de substituição (\uFFFD), recarrega como ISO-8859-1
+    if (content && content.includes('\uFFFD') && !reader._retriedIso) {
+      reader._retriedIso = true;
+      const isoReader = new FileReader();
+      isoReader.onload = function(isoEvt) {
+        processFileContent(isoEvt.target.result);
+      };
+      isoReader.readAsText(file, "ISO-8859-1");
+      return;
+    }
+    processFileContent(content);
   };
 
   reader.readAsText(file, "UTF-8");
@@ -3557,35 +3611,94 @@ function parsePastedText() {
 }
 
 function parseRawQuestionsText(rawText) {
-  const lines = rawText.split(/\r?\n/);
+  const clean = normalizeExamText(rawText);
+  const lines = clean.split(/\r?\n/);
   const questions = [];
   let currentQ = null;
+
+  // Reconhecimento universal de números de questão moçambicanos:
+  // 1., 1), 1 -, 1 –, 1ª, 1.ª, 1º, 1.º, 1°, Questão 1, Pergunta 1, Exercício 1, Nº 1, No. 1, Q1, P1
+  const qRegex = /^(?:(?:Quest[aã]o|Pergunta|Exerc[ií]cio|Problema|Item|(?:N[º°\.]|N\.º|No\.)|Q|P)\s*)?(\d+)(?:[ªº°]|\.[ªº°])?[\.\)\:\s\-\u2013\u2014]+(.*)$/i;
+
+  // Reconhecimento flexível de opções:
+  // A) ..., A. ..., A - ..., A – ..., (A) ..., [A] ..., A: ...
+  const optRegex = /^(?:[\(\[]\s*([A-Fa-f])\s*[\)\]]|([A-Fa-f])\s*[\.\)\:\-\u2013\u2014])\s*(.*)$/;
+
+  // Reconhecimento exaustivo do gabarito / resposta correta:
+  // Resposta: A, Resposta correcta: A, Gabarito: A, Opção correcta: A, Alternativa: A, Chave: A, Solução: A, Resp: A, R: A
+  const ansRegex = /^(?:[\(\[]?\s*(?:Resposta(?:\s+correcta|\s+correta|\s+certa)?|Gabarito|Op[çc][aã]o(?:\s+correcta|\s+correta|\s+certa)?|Alternativa(?:\s+correcta|\s+correta|\s+certa)?|Chave(?:\s+de\s+correc[çc][aã]o)?|Solu[çc][aã]o|Correta|Correcta|Resp|R)\s*[\:\-\u2013\u2014\.]*\s*[\(\[]?\s*([A-Fa-f])\s*[\)\]]?)/i;
+
+  // Reconhecimento de explicações / resoluções / comentários:
+  // Explicação: ..., Resolução: ..., Justificação: ..., Comentário: ..., Nota: ..., Dica: ...
+  const expRegex = /^(?:Explica[çc][aã]o|Resolu[çc][aã]o|Justifica[çc][aã]o|Coment[aá]rio|Nota|Dica)\s*[\:\-\u2013\u2014\.]*\s*(.*)$/i;
 
   lines.forEach(line => {
     const trimmed = line.trim();
     if (!trimmed) return;
 
-    // Detect new question: "1. Texto", "Questão 1: Texto", "1) Texto"
-    const qMatch = trimmed.match(/^(\d+)[\.\)\:\-]\s*(.*)$/i) || trimmed.match(/^Quest[aã]o\s*(\d+)[\.\)\:\-]\s*(.*)$/i);
-    
-    if (qMatch && !trimmed.match(/^[A-E][\.\)\:\-]/i) && !trimmed.toLowerCase().startsWith('resposta') && !trimmed.toLowerCase().startsWith('gabarito')) {
-      if (currentQ && currentQ.text && currentQ.options.length > 0) {
-        questions.push(currentQ);
+    // 1. Verificar se é linha de resposta / gabarito
+    const ansMatch = trimmed.match(ansRegex);
+    if (ansMatch) {
+      if (currentQ) {
+        const letter = ansMatch[1].toUpperCase();
+        currentQ.correct_option = letter.charCodeAt(0) - 65;
       }
-      currentQ = {
-        number: parseInt(qMatch[1]) || (questions.length + 1),
-        text: qMatch[2] || '',
-        options: [],
-        correct_option: 0,
-        explanation: 'Resolução oficial standard.'
-      };
       return;
     }
 
+    // 2. Verificar se é linha de explicação
+    const expMatch = trimmed.match(expRegex);
+    if (expMatch) {
+      if (currentQ) {
+        currentQ.explanation = expMatch[1].trim() || 'Resolução oficial standard.';
+      }
+      return;
+    }
+
+    // 3. Verificar se é opção (A, B, C, D, E, F)
+    const optMatch = trimmed.match(optRegex);
+    if (optMatch && (!trimmed.match(qRegex) || (currentQ && currentQ.options.length < 6))) {
+      const letter = (optMatch[1] || optMatch[2]).toUpperCase();
+      const text = optMatch[3].trim();
+      if (currentQ) {
+        currentQ.options.push(`${letter}) ${text}`);
+        return;
+      }
+    }
+
+    // 4. Verificar se é uma nova pergunta
+    const qMatch = trimmed.match(qRegex);
+    if (qMatch && !optMatch) {
+      const qNum = parseInt(qMatch[1]) || (questions.length + 1);
+      const qHeadingText = cleanQuestionHeading(qMatch[2]);
+
+      if (currentQ && currentQ.text && currentQ.options.length >= 2) {
+        questions.push(currentQ);
+        currentQ = {
+          number: qNum,
+          text: qHeadingText,
+          options: [],
+          correct_option: 0,
+          explanation: 'Resolução oficial standard.'
+        };
+        return;
+      } else if (!currentQ) {
+        currentQ = {
+          number: qNum,
+          text: qHeadingText,
+          options: [],
+          correct_option: 0,
+          explanation: 'Resolução oficial standard.'
+        };
+        return;
+      }
+    }
+
+    // 5. Continuação de enunciado ou explicação
     if (!currentQ) {
       currentQ = {
         number: questions.length + 1,
-        text: trimmed,
+        text: cleanQuestionHeading(trimmed),
         options: [],
         correct_option: 0,
         explanation: 'Resolução oficial standard.'
@@ -3593,72 +3706,90 @@ function parseRawQuestionsText(rawText) {
       return;
     }
 
-    // Detect options: "A) ...", "B) ...", "a. ..."
-    const optMatch = trimmed.match(/^([A-Ea-e])[\.\)\:\-]\s*(.*)$/);
-    if (optMatch) {
-      currentQ.options.push(`${optMatch[1].toUpperCase()}) ${optMatch[2]}`);
-      return;
-    }
-
-    // Detect correct answer: "Resposta: B", "Gabarito: C", "Correct: A"
-    const ansMatch = trimmed.match(/^(?:Resposta|Gabarito|Correta|Chave|Correct)[\s\:\-]+([A-Ea-e])/i);
-    if (ansMatch) {
-      const letter = ansMatch[1].toUpperCase();
-      currentQ.correct_option = letter.charCodeAt(0) - 65;
-      return;
-    }
-
-    // Detect explanation: "Explicação: ...", "Resolução: ..."
-    const expMatch = trimmed.match(/^(?:Explica[çc][aã]o|Resolu[çc][aã]o|Nota)[\s\:\-]+(.*)$/i);
-    if (expMatch) {
-      currentQ.explanation = expMatch[1].trim();
-      return;
-    }
-
-    // Continuation of text or explanation
     if (currentQ.options.length === 0) {
-      currentQ.text += ' ' + trimmed;
+      currentQ.text = currentQ.text ? `${currentQ.text} ${trimmed}` : trimmed;
     } else {
-      currentQ.explanation += ' ' + trimmed;
+      currentQ.explanation = currentQ.explanation && currentQ.explanation !== 'Resolução oficial standard.'
+        ? `${currentQ.explanation} ${trimmed}`
+        : trimmed;
     }
   });
 
-  if (currentQ && currentQ.text && currentQ.options.length > 0) {
+  if (currentQ && currentQ.text && currentQ.options.length >= 2) {
     questions.push(currentQ);
   }
 
   return questions;
 }
 
+function splitCsvLine(line, delimiter) {
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === delimiter && !inQuotes) {
+      result.push(cur.trim());
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
 function parseCsvQuestions(csvText) {
-  const lines = csvText.split(/\r?\n/).filter(l => l.trim().length > 0);
+  const clean = normalizeExamText(csvText);
+  const lines = clean.split(/\r?\n/).filter(l => l.trim().length > 0);
   if (lines.length < 2) return [];
 
-  const delimiter = lines[0].includes(';') ? ';' : ',';
+  const firstLine = lines[0];
+  const delimiter = firstLine.includes(';') ? ';' : (firstLine.includes('\t') ? '\t' : ',');
   const questions = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, ''));
+    const rawCols = splitCsvLine(lines[i], delimiter);
+    const cols = rawCols.map(c => c.replace(/^["']|["']$/g, '').trim());
     if (cols.length >= 6) {
       const qNum = parseInt(cols[0]) || i;
-      const qText = cols[1];
-      const optA = cols[2].startsWith('A)') ? cols[2] : `A) ${cols[2]}`;
-      const optB = cols[3].startsWith('B)') ? cols[3] : `B) ${cols[3]}`;
-      const optC = cols[4].startsWith('C)') ? cols[4] : `C) ${cols[4]}`;
-      const optD = cols[5].startsWith('D)') ? cols[5] : `D) ${cols[5]}`;
-      const rawAns = cols[6] ? cols[6].toUpperCase() : 'A';
+      const qText = cleanQuestionHeading(cols[1]);
+      const optA = cols[2].match(/^[A-Fa-f][\)\.]/) ? cols[2] : `A) ${cols[2]}`;
+      const optB = cols[3].match(/^[A-Fa-f][\)\.]/) ? cols[3] : `B) ${cols[3]}`;
+      const optC = cols[4].match(/^[A-Fa-f][\)\.]/) ? cols[4] : `C) ${cols[4]}`;
+      const optD = cols[5].match(/^[A-Fa-f][\)\.]/) ? cols[5] : `D) ${cols[5]}`;
+      const options = [optA, optB, optC, optD];
+
+      // Opção E adicional se presente
+      if (cols.length >= 8 && cols[6] && !cols[6].match(/^[A-Ea-e]$/)) {
+        const optE = cols[6].match(/^[A-Fa-f][\)\.]/) ? cols[6] : `E) ${cols[6]}`;
+        options.push(optE);
+      }
+
+      const rawAnsCol = cols.length >= 8 && options.length === 5 ? cols[7] : (cols[6] || 'A');
+      const rawAns = rawAnsCol.toUpperCase().trim();
       let correctOpt = 0;
-      if (['A', 'B', 'C', 'D'].includes(rawAns)) {
+      if (['A', 'B', 'C', 'D', 'E'].includes(rawAns)) {
         correctOpt = rawAns.charCodeAt(0) - 65;
       } else if (!isNaN(parseInt(rawAns))) {
-        correctOpt = parseInt(rawAns);
+        const num = parseInt(rawAns);
+        correctOpt = num >= 1 && num <= 5 ? num - 1 : (num >= 0 && num <= 4 ? num : 0);
       }
-      const explanation = cols[7] || 'Resolução oficial standard.';
+
+      const expColIndex = options.length === 5 ? 8 : 7;
+      const explanation = cols[expColIndex] || 'Resolução oficial standard.';
 
       questions.push({
         number: qNum,
         text: qText,
-        options: [optA, optB, optC, optD],
+        options: options,
         correct_option: correctOpt,
         explanation: explanation
       });
@@ -3691,7 +3822,7 @@ function displayImportPreview(info) {
       const correctLetter = String.fromCharCode(65 + (q.correct_option || 0));
       html += `
         <li style="margin-bottom: 8px;">
-          <strong>Q${q.number}:</strong> ${q.text.substring(0, 70)}...<br>
+          <strong>Q${q.number}:</strong> ${escapeHtml(q.text.substring(0, 70))}...<br>
           <span style="color: var(--text-secondary); font-size: 0.75rem;">${q.options.length} Opções | Gabarito: <strong>${correctLetter}</strong></span>
         </li>
       `;

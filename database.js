@@ -19,6 +19,16 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000
 });
 
+// Garante que todas as conexões ao Supabase/PostgreSQL utilizam estritamente UTF-8
+// prevenindo corrupção de acentos moçambicanos (ã, ç, é, ê) e caracteres matemáticos (², ³, √, ±, Δ)
+pool.on('connect', (client) => {
+  client.query("SET client_encoding TO 'UTF8'", (err) => {
+    if (err) {
+      console.warn('Aviso: Não foi possível definir client_encoding para UTF-8:', err.message);
+    }
+  });
+});
+
 // Traduz placeholders do formato SQLite (?) para o formato PostgreSQL ($1, $2, ...)
 function translateQuery(query) {
   let index = 1;

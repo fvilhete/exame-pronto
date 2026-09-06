@@ -390,12 +390,24 @@
                 <p>Testa os teus conhecimentos sobre geografia, história, fauna e cultura geral do nosso belo país!</p>
                 <button class="btn btn-accent btn-sm" style="margin-top: 15px; width: 100%;">Jogar Agora</button>
               </div>
+              <div class="uni-card" id="game-card-duel" style="text-align: left; padding: 25px; cursor: pointer; border: 2px solid rgba(79, 70, 229, 0.2);">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">⚔️</div>
+                <h3>Duelo 1 vs 1 (Batalha)</h3>
+                <p>Desafia a IA ou um colega em 5 rodadas rápidas de perguntas com temporizador. Quem responder primeiro e certo vence!</p>
+                <button class="btn btn-primary btn-sm" style="margin-top: 15px; width: 100%;">Iniciar Duelo</button>
+              </div>
+              <div class="uni-card" id="game-card-flashcards" style="text-align: left; padding: 25px; cursor: pointer;">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">🃏</div>
+                <h3>Flashcards 3D (Quizlet)</h3>
+                <p>Memorização espaçada de fórmulas de Física, Matemática, sinais do INATRO e datas históricas de Moçambique.</p>
+                <button class="btn btn-outline btn-sm" style="margin-top: 15px; width: 100%;">Praticar Cartões</button>
+              </div>
             </div>
           </div>
 
           <!-- Game 1: Math Rush Arena -->
           <div id="game-math-arena" style="display: none; text-align: center; animation: fadeIn 0.3s;">
-            <button class="btn btn-sm btn-outline" class="btn-game-back" style="margin-bottom: 20px; float: left;">&larr; Sair</button>
+            <button class="btn btn-sm btn-outline btn-game-back" style="margin-bottom: 20px; float: left;">&larr; Sair</button>
             <div style="clear: both;"></div>
             <h2 style="font-size: 2rem; color: var(--primary);">Math Rush!</h2>
             <div style="display: flex; justify-content: space-around; font-size: 1.2rem; font-weight: bold; margin: 20px 0;">
@@ -414,7 +426,7 @@
 
           <!-- Game 2: Moz Quiz Arena -->
           <div id="game-quiz-arena" style="display: none; text-align: left; animation: fadeIn 0.3s;">
-            <button class="btn btn-sm btn-outline" class="btn-game-back" style="margin-bottom: 20px;">&larr; Sair</button>
+            <button class="btn btn-sm btn-outline btn-game-back" style="margin-bottom: 20px;">&larr; Sair</button>
             <h2 style="font-size: 1.8rem; color: var(--accent); margin-bottom: 10px;">Quiz de Moçambique</h2>
             
             <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin-bottom: 20px;">
@@ -428,6 +440,81 @@
 
             <div class="options-list" id="game-quiz-options-container">
               <!-- Options loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- Game 3: Duel 1 vs 1 Arena -->
+          <div id="game-duel-arena" style="display: none; animation: fadeIn 0.3s;">
+            <button class="btn btn-sm btn-outline btn-game-back" style="margin-bottom: 15px;">&larr; Sair do Duelo</button>
+            
+            <div class="duel-scoreboard">
+              <div class="duel-player-badge">
+                <div class="duel-player-avatar duel-p1-avatar" id="duel-p1-name-tag">P1</div>
+                <strong id="duel-p1-label" style="font-size: 0.85rem;">Você (Jogador 1)</strong>
+                <span class="duel-score-num" style="color: #3b82f6;" id="duel-p1-score">0</span>
+              </div>
+              
+              <div style="text-align: center;">
+                <div class="duel-vs-circle">VS</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;" id="duel-round-text">Rodada 1/5</div>
+              </div>
+              
+              <div class="duel-player-badge">
+                <div class="duel-player-avatar duel-p2-avatar" id="duel-p2-name-tag">IA</div>
+                <strong id="duel-p2-label" style="font-size: 0.85rem;">Adversário Virtual</strong>
+                <span class="duel-score-num" style="color: #f97316;" id="duel-p2-score">0</span>
+              </div>
+            </div>
+
+            <!-- Timer Bar -->
+            <div class="duel-timer-bar-container">
+              <div class="duel-timer-bar" id="duel-timer-bar"></div>
+            </div>
+
+            <!-- Question Statement -->
+            <div style="margin-bottom: 20px;">
+              <span class="exam-tag" id="duel-category-tag" style="margin-bottom: 8px; display: inline-block;">Duelo de Conhecimento</span>
+              <h3 id="duel-question-text" style="font-size: 1.2rem; color: var(--text-primary); line-height: 1.4;">Carregando pergunta do duelo...</h3>
+            </div>
+
+            <!-- Options Grid -->
+            <div class="options-list" id="duel-options-container"></div>
+
+            <!-- Round Banner / Feedback -->
+            <div id="duel-round-banner" style="display: none; margin-top: 15px; padding: 10px; border-radius: var(--radius-sm); text-align: center; font-weight: bold; font-size: 0.9rem;"></div>
+          </div>
+
+          <!-- Game 4: 3D Flashcards Arena -->
+          <div id="game-flashcards-arena" style="display: none; text-align: center; animation: fadeIn 0.3s;">
+            <button class="btn btn-sm btn-outline btn-game-back" style="margin-bottom: 15px; float: left;">&larr; Voltar</button>
+            <div style="clear: both;"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; max-width: 520px; margin: 0 auto 10px auto;">
+              <h3 style="color: var(--primary); margin: 0;">Flashcards 3D</h3>
+              <span id="flashcard-counter" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: bold;">1 / 10</span>
+            </div>
+
+            <!-- Flashcard 3D Scene -->
+            <div class="flashcard-scene" id="flashcard-scene-wrapper">
+              <div class="flashcard-card" id="flashcard-card-element">
+                <div class="flashcard-face flashcard-front">
+                  <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--primary); font-weight: 700;" id="flashcard-front-topic">FÓRMULA / CONCEITO</div>
+                  <div style="font-size: 1.3rem; font-weight: 700; margin: auto;" id="flashcard-front-text">Texto da Pergunta</div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary);">👆 Toque no cartão para ver a resposta</div>
+                </div>
+                <div class="flashcard-face flashcard-back">
+                  <div style="font-size: 0.8rem; text-transform: uppercase; color: #a5b4fc; font-weight: 700;">EXPLICAÇÃO / DEFINIÇÃO</div>
+                  <div style="font-size: 1.15rem; font-weight: 500; margin: auto; line-height: 1.5;" id="flashcard-back-text">Explicação pedagógica detalhada.</div>
+                  <div style="font-size: 0.75rem; color: #94a3b8;">🔄 Toque para virar novamente</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+              <button class="btn btn-sm btn-outline" id="flashcard-prev-btn">⏮️ Anterior</button>
+              <button class="btn btn-sm btn-primary" id="flashcard-flip-btn">🔄 Virar Cartão</button>
+              <button class="btn btn-sm btn-outline" id="flashcard-next-btn">Próximo ⏭️</button>
             </div>
           </div>
 
@@ -601,6 +688,9 @@
             <button class="btn btn-sm btn-outline" id="quiz-download-paper-btn" title="Descarregar Caderno de Exame Completo em PDF" style="padding: 3px 8px; font-size: 0.75rem;">
               📥 Baixar Caderno PDF
             </button>
+            <button class="btn btn-sm btn-outline" id="quiz-hint-btn" title="Pedir Dica Pedagógica" style="padding: 3px 8px; font-size: 0.75rem; color: var(--accent); border-color: var(--accent);">
+              💡 Pedir Dica
+            </button>
           </div>
         </div>
         <div class="quiz-timer-box" id="quiz-timer-container">
@@ -615,6 +705,9 @@
         <div class="question-number" id="quiz-question-number">QUESTÃO 1</div>
         <div class="question-text" id="quiz-question-text">Questão de exemplo para o simulador de exame de admissão.</div>
         
+        <!-- Hint Box -->
+        <div class="quiz-hint-box" id="quiz-hint-box"></div>
+
         <div class="options-list" id="quiz-options-container">
           <!-- JS will render options here -->
         </div>
@@ -942,16 +1035,24 @@
                   </select>
                 </div>
                 <div>
-                  <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">2. Carregar Ficheiro (.json, .csv, .txt, .md):</label>
-                  <input type="file" id="admin-file-upload-input" accept=".json,.csv,.txt,.md" style="width: 100%; padding: 6px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                  <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">2. Carregar Ficheiro (PDF, TXT, CSV, JSON):</label>
+                  <input type="file" id="admin-file-upload-input" accept=".pdf,.json,.csv,.txt,.md" style="width: 100%; padding: 6px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
                 </div>
+              </div>
+
+              <!-- Quick Helper for Scanned Images & PDFs -->
+              <div style="margin-top: 15px; padding: 12px; background: rgba(79, 70, 229, 0.08); border-left: 4px solid var(--primary); border-radius: var(--radius-sm); font-size: 0.8rem; line-height: 1.4;">
+                <strong style="color: var(--primary);">📸 Como processar Exames recebidos em PDF ou Fotos/Imagens:</strong><br>
+                • <strong>Fotos de Exames tiradas com o telemóvel:</strong> Abra a foto no telemóvel e use a ferramenta <em>Google Lens</em> ou <em>Câmara -> Copiar Texto</em>. Cole o texto no campo abaixo.<br>
+                • <strong>Ficheiros PDF:</strong> Selecione o PDF no botão acima ou abra o PDF no computador, selecione o texto com <code>Ctrl+A</code> e cole no campo abaixo.<br>
+                O nosso motor inteligente identifica e separa automaticamente as perguntas <code>1., 2.</code> e as opções <code>A), B), C), D)</code>!
               </div>
 
               <!-- Or Paste Text Area -->
               <div style="margin-top: 15px;">
-                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Ou cole aqui o texto com perguntas (formato 1. Pergunta / A) ... B) ... Resposta: B):</label>
-                <textarea id="admin-paste-text-input" rows="3" class="chat-input" placeholder="1. Qual é a fórmula da velocidade?&#10;A) v = d / t&#10;B) v = d * t&#10;C) v = m * a&#10;D) v = F / m&#10;Resposta: A&#10;Explicação: A velocidade média calcula-se dividindo a distância pelo tempo." style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 0.85rem;"></textarea>
-                <button class="btn btn-sm btn-outline" id="admin-parse-text-btn" style="margin-top: 5px;">🔍 Processar Texto Colado</button>
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Cole aqui o texto do PDF ou da foto do exame:</label>
+                <textarea id="admin-paste-text-input" rows="4" class="chat-input" placeholder="1. Qual é a velocidade máxima dentro das localidades segundo o INATRO?&#10;A) 40 km/h&#10;B) 60 km/h&#10;C) 80 km/h&#10;D) 100 km/h&#10;Resposta: B&#10;Explicação: Segundo o regulamento de trânsito de Moçambique, o limite dentro das localidades é de 60 km/h." style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 0.85rem;"></textarea>
+                <button class="btn btn-sm btn-outline" id="admin-parse-text-btn" style="margin-top: 5px;">🔍 Auto-Formatar e Processar Perguntas</button>
               </div>
 
               <!-- Preview Area -->
@@ -1021,33 +1122,43 @@
             </div>
           </div>
 
-          <!-- Tab 4: Vouchers & Raspadinhas -->
+          <!-- Tab 4: Vouchers & Raspadinhas (Rede de Revendedores) -->
           <div id="tab-admin-vouchers" class="admin-tab-content" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
               <div>
-                <h3>Gestão de Vouchers & Raspadinhas 🎟️</h3>
-                <p style="font-size: 0.85rem; color: var(--text-secondary);">Gere lotes de códigos para venda impressa em escolas e papelarias parceiras.</p>
+                <h3>Gestão de Vouchers & Rede de Revenda 🎟️</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">Gere lotes de raspadinhas para papelarias escolares, bancas e agentes locais da Vilhete Solutions.</p>
               </div>
-              <button class="btn btn-outline" id="admin-print-vouchers-btn" style="display: flex; align-items: center; gap: 6px;">
-                🖨️ Imprimir Folha de Raspadinhas
-              </button>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary" id="admin-print-reseller-sheet-btn" style="display: flex; align-items: center; gap: 6px;">
+                  🖨️ Imprimir Cartões de Revenda (A4)
+                </button>
+              </div>
             </div>
 
             <!-- Generate Vouchers Form -->
             <form id="admin-generate-vouchers-form" onsubmit="return false;" style="display: flex; gap: 10px; background: var(--bg-primary); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end;">
-              <div style="flex: 1; min-width: 120px;">
+              <div style="flex: 1; min-width: 110px;">
                 <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Quantidade:</label>
                 <input type="number" id="gen-vouchers-count" value="10" min="1" max="100" class="chat-input" style="width: 100%; padding: 8px;">
               </div>
-              <div style="flex: 1; min-width: 140px;">
-                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Duração do Plano:</label>
+              <div style="flex: 1; min-width: 130px;">
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Duração:</label>
                 <select id="gen-vouchers-days" class="lesson-select" style="width: 100%; padding: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
-                  <option value="7">7 Dias (Semanal - 49 MT)</option>
-                  <option value="30" selected>30 Dias (Mensal - 119 MT)</option>
+                  <option value="7">7 Dias (49 MT)</option>
+                  <option value="30" selected>30 Dias (119 MT)</option>
                 </select>
               </div>
+              <div style="flex: 2; min-width: 180px;">
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Agente / Ponto de Venda:</label>
+                <input type="text" id="gen-vouchers-agent" placeholder="Ex: Papelaria Josina Machel / Banca Matola" value="Banca Geral" class="chat-input" style="width: 100%; padding: 8px;">
+              </div>
+              <div style="flex: 1; min-width: 120px;">
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">Comissão Revendedor:</label>
+                <input type="text" id="gen-vouchers-commission" value="10 MT / cartão" class="chat-input" style="width: 100%; padding: 8px;">
+              </div>
               <button type="submit" class="btn btn-primary" style="height: 38px;">
-                + Gerar Lote de Códigos
+                + Gerar Lote
               </button>
             </form>
 

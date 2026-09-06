@@ -71,6 +71,97 @@ const mozQuizQuestions = [
   }
 ];
 
+// Estados do Duelo 1 vs 1
+let gameDuelTimer = null;
+let gameDuelAiTimer = null;
+let gameDuelState = {
+  round: 1,
+  maxRounds: 5,
+  p1Score: 0,
+  p2Score: 0,
+  timeLeft: 15,
+  currentQuestion: null,
+  isLocked: false
+};
+
+// Estados dos Flashcards 3D
+let currentFlashcardIndex = 0;
+const flashcardsData = [
+  {
+    topic: "Física (Cinemática)",
+    front: "Qual é a fórmula da Velocidade Média?",
+    back: "v = Δs / Δt\nA velocidade média é a razão entre a distância percorrida (Δs em metros) e o tempo decorrido (Δt em segundos)."
+  },
+  {
+    topic: "Física (Dinâmica)",
+    front: "Qual é a Segunda Lei de Newton (Princípio Fundamental da Dinâmica)?",
+    back: "F = m · a\nA força resultante (F em Newtons) é igual ao produto da massa (m em kg) pela aceleração (a em m/s²)."
+  },
+  {
+    topic: "Matemática (Álgebra)",
+    front: "Qual é a Fórmula de Bhaskara para Equações Quadráticas?",
+    back: "x = (-b ± √Δ) / (2a), onde Δ = b² - 4ac\nSe Δ > 0: duas raízes reais distintas.\nSe Δ = 0: uma raiz real dupla.\nSe Δ < 0: não tem raízes reais."
+  },
+  {
+    topic: "Matemática (Progressões)",
+    front: "Qual é a fórmula do Termo Geral de uma Progressão Aritmética (PA)?",
+    back: "a_n = a₁ + (n - 1) · r\nOnde a₁ é o primeiro termo, n é o número do termo e r é a razão da PA."
+  },
+  {
+    topic: "Código de Estrada (INATRO)",
+    front: "Quem tem prioridade num cruzamento sem sinalização em Moçambique?",
+    back: "Prioridade da Direita:\nO condutor deve ceder passagem aos veículos que se apresentem pela direita, exceto se saírem de garagens ou vias privadas."
+  },
+  {
+    topic: "Código de Estrada (INATRO)",
+    front: "O que indica um sinal triangular com orla vermelha e vértice para cima?",
+    back: "Sinal de Perigo:\nAlerta para a existência de um risco na via adiante (ex: curva perigosa, estrada escorregadia, passagem de crianças)."
+  },
+  {
+    topic: "História de Moçambique",
+    front: "Em que data foi proclamada a Independência Nacional de Moçambique?",
+    back: "25 de Junho de 1975\nProclamada no Estádio da Machava pelo Presidente Samora Moisés Machel."
+  },
+  {
+    topic: "Geografia de Moçambique",
+    front: "Qual é o ponto de maior altitude (ponto mais alto) de Moçambique?",
+    back: "Monte Binga (2.436 metros)\nLocalizado na província de Manica, na fronteira com o Zimbabwe."
+  }
+];
+
+const duelQuestionsBank = [
+  {
+    category: "Matemática & Lógica",
+    text: "Qual é o valor de 15% de 200 Meticais?",
+    options: ["A) 20 MT", "B) 30 MT", "C) 35 MT", "D) 40 MT"],
+    correct: 1
+  },
+  {
+    category: "Código de Estrada (INATRO)",
+    text: "Qual é a velocidade máxima permitida para ligeiros dentro das localidades em Moçambique?",
+    options: ["A) 40 km/h", "B) 60 km/h", "C) 80 km/h", "D) 100 km/h"],
+    correct: 1
+  },
+  {
+    category: "Geografia & Moçambique",
+    text: "Qual é o maior rio que atravessa Moçambique até desaguar no Oceano Índico?",
+    options: ["A) Rio Limpopo", "B) Rio Rovuma", "C) Rio Zambeze", "D) Rio Save"],
+    correct: 2
+  },
+  {
+    category: "Ciências & Biologia",
+    text: "Qual é a organela celular responsável pela respiração aeróbia e produção de ATP?",
+    options: ["A) Ribossoma", "B) Complexo de Golgi", "C) Mitocôndria", "D) Vacúolo"],
+    correct: 2
+  },
+  {
+    category: "Física Básica",
+    text: "Qual é a aceleração da gravidade aproximada na superfície da Terra?",
+    options: ["A) 9,8 m/s²", "B) 15,2 m/s²", "C) 5,0 m/s²", "D) 20 m/s²"],
+    correct: 0
+  }
+];
+
 // --- INICIALIZAÇÃO ---
 document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
@@ -402,6 +493,8 @@ function setupEventListeners() {
   // Game Lobby Buttons
   safeAddListener("game-card-math", "click", startMathRush);
   safeAddListener("game-card-quiz", "click", startMozQuiz);
+  safeAddListener("game-card-duel", "click", startDuelGame);
+  safeAddListener("game-card-flashcards", "click", startFlashcardsGame);
   
   document.querySelectorAll(".btn-game-back").forEach(btn => {
     btn.addEventListener("click", openGamesLobby);
@@ -412,14 +505,23 @@ function setupEventListeners() {
     const lastGame = pts ? pts.getAttribute("data-last-game") : "math_rush";
     if (lastGame === "math_rush") startMathRush();
     else if (lastGame === "moz_quiz") startMozQuiz();
+    else if (lastGame === "duel") startDuelGame();
+    else if (lastGame === "flashcards") startFlashcardsGame();
   });
   safeAddListener("game-over-lobby-btn", "click", openGamesLobby);
+
+  // Flashcards Controls
+  safeAddListener("flashcard-flip-btn", "click", flipFlashcard);
+  safeAddListener("flashcard-scene-wrapper", "click", flipFlashcard);
+  safeAddListener("flashcard-next-btn", "click", nextFlashcard);
+  safeAddListener("flashcard-prev-btn", "click", prevFlashcard);
 
   // Sound, Speech & Proctoring listeners
   safeAddListener("btn-sound-toggle", "click", toggleSound);
   safeAddListener("quiz-tts-btn", "click", speakCurrentQuizQuestion);
   safeAddListener("quiz-focus-btn", "click", toggleFocusMode);
   safeAddListener("quiz-download-paper-btn", "click", downloadExamPaperPdf);
+  safeAddListener("quiz-hint-btn", "click", showPedagogicalHint);
 
   // Question CMS Events
   safeAddListener("admin-load-questions-btn", "click", fetchAdminExamQuestions);
@@ -442,6 +544,7 @@ function setupEventListeners() {
   }
 
   safeAddListener("admin-print-vouchers-btn", "click", printAdminVouchers);
+  safeAddListener("admin-print-reseller-sheet-btn", "click", printResellerVoucherSheet);
 
   // Smart File Importer Events
   safeAddListener("admin-file-upload-input", "change", handleAdminFileUpload);
@@ -916,9 +1019,32 @@ function renderQuestion() {
   });
 
   document.getElementById("quiz-explanation-box").style.display = "none";
+  const hintBox = document.getElementById("quiz-hint-box");
+  if (hintBox) {
+    hintBox.style.display = "none";
+    hintBox.textContent = "";
+  }
   document.getElementById("quiz-verify-btn").style.display = "inline-flex";
   document.getElementById("quiz-verify-btn").disabled = true;
   document.getElementById("quiz-next-btn").style.display = "none";
+}
+
+function showPedagogicalHint() {
+  const box = document.getElementById("quiz-hint-box");
+  if (!box || !currentQuiz.exam) return;
+
+  const currentQ = currentQuiz.exam.questions[currentQuiz.currentIndex];
+  if (!currentQ) return;
+
+  let hintText = "💡 Dica de Raciocínio: Leia atentamente as opções e elimine primeiro as duas respostas mais improváveis.";
+  if (currentQ.explanation && currentQ.explanation.length > 15) {
+    const sentences = currentQ.explanation.split('.');
+    hintText = `💡 Dica de Resolução: ${sentences[0].trim()}. Concentre-se nas regras e fórmulas fundamentais desta disciplina!`;
+  }
+
+  box.textContent = hintText;
+  box.style.display = "block";
+  showToast("💡 Dica pedagógica revelada!", "info");
 }
 
 function selectOption(index) {
@@ -1260,10 +1386,16 @@ function openGamesLobby() {
 
   // Limpar timers e ecrãs
   if (gameMathTimer) clearInterval(gameMathTimer);
+  if (gameDuelTimer) clearInterval(gameDuelTimer);
+  if (gameDuelAiTimer) clearTimeout(gameDuelAiTimer);
   
   document.getElementById("game-selection-panel").style.display = "block";
   document.getElementById("game-math-arena").style.display = "none";
   document.getElementById("game-quiz-arena").style.display = "none";
+  const duelArena = document.getElementById("game-duel-arena");
+  if (duelArena) duelArena.style.display = "none";
+  const flashArena = document.getElementById("game-flashcards-arena");
+  if (flashArena) flashArena.style.display = "none";
   document.getElementById("game-over-screen").style.display = "none";
 
   showSection("games");
@@ -1448,6 +1580,262 @@ async function endQuizGame() {
 
   await submitGameScore("moz_quiz", gameQuizState.score);
   loadLeaderboard("moz_quiz");
+}
+
+// 3. Duelo 1 vs 1 Game Engine
+function startDuelGame() {
+  document.getElementById("game-selection-panel").style.display = "none";
+  document.getElementById("game-duel-arena").style.display = "block";
+  document.getElementById("game-over-screen").style.display = "none";
+
+  gameDuelState.round = 1;
+  gameDuelState.p1Score = 0;
+  gameDuelState.p2Score = 0;
+  gameDuelState.isLocked = false;
+
+  document.getElementById("duel-p1-score").textContent = "0";
+  document.getElementById("duel-p2-score").textContent = "0";
+
+  loadDuelRound();
+}
+
+function loadDuelRound() {
+  if (gameDuelTimer) clearInterval(gameDuelTimer);
+  if (gameDuelAiTimer) clearTimeout(gameDuelAiTimer);
+
+  gameDuelState.timeLeft = 15;
+  gameDuelState.isLocked = false;
+
+  document.getElementById("duel-round-text").textContent = `Rodada ${gameDuelState.round}/${gameDuelState.maxRounds}`;
+  const banner = document.getElementById("duel-round-banner");
+  if (banner) banner.style.display = "none";
+
+  const qIndex = (gameDuelState.round - 1) % duelQuestionsBank.length;
+  const q = duelQuestionsBank[qIndex];
+  gameDuelState.currentQuestion = q;
+
+  document.getElementById("duel-category-tag").textContent = q.category;
+  document.getElementById("duel-question-text").textContent = q.text;
+
+  const timerBar = document.getElementById("duel-timer-bar");
+  if (timerBar) {
+    timerBar.style.width = "100%";
+    timerBar.style.background = "linear-gradient(90deg, var(--success), var(--error))";
+  }
+
+  const container = document.getElementById("duel-options-container");
+  container.innerHTML = "";
+
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.innerHTML = `<span>${opt}</span>`;
+    btn.addEventListener("click", () => handleDuelAnswer(idx));
+    container.appendChild(btn);
+  });
+
+  const startTime = Date.now();
+  gameDuelTimer = setInterval(() => {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const remaining = Math.max(0, 15 - elapsed);
+    gameDuelState.timeLeft = remaining;
+
+    if (timerBar) {
+      const pct = (remaining / 15) * 100;
+      timerBar.style.width = `${pct}%`;
+    }
+
+    if (remaining <= 0) {
+      clearInterval(gameDuelTimer);
+      handleDuelTimeout();
+    }
+  }, 100);
+
+  // Simular resposta da IA entre 5 e 10 segundos com 75% de acerto
+  const aiDelay = Math.floor(Math.random() * 5000) + 5000;
+  gameDuelAiTimer = setTimeout(() => {
+    if (!gameDuelState.isLocked) {
+      const aiIsCorrect = Math.random() < 0.75;
+      if (aiIsCorrect) {
+        handleDuelAiCorrect();
+      }
+    }
+  }, aiDelay);
+}
+
+function handleDuelAnswer(chosenIdx) {
+  if (gameDuelState.isLocked) return;
+  gameDuelState.isLocked = true;
+
+  if (gameDuelTimer) clearInterval(gameDuelTimer);
+  if (gameDuelAiTimer) clearTimeout(gameDuelAiTimer);
+
+  const q = gameDuelState.currentQuestion;
+  const buttons = document.querySelectorAll("#duel-options-container .option-btn");
+  const banner = document.getElementById("duel-round-banner");
+
+  buttons.forEach((btn, idx) => {
+    btn.disabled = true;
+    if (idx === q.correct) btn.classList.add("correct");
+    else if (idx === chosenIdx) btn.classList.add("incorrect");
+  });
+
+  if (chosenIdx === q.correct) {
+    const speedBonus = Math.round(gameDuelState.timeLeft * 5);
+    const roundPts = 100 + speedBonus;
+    gameDuelState.p1Score += roundPts;
+    document.getElementById("duel-p1-score").textContent = gameDuelState.p1Score;
+    playAudioChime("correct");
+
+    if (banner) {
+      banner.textContent = `🎯 Correto! Respondeu primeiro (+${roundPts} pts)`;
+      banner.style.background = "rgba(16, 185, 129, 0.15)";
+      banner.style.color = "var(--success)";
+      banner.style.display = "block";
+    }
+  } else {
+    playAudioChime("wrong");
+    gameDuelState.p2Score += 80;
+    document.getElementById("duel-p2-score").textContent = gameDuelState.p2Score;
+
+    if (banner) {
+      banner.textContent = `❌ Resposta incorreta! O Adversário pontuou (+80 pts)`;
+      banner.style.background = "rgba(239, 68, 68, 0.15)";
+      banner.style.color = "var(--error)";
+      banner.style.display = "block";
+    }
+  }
+
+  setTimeout(() => {
+    gameDuelState.round++;
+    if (gameDuelState.round <= gameDuelState.maxRounds) {
+      loadDuelRound();
+    } else {
+      endDuelGame();
+    }
+  }, 1800);
+}
+
+function handleDuelAiCorrect() {
+  if (gameDuelState.isLocked) return;
+  gameDuelState.isLocked = true;
+
+  if (gameDuelTimer) clearInterval(gameDuelTimer);
+
+  const q = gameDuelState.currentQuestion;
+  const buttons = document.querySelectorAll("#duel-options-container .option-btn");
+  const banner = document.getElementById("duel-round-banner");
+
+  buttons.forEach((btn, idx) => {
+    btn.disabled = true;
+    if (idx === q.correct) btn.classList.add("correct");
+  });
+
+  const aiPts = 100 + Math.round(gameDuelState.timeLeft * 4);
+  gameDuelState.p2Score += aiPts;
+  document.getElementById("duel-p2-score").textContent = gameDuelState.p2Score;
+  playAudioChime("wrong");
+
+  if (banner) {
+    banner.textContent = `⚡ O Adversário respondeu primeiro (+${aiPts} pts)!`;
+    banner.style.background = "rgba(249, 115, 22, 0.15)";
+    banner.style.color = "#ea580c";
+    banner.style.display = "block";
+  }
+
+  setTimeout(() => {
+    gameDuelState.round++;
+    if (gameDuelState.round <= gameDuelState.maxRounds) {
+      loadDuelRound();
+    } else {
+      endDuelGame();
+    }
+  }, 1800);
+}
+
+function handleDuelTimeout() {
+  if (gameDuelState.isLocked) return;
+  gameDuelState.isLocked = true;
+
+  const banner = document.getElementById("duel-round-banner");
+  if (banner) {
+    banner.textContent = "⏱️ Tempo esgotado! Nenhum jogador pontuou.";
+    banner.style.background = "rgba(100, 116, 139, 0.15)";
+    banner.style.color = "var(--text-secondary)";
+    banner.style.display = "block";
+  }
+
+  setTimeout(() => {
+    gameDuelState.round++;
+    if (gameDuelState.round <= gameDuelState.maxRounds) {
+      loadDuelRound();
+    } else {
+      endDuelGame();
+    }
+  }, 1500);
+}
+
+async function endDuelGame() {
+  document.getElementById("game-duel-arena").style.display = "none";
+  const goScreen = document.getElementById("game-over-screen");
+
+  const isWin = gameDuelState.p1Score > gameDuelState.p2Score;
+  const isTie = gameDuelState.p1Score === gameDuelState.p2Score;
+
+  let msg = isWin 
+    ? "🏆 Grande Vitória no Duelo! Venceu a batalha de conhecimento!" 
+    : isTie 
+    ? "🤝 Empate técnico emocionante!" 
+    : "🥈 Foi por pouco! O adversário virtual venceu esta rodada. Tente novamente!";
+
+  if (isWin) playAudioChime("fanfare");
+
+  document.getElementById("game-over-points").textContent = `${gameDuelState.p1Score} vs ${gameDuelState.p2Score} Pts`;
+  document.getElementById("game-over-points").setAttribute("data-last-game", "duel");
+  document.getElementById("game-over-message").textContent = msg;
+
+  goScreen.style.display = "block";
+
+  await submitGameScore("math_rush", gameDuelState.p1Score);
+}
+
+// 4. Flashcards 3D Game Engine
+function startFlashcardsGame() {
+  document.getElementById("game-selection-panel").style.display = "none";
+  document.getElementById("game-flashcards-arena").style.display = "block";
+  document.getElementById("game-over-screen").style.display = "none";
+
+  currentFlashcardIndex = 0;
+  renderFlashcard();
+}
+
+function renderFlashcard() {
+  const cardEl = document.getElementById("flashcard-card-element");
+  if (cardEl) cardEl.classList.remove("is-flipped");
+
+  const card = flashcardsData[currentFlashcardIndex];
+  document.getElementById("flashcard-counter").textContent = `${currentFlashcardIndex + 1} / ${flashcardsData.length}`;
+  document.getElementById("flashcard-front-topic").textContent = card.topic;
+  document.getElementById("flashcard-front-text").textContent = card.front;
+  document.getElementById("flashcard-back-text").textContent = card.back;
+}
+
+function flipFlashcard() {
+  const cardEl = document.getElementById("flashcard-card-element");
+  if (cardEl) {
+    cardEl.classList.toggle("is-flipped");
+    playAudioChime("correct");
+  }
+}
+
+function nextFlashcard() {
+  currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcardsData.length;
+  renderFlashcard();
+}
+
+function prevFlashcard() {
+  currentFlashcardIndex = (currentFlashcardIndex - 1 + flashcardsData.length) % flashcardsData.length;
+  renderFlashcard();
 }
 
 // 3. Submeter pontuação à API do Servidor
@@ -3045,8 +3433,63 @@ async function printAdminVouchers() {
   }
 }
 
+function printResellerVoucherSheet() {
+  const vouchers = adminVouchersCache || [];
+  if (vouchers.length === 0) {
+    showToast("Gere primeiro um lote de raspadinhas para imprimir.", "error");
+    return;
+  }
 
-// --- IMPORTADOR INTELIGENTE POR FICHEIRO (JSON, CSV, TXT, MD) ---
+  const agentName = document.getElementById("gen-vouchers-agent")?.value.trim() || "Banca / Escola Parceira";
+  const commission = document.getElementById("gen-vouchers-commission")?.value.trim() || "10 MT / cartão";
+  const printContainer = document.getElementById("printable-vouchers-container");
+  if (!printContainer) return;
+
+  const now = new Date().toLocaleDateString("pt-MZ");
+  let cardsHtml = vouchers.map(v => {
+    const price = v.days <= 7 ? "49 MT (Semanal)" : "119 MT (Mensal)";
+    return `
+      <div style="border: 2px dashed #4f46e5; border-radius: 8px; padding: 12px; margin-bottom: 10px; break-inside: avoid; background: #fff; font-family: sans-serif; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 8px;">
+          <strong style="color: #4f46e5; font-size: 0.85rem;">VILHETE SOLUTIONS | EXAMEPRONTO</strong>
+          <span style="font-weight: 800; font-size: 0.95rem; color: #e11d48;">${price}</span>
+        </div>
+        <div style="font-size: 0.75rem; color: #475569; margin-bottom: 6px;">
+          <strong>Ponto de Venda:</strong> ${agentName} &bull; <strong>Data:</strong> ${now}
+        </div>
+        <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px; text-align: center; margin-bottom: 6px;">
+          <div style="font-size: 0.65rem; color: #64748b; text-transform: uppercase;">CÓDIGO OFICIAL DE ACESSO (RASPE AQUI)</div>
+          <div style="font-family: monospace; font-size: 1.25rem; font-weight: 800; letter-spacing: 2px; color: #0f172a;">${v.code}</div>
+        </div>
+        <div style="font-size: 0.7rem; color: #475569; line-height: 1.3;">
+          <strong>Como Ativar:</strong> 1. Aceda a <u>exame-pronto.vercel.app</u> &bull; 2. No menu, clique em <strong>Adquirir Premium</strong> &bull; 3. Digite o código.<br>
+          <span style="color: #059669; font-weight: 600;">Suporte WhatsApp: +258 849517984</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  printContainer.innerHTML = `
+    <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px solid #0f172a; padding-bottom: 10px;">
+      <h2 style="margin: 0; color: #4f46e5;">VILHETE SOLUTIONS — REDE OFICIAL DE DISTRIBUIÇÃO</h2>
+      <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #475569;">
+        Lote de Cartões de Estudo &bull; <strong>Agente Credenciado:</strong> ${agentName} &bull; <strong>Comissão da Banca:</strong> ${commission}
+      </p>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+      ${cardsHtml}
+    </div>
+  `;
+
+  document.body.className = "print-vouchers-mode";
+  window.print();
+  setTimeout(() => {
+    document.body.className = "";
+  }, 1000);
+}
+
+
+// --- IMPORTADOR INTELIGENTE POR FICHEIRO (JSON, CSV, TXT, MD, PDF) ---
 
 let pendingImportData = null;
 
@@ -3056,6 +3499,10 @@ function handleAdminFileUpload(e) {
 
   const reader = new FileReader();
   const ext = file.name.split('.').pop().toLowerCase();
+
+  if (ext === 'pdf') {
+    showToast(`📄 Ficheiro PDF "${file.name}" detetado. Para garantir extração 100% fiel, abra o PDF, copie o texto das perguntas (Ctrl+A e Ctrl+C) e cole no campo abaixo!`, "info");
+  }
 
   reader.onload = function(evt) {
     const content = evt.target.result;

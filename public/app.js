@@ -13,13 +13,17 @@ let currentLessons = []; // Caching local das lições carregadas
 
 let currentQuiz = {
   exam: null,
+  mode: "exam", // 'exam' (cronometrado) ou 'study' (com dicas e sem tempo limite)
   currentIndex: 0,
   answers: [], // { selectedOptionIndex, isCorrect }
   timerInterval: null,
-  timeRemaining: 0
+  timeRemaining: 0,
+  elapsedStudySeconds: 0
 };
 
 let activeLevel = "superior";
+let activeUniversity = "all";
+let activeYear = "all";
 let selectedPlan = "semanal";
 let authMode = "login"; // 'login' ou 'register'
 let activePayment = null; // Guardar dados da transação pendente
@@ -406,6 +410,8 @@ function setupEventListeners() {
       const selectedCard = e.currentTarget;
       selectedCard.classList.add("active");
       activeLevel = selectedCard.getAttribute("data-level");
+      activeUniversity = "all";
+      activeYear = "all";
       renderExamsList();
     });
   });
@@ -792,9 +798,24 @@ function updateProgressCardUI(completedList) {
 }
 
 // --- RENDERIZAR EXAMES DESDE A BASE DE DADOS ---
+function getUniversityBadgeClass(univ) {
+  if (!univ) return 'uem';
+  const u = univ.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (u.includes('uem')) return 'uem';
+  if (u.includes('up') || u.includes('pedagogica')) return 'up';
+  if (u.includes('zambeze')) return 'unizambeze';
+  if (u.includes('lurio')) return 'unilurio';
+  if (u.includes('isri')) return 'minedh';
+  if (u.includes('minedh')) return 'minedh';
+  if (u.includes('inatro')) return 'inatro';
+  if (u.includes('cambridge')) return 'cambridge';
+  return 'uem';
+}
+
 async function renderExamsList() {
   const container = document.getElementById("exams-list-grid");
-  container.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">A carregar simuladores...</p>`;
+  if (!container) return;
+  container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); width: 100%; padding: 30px;">A carregar simuladores...</p>`;
 
   try {
     const res = await fetch(`/api/exams?level=${activeLevel}`);
@@ -811,10 +832,108 @@ async function renderExamsList() {
       }
     }
 
+    renderUniversityAndYearFilters();
     filterAndRenderExams();
 
   } catch (e) {
-    container.innerHTML = `<p style="text-align: center; color: var(--error);">Erro ao ligar ao servidor.</p>`;
+    container.innerHTML = `<p style="text-align: center; color: var(--error); width: 100%; padding: 30px;">Erro ao ligar ao servidor de exames.</p>`;
+  }
+}
+
+function renderUniversityAndYearFilters() {
+  const univPillsContainer = document.getElementById("university-filter-pills");
+  const yearPillsContainer = document.getElementById("year-filter-pills");
+  const univLabel = document.getElementById("selected-university-label");
+  const yearLabel = document.getElementById("selected-year-label");
+
+  if (!univPillsContainer || !yearPillsContainer) return;
+
+  const exams = currentLevelExams || [];
+  
+  // 1. Contagens de Universidades
+  const univCounts = {};
+  exams.forEach(e => {
+    const u = (e.university || 'UEM').trim();
+    univCounts[u] = (univCounts[u] || 0) + 1;
+  });
+  const univKeys = Object.keys(univCounts).sort();
+
+  // Renderizar pills de universidade
+  univPillsContainer.innerHTML = "";
+  
+  // Pill "Todas"
+  const allUnivPill = document.createElement("button");
+  allUnivPill.className = `filter-pill ${activeUniversity === 'all' ? 'active' : ''}`;
+  allUnivPill.innerHTML = `🏛️ Todas <span class="pill-count">${exams.length}</span>`;
+  allUnivPill.addEventListener("click", () => {
+    activeUniversity = "all";
+    if (univLabel) univLabel.textContent = "Todas";
+    renderUniversityAndYearFilters();
+    filterAndRenderExams();
+  });
+  univPillsContainer.appendChild(allUnivPill);
+
+  univKeys.forEach(u => {
+    const pill = document.createElement("button");
+    pill.className = `filter-pill ${activeUniversity.toLowerCase() === u.toLowerCase() ? 'active' : ''}`;
+    pill.innerHTML = `<span>${escapeHtml(u)}</span> <span class="pill-count">${univCounts[u]}</span>`;
+    pill.addEventListener("click", () => {
+      activeUniversity = u;
+      if (univLabel) univLabel.textContent = u;
+      renderUniversityAndYearFilters();
+      filterAndRenderExams();
+    });
+    univPillsContainer.appendChild(pill);
+  });
+
+  if (univLabel) {
+    univLabel.textContent = activeUniversity === "all" ? "Todas" : activeUniversity;
+  }
+
+  // 2. Contagens de Anos (filtrado pela universidade selecionada se houver, ou geral)
+  const yearCounts = {};
+  exams.forEach(e => {
+    if (activeUniversity === 'all' || (e.university && e.university.toLowerCase() === activeUniversity.toLowerCase())) {
+      const y = String(e.year || '2025').trim();
+      yearCounts[y] = (yearCounts[y] || 0) + 1;
+    }
+  });
+  const yearKeys = Object.keys(yearCounts).sort((a, b) => Number(b) - Number(a));
+
+  // Renderizar pills de ano
+  yearPillsContainer.innerHTML = "";
+
+  // Pill "Todos os Anos"
+  const matchingUnivCount = activeUniversity === 'all' 
+    ? exams.length 
+    : exams.filter(e => (e.university || '').toLowerCase() === activeUniversity.toLowerCase()).length;
+
+  const allYearPill = document.createElement("button");
+  allYearPill.className = `filter-pill ${activeYear === 'all' ? 'active' : ''}`;
+  allYearPill.innerHTML = `📅 Todos <span class="pill-count">${matchingUnivCount}</span>`;
+  allYearPill.addEventListener("click", () => {
+    activeYear = "all";
+    if (yearLabel) yearLabel.textContent = "Todos os Anos";
+    renderUniversityAndYearFilters();
+    filterAndRenderExams();
+  });
+  yearPillsContainer.appendChild(allYearPill);
+
+  yearKeys.forEach(y => {
+    const pill = document.createElement("button");
+    pill.className = `filter-pill ${String(activeYear) === String(y) ? 'active' : ''}`;
+    pill.innerHTML = `<span>${escapeHtml(y)}</span> <span class="pill-count">${yearCounts[y]}</span>`;
+    pill.addEventListener("click", () => {
+      activeYear = y;
+      if (yearLabel) yearLabel.textContent = y;
+      renderUniversityAndYearFilters();
+      filterAndRenderExams();
+    });
+    yearPillsContainer.appendChild(pill);
+  });
+
+  if (yearLabel) {
+    yearLabel.textContent = activeYear === "all" ? "Todos os Anos" : activeYear;
   }
 }
 
@@ -826,19 +945,42 @@ function filterAndRenderExams() {
   const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : "";
   let list = currentLevelExams || [];
 
+  // Filtro por Universidade
+  if (activeUniversity !== "all") {
+    list = list.filter(e => (e.university || "UEM").toLowerCase() === activeUniversity.toLowerCase());
+  }
+
+  // Filtro por Ano
+  if (activeYear !== "all") {
+    list = list.filter(e => String(e.year || "").trim() === String(activeYear).trim());
+  }
+
+  // Filtro por Pesquisa de Texto
   if (searchVal) {
     list = list.filter(e => 
       (e.subject_name || "").toLowerCase().includes(searchVal) ||
       (e.level_name || "").toLowerCase().includes(searchVal) ||
+      (e.university || "").toLowerCase().includes(searchVal) ||
       (e.year || "").toString().includes(searchVal) ||
       (e.id || "").toLowerCase().includes(searchVal)
     );
   }
 
+  // Atualizar badge de contagem de exames no cabeçalho
+  const countBadge = document.getElementById("exams-count-badge");
+  if (countBadge) {
+    countBadge.textContent = `${list.length} Exame${list.length === 1 ? '' : 's'} Disponíve${list.length === 1 ? 'l' : 'is'}`;
+  }
+
   container.innerHTML = "";
 
   if (list.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); width: 100%;">Nenhum exame encontrado com os critérios de pesquisa.</p>`;
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-secondary); width: 100%; padding: 40px 20px; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px dashed var(--border-color); grid-column: 1 / -1;">
+        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Nenhum exame encontrado</p>
+        <p style="font-size: 0.88rem; color: var(--text-secondary);">Tente alterar o filtro de universidade, ano ou limpar a busca.</p>
+      </div>
+    `;
     return;
   }
 
@@ -847,6 +989,9 @@ function filterAndRenderExams() {
     if (userProgressCache) {
       completedInfo = userProgressCache.find(p => p.exam_id === exam.id);
     }
+
+    const univName = exam.university || "UEM";
+    const univSlug = getUniversityBadgeClass(univName);
 
     const card = document.createElement("div");
     card.className = "exam-card";
@@ -857,9 +1002,9 @@ function filterAndRenderExams() {
       const pct = Math.round((completedInfo.score / completedInfo.total) * 100);
       const isApproved = pct >= 50;
       scoreBadge = `
-        <div style="margin-top: 10px; padding: 6px 10px; background: ${isApproved ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 6px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="margin-top: 14px; padding: 6px 10px; background: ${isApproved ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 6px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
           <span style="color: ${isApproved ? 'var(--success)' : 'var(--error)'}; font-weight: bold;">
-            ${isApproved ? '✓ Feito:' : '⚠ Feito:'} ${completedInfo.score}/${completedInfo.total} (${pct}%)
+            ${isApproved ? '✓ Concluído:' : '⚠ Concluído:'} ${completedInfo.score}/${completedInfo.total} (${pct}%)
           </span>
           <span style="font-size: 0.75rem; color: var(--text-secondary);">
             ${new Date(completedInfo.completed_at).toLocaleDateString('pt-MZ')}
@@ -869,27 +1014,47 @@ function filterAndRenderExams() {
     }
 
     card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-        <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">${exam.subject_name}</h4>
-        ${badgeHtml}
+      <div>
+        <div class="exam-card-header">
+          <h4 class="exam-card-title">${escapeHtml(exam.subject_name)}</h4>
+          <div class="exam-badges-wrap">
+            <span class="badge-university ${univSlug}">${escapeHtml(univName)}</span>
+            <span class="badge-year">${exam.year}</span>
+            ${badgeHtml}
+          </div>
+        </div>
+        <div class="exam-card-meta">
+          <span>📚 ${escapeHtml(exam.level_name)}</span>
+          <span>⏱️ ${exam.duration_minutes || 120} Min</span>
+          <span>📝 40 Questões Oficiais</span>
+        </div>
       </div>
-      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
-        <div>📚 ${exam.level_name} (${exam.year})</div>
-        <div>⏱️ Duração: ${exam.duration_minutes || 120} Minutos</div>
+      <div class="exam-card-actions">
+        <button class="btn btn-sm btn-outline btn-study-exam" data-id="${exam.id}" title="Modo Estudo: Resolução sem pressão de tempo com explicações passo a passo e dicas">
+          📖 Modo Estudo
+        </button>
+        <button class="btn btn-sm btn-primary btn-start-exam" data-id="${exam.id}" title="Simular Prova: Simulação oficial cronometrada com contagem regressiva">
+          ⏱️ Simular Prova
+        </button>
       </div>
-      <button class="btn btn-sm btn-primary btn-start-exam" data-id="${exam.id}" style="width: 100%;">
-        Começar Simulado
-      </button>
       ${scoreBadge}
     `;
 
     container.appendChild(card);
   });
 
+  // Action listeners para Modo Estudo e Simular Prova
+  container.querySelectorAll(".btn-study-exam").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const examId = e.currentTarget.getAttribute("data-id");
+      startExam(examId, 'study');
+    });
+  });
+
   container.querySelectorAll(".btn-start-exam").forEach(btn => {
     btn.addEventListener("click", (e) => {
       const examId = e.currentTarget.getAttribute("data-id");
-      startExam(examId);
+      startExam(examId, 'exam');
     });
   });
 }
@@ -938,7 +1103,7 @@ function handleUrlRouting() {
 }
 
 // --- FLUXO DO QUIZ SEGURO ---
-async function startExam(examId) {
+async function startExam(examId, mode = 'exam') {
   if (!jwtToken) {
     alert("🔒 Autenticação Necessária!\n\nDeves iniciar sessão para realizar exames.");
     openAuthModal();
@@ -958,9 +1123,11 @@ async function startExam(examId) {
     const exam = await res.json();
     
     currentQuiz.exam = exam;
+    currentQuiz.mode = mode; // 'exam' ou 'study'
     currentQuiz.currentIndex = 0;
     currentQuiz.answers = [];
-    currentQuiz.timeRemaining = exam.durationMinutes * 60;
+    currentQuiz.elapsedStudySeconds = 0;
+    currentQuiz.timeRemaining = (exam.durationMinutes || exam.duration_minutes || 120) * 60;
 
     renderQuestion();
     startTimer();
@@ -978,8 +1145,22 @@ function startTimer() {
 
   const timerText = document.getElementById("quiz-timer");
   const timerContainer = document.getElementById("quiz-timer-container");
+  if (!timerText || !timerContainer) return;
   timerContainer.classList.remove("warning");
 
+  if (currentQuiz.mode === 'study') {
+    timerText.textContent = "00:00:00 (Estudo)";
+    currentQuiz.timerInterval = setInterval(() => {
+      currentQuiz.elapsedStudySeconds = (currentQuiz.elapsedStudySeconds || 0) + 1;
+      const hrs = Math.floor(currentQuiz.elapsedStudySeconds / 3600);
+      const mins = Math.floor((currentQuiz.elapsedStudySeconds % 3600) / 60);
+      const secs = currentQuiz.elapsedStudySeconds % 60;
+      timerText.textContent = `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")} (Estudo)`;
+    }, 1000);
+    return;
+  }
+
+  // Modo Simulado Prova Cronometrada
   currentQuiz.timerInterval = setInterval(() => {
     currentQuiz.timeRemaining--;
 
@@ -1005,7 +1186,9 @@ function renderQuestion() {
   const exam = currentQuiz.exam;
   const question = exam.questions[currentQuiz.currentIndex];
 
-  document.getElementById("quiz-exam-title").textContent = `${exam.subject_name} (${exam.year})`;
+  const modeBadge = currentQuiz.mode === 'study' ? '📖 Modo Estudo' : '⏱️ Simulado Oficial';
+  const univLabel = exam.university ? ` - ${exam.university}` : '';
+  document.getElementById("quiz-exam-title").textContent = `${modeBadge}: ${exam.subject_name} (${exam.year})${univLabel}`;
   document.getElementById("quiz-question-counter").textContent = `Pergunta ${currentQuiz.currentIndex + 1} de ${exam.questions.length}`;
   document.getElementById("quiz-question-number").textContent = `QUESTÃO ${question.number}`;
   

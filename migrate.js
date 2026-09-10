@@ -40,8 +40,12 @@ const schema = [
     subject TEXT NOT NULL,
     subject_name TEXT NOT NULL,
     year INTEGER NOT NULL,
-    duration_minutes INTEGER DEFAULT 120
+    duration_minutes INTEGER DEFAULT 120,
+    university TEXT DEFAULT 'UEM'
   );`,
+
+  // Garante que a coluna de universidade é adicionada se a tabela já existir
+  `ALTER TABLE exams ADD COLUMN IF NOT EXISTS university TEXT DEFAULT 'UEM';`,
 
   // 3. Tabela de Perguntas
   `CREATE TABLE IF NOT EXISTS questions (

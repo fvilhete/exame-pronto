@@ -203,7 +203,42 @@
 
           <!-- Exams List -->
           <div class="exams-list-container">
-            <h3 class="uni-section-title"><span></span>2. Exames e Simulados Disponíveis</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+              <h3 class="uni-section-title" style="margin-bottom: 0;"><span></span>2. Exames e Simulados Disponíveis</h3>
+              <span id="exams-count-badge" class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.85rem; padding: 6px 14px; border-radius: 20px; font-weight: 700;">Carregando...</span>
+            </div>
+
+            <!-- Filtros Modernos por Universidade & Ano (Padrão Internacional) -->
+            <div class="filter-controls-container" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; margin-bottom: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+              
+              <!-- 1. Linha de Universidades / Instituições -->
+              <div id="university-filter-wrapper" style="margin-bottom: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                    🏛️ Filtrar por Instituição / Universidade:
+                  </span>
+                  <span id="selected-university-label" style="font-size: 0.8rem; color: var(--primary); font-weight: 600;">Todas</span>
+                </div>
+                <div class="filter-pills-row" id="university-filter-pills">
+                  <!-- JS vai preencher os pills de universidades com badges e contagens -->
+                </div>
+              </div>
+
+              <!-- 2. Linha de Anos -->
+              <div id="year-filter-wrapper">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                    📅 Filtrar por Ano da Prova:
+                  </span>
+                  <span id="selected-year-label" style="font-size: 0.8rem; color: var(--accent); font-weight: 600;">Todos os Anos</span>
+                </div>
+                <div class="filter-pills-row" id="year-filter-pills">
+                  <!-- JS vai preencher os pills de anos -->
+                </div>
+              </div>
+
+            </div>
+
             <div class="exams-grid" id="exams-list-grid">
               <!-- JS will populate this list from Server Database -->
             </div>

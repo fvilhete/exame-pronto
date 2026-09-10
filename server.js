@@ -257,14 +257,24 @@ app.get('/api/user/profile', requireAuth, (req, res) => {
 // --- ROTAS DE EXAMES ---
 
 app.get('/api/exams', (req, res) => {
-  const { level } = req.query;
-  let query = "SELECT id, level, level_name, subject, subject_name, year, duration_minutes FROM exams";
+  const { level, university, year } = req.query;
+  let query = "SELECT id, level, level_name, subject, subject_name, year, duration_minutes, COALESCE(university, 'UEM') as university FROM exams WHERE 1=1";
   let params = [];
 
   if (level) {
-    query += " WHERE level = ?";
+    query += " AND level = ?";
     params.push(level);
   }
+  if (university && university !== 'all') {
+    query += " AND university = ?";
+    params.push(university);
+  }
+  if (year && year !== 'all') {
+    query += " AND year = ?";
+    params.push(parseInt(year, 10));
+  }
+
+  query += " ORDER BY year DESC, subject_name ASC";
 
   db.all(query, params, (err, rows) => {
     if (err) {
@@ -289,7 +299,12 @@ app.get('/api/exams/:id', authenticateToken, async (req, res) => {
       }
 
       const sanitizedQuestions = questions.map((q) => {
-        const parsedOptions = JSON.parse(q.options);
+        let parsedOptions = [];
+        try {
+          parsedOptions = JSON.parse(q.options);
+        } catch (e) {
+          parsedOptions = [];
+        }
         
         if (isPremium || q.number <= 3) {
           return {
@@ -317,6 +332,7 @@ app.get('/api/exams/:id', authenticateToken, async (req, res) => {
         subject: exam.subject,
         subject_name: exam.subject_name,
         year: exam.year,
+        university: exam.university || 'UEM',
         durationMinutes: exam.duration_minutes,
         questions: sanitizedQuestions,
         isPremiumLoaded: isPremium
@@ -861,13 +877,13 @@ app.post('/api/admin/vouchers/generate', requireAdmin, (req, res) => {
 
 // 5. Criar um novo exame
 app.post('/api/admin/exams', requireAdmin, (req, res) => {
-  const { id, level, level_name, subject, subject_name, year, duration_minutes } = req.body;
+  const { id, level, level_name, subject, subject_name, year, duration_minutes, university } = req.body;
   if (!id || !level || !level_name || !subject || !subject_name || !year) {
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios do exame.' });
   }
   db.run(
-    `INSERT INTO exams (id, level, level_name, subject, subject_name, year, duration_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, level, level_name, subject, subject_name, parseInt(year), parseInt(duration_minutes) || 120],
+    `INSERT INTO exams (id, level, level_name, subject, subject_name, year, duration_minutes, university) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, level, level_name, subject, subject_name, parseInt(year), parseInt(duration_minutes) || 120, university || 'UEM'],
     function(err) {
       if (err) return res.status(500).json({ error: 'Erro ao criar exame: ' + err.message });
       res.status(201).json({ message: 'Exame criado com sucesso.', examId: id });

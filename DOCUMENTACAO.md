@@ -1,7 +1,7 @@
-# Documentação Oficial e Operacional do Sistema: ExamePronto 4.0
-### Plataforma Nacional de Preparação Escolar, Ensino Superior (UEM), Cambridge e Condução
+# Documentação Oficial e Operacional do Sistema: ExamePronto 5.0
+### Plataforma Nacional de Preparação para o Ensino Superior (UEM, UP, UniZambeze, UniLúrio), Ensino Geral (MINEDH), Cambridge e Condução (INATRO)
 **Propriedade:** Vilhete Solutions | Moçambique  
-**Versão Atual:** 4.0 (Produção Global)  
+**Versão Atual:** 5.0 Enterprise Edition  
 **Data da Revisão:** Setembro de 2026  
 **Repositório Oficial:** `https://github.com/fvilhete/exame-pronto.git` (Branch `main`)  
 
@@ -9,132 +9,157 @@
 
 ## 1. Guia Prático: Como Processar Enunciados em PDF e Fotos/Imagens de Exames
 
-A **Vilhete Solutions** recebe frequentemente enunciados em papel, fotos tiradas com telemóvel ou documentos PDF do Ministério da Educação, INATRO e Comissões de Exames de Admissão. O ExamePronto 4.0 inclui um fluxo simplificado para transformar qualquer prova num simulador interativo em menos de 2 minutos.
+A **Vilhete Solutions** recebe continuamente enunciados em papel, fotos tiradas por telemóvel e arquivos PDF de comissões de exames de várias universidades moçambicanas e do Ministério da Educação. O sistema dispõe de duas vias de processamento:
 
-### 1.1. Se recebeu uma Foto ou Imagem de Prova em Papel:
-1. No seu telemóvel (Android ou iPhone), abra a fotografia no **Google Fotos** ou aponte a câmara com o **Google Lens**.
-2. Toque no botão **"Texto"** -> **"Selecionar Tudo"** -> **"Copiar Texto"**.
-3. Aceda ao painel Admin do ExamePronto em `/admin` -> Separador **"Adicionar Conteúdo"**.
-4. No campo **"Cole aqui o texto do PDF ou da foto do exame"**, cole o texto copiado.
-5. Clique em **"🔍 Auto-Formatar e Processar Perguntas"**. O algoritmo inteligente separa automaticamente o número da questão, o enunciado e as opções A, B, C, D (e E se aplicável).
-6. Selecione o Exame de destino e clique em **"🚀 Gravar no Supabase"**. As perguntas ficam imediatamente disponíveis online para os estudantes!
+### 1.1. Via Painel Administrativo CMS (`/admin`):
+1. **Fotos de Enunciados:** Abra a foto no telemóvel com o **Google Lens** ou Google Fotos, copie o texto extraído.
+2. Aceda a `/admin` -> Separador **"Adicionar Conteúdo"**.
+3. Cole o texto no campo **"Cole aqui o texto do PDF ou da foto do exame"**.
+4. Clique em **"🔍 Auto-Formatar e Processar Perguntas"**. O algoritmo identifica automaticamente o número da questão, enunciado e as opções A, B, C, D e E.
+5. Selecione o Exame de destino e clique em **"🚀 Gravar no Supabase"**.
 
-### 1.2. Se recebeu um Ficheiro PDF:
-1. Abra o ficheiro PDF no seu computador ou telemóvel.
-2. Selecione o texto das perguntas com `Ctrl + A` e copie com `Ctrl + C`.
-3. Cole no campo de importação do Admin e clique em **"🔍 Auto-Formatar e Processar Perguntas"**.
-4. Se o PDF estiver em formato texto simples, também pode carregá-lo diretamente no botão **"Carregar Ficheiro (PDF, TXT, CSV, JSON)"**.
+### 1.2. Via Motor Mestre Universal de Ingestão (`ingest_master_exams.js`):
+Para processar centenas de exames em lote diretamente das pastas de PDFs, utilize o novo script automatizado (detalhado na Secção 6).
 
 ---
 
 ## 2. Rede de Distribuição de Raspadinhas em Escolas e Bancas (POS Vilhete Solutions)
 
-Para alcançar os milhares de estudantes em Moçambique que não possuem conta bancária ou têm saldo M-Pesa limitado, o sistema dispõe do **Módulo de Revenda por Agentes Locais**:
+Para contornar as limitações de contas bancárias e permitir que qualquer aluno compre acesso mesmo com notas de dinheiro físico em papel:
 
-### 2.1. Como Funciona o Modelo de Negócio:
-* **Ponto de Venda Parceiro:** Papelarias escolares perto de escolas secundárias (ex.: Josina Machel, Francisco Manyanga), bancas de jornais e cantinas.
-* **Preço Final ao Aluno:** 49 MT (Acesso Semanal) ou 119 MT (Acesso Mensal).
-* **Margem do Revendedor:** 10 MT por cartão vendido (lucro de 20% para a banca).
-* **Receita Líquida da Vilhete Solutions:** 39 MT por cartão semanal vendido.
+### 2.1. Modelo de Parceria Comercial:
+* **Pontos de Venda Parceiros:** Papelarias próximas a escolas secundárias (ex.: Josina Machel, Francisco Manyanga, Noroeste 1, Matola), bancas de jornais e cantinas escolares.
+* **Preço de Venda ao Aluno:** 49 MT (Acesso Semanal) | 119 MT (Acesso Mensal).
+* **Comissão do Agente/Banca:** 10 MT por cartão vendido (lucro direto de 20% para a banca).
+* **Receita Líquida Vilhete Solutions:** 39 MT por cartão semanal vendido.
 
-### 2.2. Como Gerar e Imprimir os Cartões:
-1. Aceda a `/admin` -> Separador **"🎟️ Vouchers & Raspadinhas"**.
-2. Defina a **Quantidade** (ex.: 20 ou 50 cartões), selecione a **Duração** (7 ou 30 dias).
-3. Preencha o campo **Agente / Ponto de Venda** (ex.: *"Papelaria Escola Secundária da Matola"*).
-4. Clique em **"+ Gerar Lote"**.
-5. Clique no botão **"🖨️ Imprimir Cartões de Revenda (A4)"**. O sistema gera automaticamente uma folha A4 com os cartões formatados com a marca oficial da Vilhete Solutions, código com área para raspar, instruções de ativação e WhatsApp de suporte (`+258 849517984`).
+### 2.2. Geração e Impressão de Lotes de Raspadinhas:
+1. No menu Admin, abra o separador **"🎟️ Vouchers & Raspadinhas"**.
+2. Escolha o número de cartões (ex.: 50 cartões), a duração (7 ou 30 dias) e o nome do agente (ex.: *"Banca Central - Av. 24 de Julho"*).
+3. Clique em **"+ Gerar Lote"** e depois em **"🖨️ Imprimir Cartões de Revenda (A4)"**.
+4. A impressora produz uma folha de alta qualidade pronta para recortar, com logótipo da Vilhete Solutions, código com área para raspar e instruções passo a passo.
 
 ---
 
 ## 3. Modo "Duelo 1 vs 1" (Batalha de Conhecimento)
 
 Disponível no lobby de **Jogos Educativos** (`/games`):
-* **Mecânica:** 5 rodadas rápidas com temporizador decrescente de 15 segundos por pergunta.
-* **Pontuação Dinâmica:** 100 pontos base por acerto + bónus de velocidade calculado com base nos segundos restantes.
-* **Adversário Inteligente (IA):** O sistema simula um competidor virtual com tempo de resposta humano (5 a 10 segundos) e taxa de acerto realista de 75%.
-* **Efeitos e Gamificação:** Sons interativos de acerto e erro via Web Audio API, animação de barras de vida/tempo e ecrã de vitória com fanfarra.
+* **Formato:** 5 rondas rápidas de confronto intelectual com relógio de 15 segundos por pergunta.
+* **Pontuação:** 100 pontos por acerto + pontuação extra calculada pelo tempo restante no relógio.
+* **Competidor Virtual Inteligente (IA):** Simula um estudante moçambicano real com tempo de reflexão de 5 a 10 segundos e taxa de acerto equilibrada de 75%.
+* **Áudio e Efeitos:** Sons comemorativos via Web Audio API e fanfarra no final com ranking atualizado.
 
 ---
 
 ## 4. Inovações Inspiradas em Plataformas Internacionais
 
-1. **Flashcards 3D (estilo Quizlet / Anki):**
-   * Cartões interativos que viram em 3D ao toque.
-   * Contém fórmulas essenciais de Física (\(F = m \cdot a\), \(v = \frac{d}{t}\)), Matemática (Bhaskara, Progressões Aritméticas), regras do Código da Estrada (INATRO) e marcos históricos de Moçambique.
-2. **Dica Pedagógica Inteligente ("💡 Pedir Dica" - estilo Khan Academy):**
-   * No simulador de exames (Quiz Arena), o aluno pode clicar no botão **"💡 Pedir Dica"** caso esteja com dificuldades. O sistema extrai a essência do raciocínio sem revelar diretamente a letra da resposta correta.
-3. **Distribuição PWA Direta (Sem Custos da Play Store):**
-   * O ExamePronto funciona como uma **Progressive Web App (PWA)** instalável diretamente pelo navegador (Google Chrome / Safari) tocando em *"Adicionar ao Ecrã Principal"*.
-   * Não necessita do pagamento inicial de 25 USD da conta de programador da Google Play Store nem comissões de 15-30% por transação.
-   * O Service Worker `v3.7` com estratégia **Network-First** garante funcionamento sem falhas e atualizações automáticas sempre que houver conexão à internet.
+Baseado nas melhores práticas mundiais (**Khan Academy**, **Quizlet**, **UWorld**, **Anki** e **Enem Brasil**):
+1. **Flashcards 3D com Repetição Espaçada:** Cartões interativos com rotação tridimensional para memorização rápida de fórmulas de Física, regras de Química e conceitos de Biologia.
+2. **Botão "Pedir Dica" Pedagógica:** Inspirado na Khan Academy, permite ao estudante pedir uma pista de raciocínio lógico antes de submeter a resposta, reduzindo a ansiedade do exame.
+3. **Leitura por Voz (TTS):** Botão 🔊 para sintetizar a leitura em áudio dos enunciados para estudantes com baixa visão ou em estudo auditivo.
+4. **PWA Instalável com Zero Custo de Google Play:** O site funciona offline e pode ser instalado no ecrã principal do telemóvel sem necessidade de pagar a taxa de desenvolvedor da Google Play Store ($25 USD).
 
 ---
 
-## 5. Reconhecimento Universal de Caracteres Especiais, Acentos e Fórmulas
+## 5. Arquitetura de Categorização por Universidade & Ano (Padrão Internacional)
 
-O ExamePronto v4.0 possui um motor inteligente de ingestão com suporte total a:
-1. **Acentuação Portuguesa Integral:** Acentos agudos, graves, circunflexos, tis e cedilhas (`á, é, í, ó, ú, à, â, ê, ô, ã, õ, ç`) normalizados canonicamente via padrão Unicode NFC.
-2. **Símbolos Científicos e Matemáticos:**
-   * Potências e Expoentes: `x²`, `x³`, `x⁴`, `m/s²`, `10⁻⁷`, `cm³`.
-   * Raízes e Operadores: `√`, `∛`, `±`, `∓`, `×`, `÷`, `·`, `≠`, `≤`, `≥`, `≈`.
-   * Letras Gregas & Variáveis: `Δ`, `π`, `θ`, `λ`, `α`, `β`, `μ`, `Ω`.
-   * Fórmulas Químicas e Índices: `H₂O`, `CO₂`, `[H⁺]`, `[OH⁻]`, `pH < 7`.
-3. **Proteção Contra Ficheiros Windows (ANSI / Windows-1252):**
-   * Ficheiros de texto criados no Bloco de Notas ou Excel do Windows frequentemente gravam caracteres em codificação legada ANSI. O sistema deteta automaticamente e converte para UTF-8 sem produzir caracteres corrompidos (``).
-   * Ficheiros com marcador UTF-8 BOM (`\uFEFF`) são higienizados na leitura, garantindo que a primeira pergunta do exame seja sempre importada com sucesso.
-4. **Renderização Segura de Expressões Lógicas:**
-   * Expressões de desigualdade como `x < 4` ou `0 < x < 5` são higienizadas via `escapeHtml()`, prevenindo que o navegador interprete sinais de menor/maior como tags HTML.
+Para proporcionar uma navegação estética e fluida equivalente a portais internacionais:
 
----
+### 5.1. Estrutura do Banco de Dados (Supabase PostgreSQL):
+* A tabela `exams` foi expandida com a coluna oficial `university`:
+```sql
+ALTER TABLE exams ADD COLUMN IF NOT EXISTS university TEXT DEFAULT 'UEM';
+```
+* Todas as provas existentes foram normalizadas:
+  - Admissão Superior -> `'UEM'`, `'UP'`, `'UniZambeze'`, `'UniLúrio'`, `'ISRI'`, `'UDM'`
+  - Ensino Secundário -> `'MINEDH'`
+  - Exames de Condução -> `'INATRO'`
+  - Exames Internacionais -> `'Cambridge'`
 
-## 6. Banco Oficial de Exames de Admissão à UEM 2025 (Ensino Superior)
+### 5.2. Interface do Utilizador (UI/UX):
+* **Linha de Instituições (Pills com Contadores):** Pills modernos (`🏛️ Todas`, `UEM`, `UP`, `UniZambeze`, etc.) exibindo o número exacto de exames disponíveis para cada universidade.
+* **Linha de Anos (Pills com Contadores):** Pills cronológicos decrescentes (`📅 Todos`, `2025`, `2024`, `2023`, `2022`, etc.).
+* **Badges Institucionais com Cores Oficiais:**
+  - `UEM`: Azul Real (`#2563eb`)
+  - `UP`: Verde Esmeralda (`#10b981`)
+  - `UniZambeze`: Âmbar Dourado (`#f59e0b`)
+  - `UniLúrio`: Ciano Oceânico (`#06b6d4`)
+  - `MINEDH`: Violeta Governamental (`#8b5cf6`)
+  - `INATRO`: Laranja Rodoviário (`#f97316`)
+  - `Cambridge`: Índigo Académico (`#4f46e5`)
 
-O ExamePronto 4.0 integra o acervo integral dos **20 exames oficiais de admissão de 2025** da **Universidade Eduardo Mondlane (UEM)**, correspondendo a **800 perguntas completas** com opções (A a E), respostas verificadas e soluções comentadas passo a passo.
-
-### 6.1. Catálogo Completo dos 20 Exames UEM 2025:
-
-| # | ID do Exame | Disciplina / Prova Oficial | Ano | Questões | Status no Sistema |
-|---|---|---|:---:|:---:|:---:|
-| 1 | `uem-bio-1-2025` | **Biologia I** (Citologia, Fotossíntese, Histologia) | 2025 | 40 | ✅ Activo |
-| 2 | `uem-bio-2-2025` | **Biologia II** (Genética, Evolução, Fisiologia) | 2025 | 40 | ✅ Activo |
-| 3 | `uem-bio-3-2025` | **Biologia III** (Reprodução Humana, Saúde Pública) | 2025 | 40 | ✅ Activo |
-| 4 | `uem-fil-2025` | **Filosofia** (Lógica Formal, Filosofia Africana, Ética) | 2025 | 40 | ✅ Activo |
-| 5 | `uem-fis-1-2025` | **Física I** (Termodinâmica, Óptica, Física Moderna) | 2025 | 40 | ✅ Activo |
-| 6 | `uem-fis-2-2025` | **Física II** (Electromagnetismo, Ondas, Relatividade) | 2025 | 40 | ✅ Activo |
-| 7 | `uem-fra-2025` | **Francês** (Interpretação Textual, Gramática e Sintaxe) | 2025 | 40 | ✅ Activo |
-| 8 | `uem-geo-1-2025` | **Geografia I** (Geografia Física e Recursos de Moçambique) | 2025 | 40 | ✅ Activo |
-| 9 | `uem-geo-2-2025` | **Geografia II** (Geografia Humana, Demografia e Climas) | 2025 | 40 | ✅ Activo |
-| 10 | `uem-his-1-2025` | **História I** (Estados Pré-Coloniais, Penetração Mercantil) | 2025 | 40 | ✅ Activo |
-| 11 | `uem-his-2-2025` | **História II** (Luta Armada de Libertação, FRELIMO, Paz) | 2025 | 40 | ✅ Activo |
-| 12 | `uem-ing-2025` | **Inglês** (Reading Comprehension, Idioms, Advanced Grammar) | 2025 | 40 | ✅ Activo |
-| 13 | `uem-mat-1-2025` | **Matemática I** (Funções, Inequações Modulares, Limites) | 2025 | 40 | ✅ Activo |
-| 14 | `uem-mat-2-2025` | **Matemática II** (Progressões, Derivadas e Optimização) | 2025 | 40 | ✅ Activo |
-| 15 | `uem-mat-3-2025` | **Matemática III** (Trigonometria, Análise Combinatória, Probabilidades) | 2025 | 40 | ✅ Activo |
-| 16 | `uem-por-1-2025` | **Português I** (Interpretação Textual, Gramática Normativa) | 2025 | 40 | ✅ Activo |
-| 17 | `uem-por-2-2025` | **Português II** (Defesa da Leitura, Sintaxe e Estilística) | 2025 | 40 | ✅ Activo |
-| 18 | `uem-por-3-2025` | **Português III** (Ensaio Mia Couto, Literatura Moçambicana) | 2025 | 40 | ✅ Activo |
-| 19 | `uem-qui-1-2025` | **Química I** (Cinética, Equilíbrio Químico, Orgânica) | 2025 | 40 | ✅ Activo |
-| 20 | `uem-qui-2-2025` | **Química II** (Electroquímica, pH, Soluções e Polímeros) | 2025 | 40 | ✅ Activo |
-
-### 6.2. Como o Candidato Estuda e Pratica:
-1. No menu principal ou no topo do site, selecione o nível **"Ensino Superior (Admissão UEM)"**.
-2. Na lista pendente de exames, o aluno visualiza todas as 20 provas oficiais UEM 2025 organizadas por disciplina.
-3. Ao iniciar o exame:
-   * **Temporizador Oficial:** 90 minutos de contagem regressiva, simulando as condições reais da prova presencial da UEM.
-   * **Navegação por Questão:** O aluno pode avançar, retroceder e marcar perguntas para rever antes de submeter.
-   * **Gabarito e Soluções Detalhadas:** Ao concluir a prova, o sistema calcula a pontuação oficial em escala de 0 a 20 valores e apresenta a explicação fundamentada de cada resposta.
-
-### 6.3. Proteção e Conversão Freemium:
-* **Perguntas 1 a 3 Gratuitas:** Qualquer estudante pode realizar as 3 primeiras perguntas de qualquer exame sem pagar nada para atestar a alta qualidade pedagógica do ExamePronto.
-* **Perguntas 4 a 40 Protegidas:** Ao atingir a 4ª questão, uma janela elegante de desbloqueio surge convidando o estudante a inserir o código da sua **Raspadinha Vilhete Solutions** ou efetuar pagamento via **M-Pesa** (`849517984`) ou **mKesh** (`826727204`).
-* A ativação desbloqueia instantaneamente todas as 40 perguntas do exame, permitindo treinar repetidas vezes.
+### 5.3. Ações Duplas por Exame (Padrão UWorld / Khan Academy):
+Cada exame no catálogo oferece duas abordagens de aprendizagem:
+1. **📖 Modo Estudo:** Resolução descontraída, sem pressão de tempo limite decrescente, com botão "Pedir Dica" ativo e explicações passo a passo imediatas após selecionar a alternativa.
+2. **⏱️ Simular Prova:** Simulação oficial cronometrada (90 a 120 minutos) com contagem regressiva rigorosa e submissão automática caso o tempo se esgote, reproduzindo com fidelidade o dia do exame real.
 
 ---
 
-## 7. Arquitetura de Produção, Deploy e Banco de Dados
+## 6. Manual do Motor Mestre de Ingestão de Exames em PDF (`scripts/ingest_master_exams.js`)
 
-* **Hospedagem Web:** Vercel Global Edge Network com deploy automático acionado por push na branch `main` do GitHub.
-* **Base de Dados:** Supabase PostgreSQL com pooling de conexões seguro via SSL e codificação forçada `UTF8` (`DATABASE_URL`).
-* **Segurança de Pagamentos:** Zero custos de comissão de intermediários; validação administrativa e ativação instantânea por raspadinhas de 12 dígitos com verificação de uso único no banco de dados.
+O script foi concebido especificamente para **correr directamente dentro de qualquer pasta do computador** que contenha ficheiros PDF de exames.
+
+### 6.1. Como Executar:
+
+#### Opção A — Executar na Própria Pasta dos PDFs:
+Abra a linha de comandos / terminal dentro da pasta onde estão os arquivos PDF (ou copie o ficheiro `scripts/ingest_master_exams.js` para lá) e execute:
+```bash
+node ingest_master_exams.js
+```
+O script reconhece automaticamente o directório de trabalho atual (`process.cwd()`), faz busca recursiva em todas as subpastas e processa os ficheiros encontrados.
+
+#### Opção B — Executar a partir da pasta do projeto apontando para qualquer pasta:
+```bash
+node scripts/ingest_master_exams.js --dir "C:\Users\fvilh\Downloads\Kico\UEM"
+```
+
+### 6.2. Funcionalidades do Motor:
+1. **Auto-Detecção de Metadados:**
+   - **Universidade:** Lê o nome do arquivo e o cabeçalho textual das primeiras páginas para identificar `UEM`, `UP`, `UniZambeze`, `UniLúrio`, `ISRI`, `UDM`, `MINEDH` ou `INATRO`.
+   - **Ano:** Identifica padrões de 4 dígitos entre 2015 e 2026.
+   - **Disciplina:** Mapeia variantes como Matemática I, II, III; Física I, II; Biologia I, II, III; Português I, II, III, IV; Química I, II; etc.
+2. **Segmentador Híbrido Resiliente:**
+   - Extrai enunciados e opções mesmo em ficheiros com diagramação em duas colunas ou pequenos erros de OCR.
+   - Normaliza opções A, B, C, D e E.
+   - Garante a completude de 40 questões por exame.
+3. **Persistência Transaccional Supabase:**
+   - Atualiza a tabela `exams` e insere as questões em `questions` com garantia ACID (rollback automático em caso de erro).
+   - Preserva codificação `UTF-8 NFC` e símbolos científicos (`²`, `³`, `√`, `π`, `Δ`, `α`, `β`, `CO₂`, `H₂SO₄`).
+
+---
+
+## 7. Sugestões de Melhorias Alinhadas com Padrões Internacionais
+
+Para elevar o **ExamePronto** ao patamar das plataformas líderes mundiais:
+
+### 7.1. Modo Duplo de Resolução (Já Implementado):
+Separar "Modo Estudo" (com dicas e sem tempo limite) de "Simular Prova" (cronometrado com contagem decrescente). Isto elimina a frustração dos alunos iniciantes e atende quem quer treinar ritmo de prova.
+
+### 7.2. Índice de Prontidão do Aluno ("Exam Readiness Score" — Estilo UWorld):
+* Em vez de mostrar apenas percentagem média simples, calcular uma nota preditiva ponderada:
+  $$\text{Índice de Prontidão} = (\text{Média dos Últimos 5 Testes} \times 0.6) + (\text{Consistência de Resposta} \times 0.4)$$
+* Exibir um selo visual dinâmico no painel do aluno:
+  - 🔴 *Ainda não Preparado* (< 50%)
+  - 🟡 *Preparação Média — Reforçar Fraquezas* (50% - 69%)
+  - 🟢 *Pronto para Admissão!* (≥ 70%)
+
+### 7.3. Gerador Automático de Flashcards a partir dos Erros do Estudante:
+* Sempre que o aluno errar uma pergunta no simulado, o sistema deve adicionar essa questão automaticamente ao "Deck de Revisão Inteligente" do estudante.
+* Utiliza o algoritmo de Repetição Espaçada (SuperMemo-2 / Anki) para reapresentar essas perguntas 24 horas, 3 dias e 7 dias depois.
+
+### 7.4. Baixar Caderno de Exame Completo em PDF para Estudo Offline:
+* Muitos estudantes moçambicanos vivem em áreas com acesso intermitente à Internet ou custos altos de dados móveis.
+* Disponibilizar um botão "📥 Baixar Caderno em PDF" que gera o teste impresso em folha A4 com um QR Code no rodapé que, ao ser escaneado pela câmara do telemóvel, abre diretamente a resolução passo a passo no ExamePronto.
+
+### 7.5. Suporte Auditivo (Áudio-Enunciados para Inclusão e Acessibilidade):
+* Permitir ouvir o texto da questão com a voz nativa do telemóvel (Web Speech API).
+* Permite que os estudantes estudem no transporte público (chapas), enquanto caminham ou enquanto descansam a visão.
+
+---
+
+## 8. Arquitetura de Produção, Deploy e Banco de Dados
+
+* **Hospedagem Web:** Vercel Global Edge Network com deploy contínuo via push na branch `main` do GitHub.
+* **Base de Dados:** Supabase PostgreSQL com pooling seguro via SSL e codificação forçada `UTF8` (`DATABASE_URL`).
+* **Segurança de Pagamentos:** Ativação instantânea por raspadinhas de 12 dígitos com verificação de uso único no banco de dados e suporte a M-Pesa / mKesh.
 * **Canal Oficial de Atendimento:** WhatsApp Vilhete Solutions (`+258 849517984`).
-

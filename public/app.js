@@ -540,6 +540,7 @@ function setupEventListeners() {
   safeAddListener("quiz-download-paper-btn", "click", downloadExamPaperPdf);
   safeAddListener("quiz-hint-btn", "click", showPedagogicalHint);
   initQuizImageLightbox();
+  initQuizScratchpad();
 
   // Question CMS Events
   safeAddListener("admin-load-questions-btn", "click", fetchAdminExamQuestions);
@@ -1183,6 +1184,25 @@ function startTimer() {
   }, 1000);
 }
 
+function renderMathFormulas(element) {
+  if (!element) return;
+  if (typeof renderMathInElement === 'function') {
+    try {
+      renderMathInElement(element, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "\\[", right: "\\]", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } catch (e) {
+      console.warn("KaTeX render error:", e);
+    }
+  }
+}
+
 function renderQuestion() {
   const exam = currentQuiz.exam;
   const question = exam.questions[currentQuiz.currentIndex];
@@ -1200,7 +1220,9 @@ function renderQuestion() {
     return;
   }
 
-  document.getElementById("quiz-question-text").textContent = question.text;
+  const qTextEl = document.getElementById("quiz-question-text");
+  qTextEl.textContent = question.text;
+  renderMathFormulas(qTextEl);
 
   // Renderizar Figura / Diagrama Oficial (Física, Biologia, Desenho, etc.)
   const imgContainer = document.getElementById("quiz-question-image-container");
@@ -1225,6 +1247,7 @@ function renderQuestion() {
     optBtn.addEventListener("click", () => selectOption(idx));
     optionsContainer.appendChild(optBtn);
   });
+  renderMathFormulas(optionsContainer);
 
   document.getElementById("quiz-explanation-box").style.display = "none";
   const hintBox = document.getElementById("quiz-hint-box");
@@ -1288,6 +1311,181 @@ function initQuizImageLightbox() {
   }
 }
 
+function initQuizScratchpad() {
+  const modal = document.getElementById("quiz-scratchpad-modal");
+  const openBtn = document.getElementById("quiz-scratchpad-btn");
+  const closeBtn = document.getElementById("scratchpad-close-btn");
+  const clearBtn = document.getElementById("scratchpad-clear-btn");
+  const eraserBtn = document.getElementById("scratchpad-eraser-btn");
+  const canvas = document.getElementById("scratchpad-canvas");
+  if (!modal || !canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  let isDrawing = false;
+  let currentColor = "#0f172a";
+  let currentSize = 2;
+  let isEraser = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  function resizeCanvas() {
+    const container = canvas.parentElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    // Salvar rascunho atual antes de redimensionar
+    let tempCanvas = null;
+    if (canvas.width > 0 && canvas.height > 0) {
+      tempCanvas = document.createElement("canvas");
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempCtx = tempCanvas.getContext("2d");
+      tempCtx.drawImage(canvas, 0, 0);
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    if (tempCanvas && tempCanvas.width > 0 && tempCanvas.height > 0) {
+      ctx.drawImage(tempCanvas, 0, 0, rect.width, rect.height);
+    }
+    updateBrush();
+  }
+
+  function updateBrush() {
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    if (isEraser) {
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.lineWidth = currentSize * 4;
+    } else {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = currentColor;
+      ctx.lineWidth = currentSize;
+    }
+  }
+
+  function getCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  }
+
+  function startDraw(e) {
+    isDrawing = true;
+    const coords = getCoords(e);
+    lastX = coords.x;
+    lastY = coords.y;
+    updateBrush();
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(lastX + 0.1, lastY + 0.1);
+    ctx.stroke();
+  }
+
+  function draw(e) {
+    if (!isDrawing) return;
+    const coords = getCoords(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(coords.x, coords.y);
+    ctx.stroke();
+    lastX = coords.x;
+    lastY = coords.y;
+  }
+
+  function stopDraw() {
+    isDrawing = false;
+  }
+
+  canvas.addEventListener("pointerdown", (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    startDraw(e);
+  });
+  canvas.addEventListener("pointermove", draw);
+  canvas.addEventListener("pointerup", (e) => {
+    try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    stopDraw();
+  });
+  canvas.addEventListener("pointercancel", stopDraw);
+
+  // Seleção de cores
+  document.querySelectorAll(".scratchpad-btn-color").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".scratchpad-btn-color").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentColor = btn.dataset.color || "#0f172a";
+      isEraser = false;
+      if (eraserBtn) eraserBtn.classList.remove("active");
+      updateBrush();
+    });
+  });
+
+  // Espessura do traço
+  document.querySelectorAll(".scratchpad-btn-size").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".scratchpad-btn-size").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentSize = parseInt(btn.dataset.size || "2", 10);
+      updateBrush();
+    });
+  });
+
+  // Modo Borracha
+  if (eraserBtn) {
+    eraserBtn.addEventListener("click", () => {
+      isEraser = !isEraser;
+      if (isEraser) {
+        eraserBtn.classList.add("active");
+        showToast("🧹 Modo Borracha Ativo", "info");
+      } else {
+        eraserBtn.classList.remove("active");
+      }
+      updateBrush();
+    });
+  }
+
+  // Limpar quadro
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      if (confirm("Deseja limpar todo o quadro de rascunho?")) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+        updateBrush();
+        showToast("🗑️ Rascunho limpo", "info");
+      }
+    });
+  }
+
+  function openScratchpad() {
+    modal.style.display = "flex";
+    setTimeout(resizeCanvas, 40);
+  }
+
+  function closeScratchpad() {
+    modal.style.display = "none";
+  }
+
+  if (openBtn) openBtn.addEventListener("click", openScratchpad);
+  if (closeBtn) closeBtn.addEventListener("click", closeScratchpad);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeScratchpad();
+  });
+
+  window.addEventListener("resize", () => {
+    if (modal.style.display === "flex") {
+      resizeCanvas();
+    }
+  });
+}
+
 function selectOption(index) {
   const options = document.querySelectorAll(".option-btn");
   options.forEach(opt => opt.classList.remove("selected"));
@@ -1329,6 +1527,7 @@ function verifyAnswer() {
   const explanationText = document.getElementById("quiz-explanation-text");
   
   explanationText.textContent = question.explanation;
+  renderMathFormulas(explanationText);
   explanationBox.style.display = "block";
 
   document.getElementById("quiz-verify-btn").style.display = "none";

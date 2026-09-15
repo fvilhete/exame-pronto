@@ -23,8 +23,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ExamePronto">
   
+  <!-- KaTeX for Scientific & Mathematical Formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+
   <!-- Estilos com Cache Busting -->
-  <link rel="stylesheet" href="styles.css?v=3.7">
+  <link rel="stylesheet" href="styles.css?v=3.8">
 </head>
 <body>
 
@@ -723,6 +728,9 @@
             <button class="btn btn-sm btn-outline" id="quiz-download-paper-btn" title="Descarregar Caderno de Exame Completo em PDF" style="padding: 3px 8px; font-size: 0.75rem;">
               📥 Baixar Caderno PDF
             </button>
+            <button class="btn btn-sm btn-outline" id="quiz-scratchpad-btn" title="Quadro de Rascunho Digital para Cálculos" style="padding: 3px 8px; font-size: 0.75rem; color: #10b981; border-color: #10b981;">
+              ✏️ Rascunho
+            </button>
             <button class="btn btn-sm btn-outline" id="quiz-hint-btn" title="Pedir Dica Pedagógica" style="padding: 3px 8px; font-size: 0.75rem; color: var(--accent); border-color: var(--accent);">
               💡 Pedir Dica
             </button>
@@ -1403,7 +1411,41 @@
     </div>
   </div>
 
+  <!-- Digital Scratchpad Modal ("✏️ Rascunho Digital para Cálculos") -->
+  <div id="quiz-scratchpad-modal" class="scratchpad-modal" style="display: none;">
+    <div class="scratchpad-box">
+      <div class="scratchpad-header">
+        <div class="scratchpad-title">
+          <span style="font-weight: 700; font-size: 0.95rem;">✏️ Rascunho Digital</span>
+          <small class="scratchpad-subtitle">Cálculos, fórmulas & rascunhos</small>
+        </div>
+        <div class="scratchpad-toolbar">
+          <div class="scratchpad-colors">
+            <button type="button" class="scratchpad-btn-color active" data-color="#0f172a" style="background: #0f172a;" title="Preto"></button>
+            <button type="button" class="scratchpad-btn-color" data-color="#2563eb" style="background: #2563eb;" title="Azul"></button>
+            <button type="button" class="scratchpad-btn-color" data-color="#dc2626" style="background: #dc2626;" title="Vermelho"></button>
+            <button type="button" class="scratchpad-btn-color" data-color="#16a34a" style="background: #16a34a;" title="Verde"></button>
+          </div>
+          <div class="scratchpad-sizes">
+            <button type="button" class="scratchpad-btn-size active" data-size="2" title="Traço Fino">Fino</button>
+            <button type="button" class="scratchpad-btn-size" data-size="4" title="Traço Médio">Médio</button>
+            <button type="button" class="scratchpad-btn-size" data-size="8" title="Traço Grosso">Grosso</button>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline scratchpad-tool-btn" id="scratchpad-eraser-btn" title="Borracha">🧹 Borracha</button>
+          <button type="button" class="btn btn-sm btn-outline scratchpad-tool-btn" id="scratchpad-clear-btn" title="Limpar Todo o Rascunho">🗑️ Limpar</button>
+          <button type="button" class="scratchpad-btn-close" id="scratchpad-close-btn" title="Fechar Rascunho">&times;</button>
+        </div>
+      </div>
+      <div class="scratchpad-canvas-container">
+        <canvas id="scratchpad-canvas"></canvas>
+      </div>
+      <div class="scratchpad-footer">
+        <span>💡 Dica: Pode usar o dedo no telemóvel ou o rato no computador. O rascunho fica guardado durante o exame!</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts com Cache Busting -->
-  <script src="app.js?v=3.7"></script>
+  <script src="app.js?v=3.8"></script>
 </body>
 </html>

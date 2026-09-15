@@ -1,4 +1,5 @@
-const CACHE_NAME = 'examepronto-v3.7-cache';
+const CACHE_NAME = 'examepronto-v3.8-cache';
+const IMAGE_CACHE_NAME = 'examepronto-images-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -20,7 +21,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== IMAGE_CACHE_NAME) {
             return caches.delete(key);
           }
         })
@@ -35,7 +36,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-First para ficheiros de código (garante atualizações instantâneas)
+  // 1. Cache-First para Imagens de Exames (/exam_images/)
+  // Economiza largura de banda móvel dos estudantes e acelera revisões
+  if (event.request.url.includes('/exam_images/')) {
+    event.respondWith(
+      caches.open(IMAGE_CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          });
+        });
+      })
+    );
+    return;
+  }
+
+  // 2. Network-First para ficheiros de código (garante atualizações instantâneas)
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {

@@ -539,6 +539,7 @@ function setupEventListeners() {
   safeAddListener("quiz-focus-btn", "click", toggleFocusMode);
   safeAddListener("quiz-download-paper-btn", "click", downloadExamPaperPdf);
   safeAddListener("quiz-hint-btn", "click", showPedagogicalHint);
+  initQuizImageLightbox();
 
   // Question CMS Events
   safeAddListener("admin-load-questions-btn", "click", fetchAdminExamQuestions);
@@ -1201,6 +1202,19 @@ function renderQuestion() {
 
   document.getElementById("quiz-question-text").textContent = question.text;
 
+  // Renderizar Figura / Diagrama Oficial (Física, Biologia, Desenho, etc.)
+  const imgContainer = document.getElementById("quiz-question-image-container");
+  const imgEl = document.getElementById("quiz-question-image");
+  if (imgContainer && imgEl) {
+    if (question.image_url) {
+      imgEl.src = question.image_url;
+      imgContainer.style.display = "flex";
+    } else {
+      imgContainer.style.display = "none";
+      imgEl.src = "";
+    }
+  }
+
   const optionsContainer = document.getElementById("quiz-options-container");
   optionsContainer.innerHTML = "";
 
@@ -1239,6 +1253,39 @@ function showPedagogicalHint() {
   box.textContent = hintText;
   box.style.display = "block";
   showToast("💡 Dica pedagógica revelada!", "info");
+}
+
+function initQuizImageLightbox() {
+  const lightbox = document.getElementById("quiz-image-lightbox");
+  const closeBtn = document.getElementById("quiz-lightbox-close-btn");
+  const zoomBtn = document.getElementById("quiz-image-zoom-btn");
+  const qImg = document.getElementById("quiz-question-image");
+  const lightImg = document.getElementById("quiz-lightbox-img");
+  const caption = document.getElementById("quiz-lightbox-caption");
+
+  function openLightbox() {
+    if (qImg && qImg.src && lightbox) {
+      lightImg.src = qImg.src;
+      if (currentQuiz.exam) {
+        const q = currentQuiz.exam.questions[currentQuiz.currentIndex];
+        caption.textContent = `Figura da Questão ${q.number} • ${currentQuiz.exam.subject_name} (${currentQuiz.exam.year})`;
+      }
+      lightbox.style.display = "flex";
+    }
+  }
+
+  function closeLightbox() {
+    if (lightbox) lightbox.style.display = "none";
+  }
+
+  if (zoomBtn) zoomBtn.addEventListener("click", openLightbox);
+  if (qImg) qImg.addEventListener("click", openLightbox);
+  if (closeBtn) closeBtn.addEventListener("click", closeLightbox);
+  if (lightbox) {
+    lightbox.addEventListener("click", (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+  }
 }
 
 function selectOption(index) {

@@ -293,7 +293,7 @@ app.get('/api/exams/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Exame não encontrado.' });
     }
 
-    db.all("SELECT id, exam_id, number, text, options, correct_option, explanation FROM questions WHERE exam_id = ? ORDER BY number ASC", [examId], (err, questions) => {
+    db.all("SELECT id, exam_id, number, text, options, correct_option, explanation, image_url FROM questions WHERE exam_id = ? ORDER BY number ASC", [examId], (err, questions) => {
       if (err) {
         return res.status(500).json({ error: 'Erro ao carregar perguntas.' });
       }
@@ -312,7 +312,8 @@ app.get('/api/exams/:id', authenticateToken, async (req, res) => {
             text: q.text,
             options: parsedOptions,
             correct: q.correct_option,
-            explanation: q.explanation
+            explanation: q.explanation,
+            image_url: q.image_url || null
           };
         } else {
           return {
@@ -320,7 +321,8 @@ app.get('/api/exams/:id', authenticateToken, async (req, res) => {
             text: "[🔒 Conteúdo Premium Bloqueado]",
             options: [],
             correct: null,
-            explanation: "[🔒 Desbloqueie o Premium para ver a resolução explicada]"
+            explanation: "[🔒 Desbloqueie o Premium para ver a resolução explicada]",
+            image_url: null
           };
         }
       });

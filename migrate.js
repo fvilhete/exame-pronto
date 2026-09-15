@@ -55,7 +55,8 @@ const schema = [
     text TEXT NOT NULL,
     options TEXT NOT NULL,
     correct_option INTEGER NOT NULL,
-    explanation TEXT NOT NULL
+    explanation TEXT NOT NULL,
+    image_url TEXT
   );`,
 
   // 4. Tabela de Explicações/Aulas

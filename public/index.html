@@ -159,8 +159,21 @@
         </div>
       </div>
 
-      <div class="search-bar-container" style="margin-bottom: 25px;">
-        <input type="text" id="dashboard-search-input" placeholder="🔍 Procurar exames (ex: Matemática, Código, Cambridge, 12ª)..." style="width: 100%; padding: 12px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+      <div class="search-bar-container" style="margin-bottom: 25px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <div style="position: relative; flex: 1; min-width: 260px;">
+          <input type="text" id="dashboard-search-input" placeholder="🔍 Procurar exames (ex: Matemática, Código, Cambridge, 12ª)..." style="width: 100%; padding: 12px 42px 12px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+          <button type="button" id="btn-clear-search" title="Limpar pesquisa" style="display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.1rem; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; border-radius: 50%;">✕</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 4px 12px;">
+          <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap;">↕ Ordenar:</span>
+          <select id="dashboard-sort-select" style="padding: 7px 8px; border: none; background: transparent; color: var(--text-primary); font-size: 0.88rem; font-weight: 600; cursor: pointer; outline: none;">
+            <option value="year-desc">📅 Mais Recentes (Ano)</option>
+            <option value="year-asc">⏳ Mais Antigos (Ano)</option>
+            <option value="subject-asc">🔤 Disciplina (A - Z)</option>
+            <option value="university-asc">🏛️ Universidade (UEM / UP)</option>
+            <option value="questions-desc">📝 Mais Questões Oficiais</option>
+          </select>
+        </div>
       </div>
 
       <div class="dashboard-grid">
@@ -211,6 +224,29 @@
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
               <h3 class="uni-section-title" style="margin-bottom: 0;"><span></span>2. Exames e Simulados Disponíveis</h3>
               <span id="exams-count-badge" class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.85rem; padding: 6px 14px; border-radius: 20px; font-weight: 700;">Carregando...</span>
+            </div>
+
+            <!-- Hero Stats Banner do Catálogo -->
+            <div class="catalog-hero-banner">
+              <div class="hero-stats-left">
+                <span class="hero-stats-badge">📚 Acervo Oficial Completo</span>
+                <h4 class="hero-stats-title">Catálogo Interativo de Exames de Admissão</h4>
+                <p class="hero-stats-sub">Prepare-se com exames reais da UEM e UP: Modo Estudo com explicações passo a passo ou Simulado Oficial com cronómetro e nota.</p>
+              </div>
+              <div class="hero-stats-pills">
+                <div class="stat-pill-box">
+                  <span class="stat-number">211</span>
+                  <span class="stat-label">Exames Reais</span>
+                </div>
+                <div class="stat-pill-box">
+                  <span class="stat-number">8.520</span>
+                  <span class="stat-label">Questões</span>
+                </div>
+                <div class="stat-pill-box">
+                  <span class="stat-number">100%</span>
+                  <span class="stat-label">Interativo</span>
+                </div>
+              </div>
             </div>
 
             <!-- Filtros Modernos por Universidade & Ano (Padrão Internacional) -->

@@ -25,6 +25,7 @@ let activeLevel = "superior";
 let activeUniversity = "all";
 let activeSubject = "all";
 let activeYear = "all";
+let activeExamSort = "year-desc";
 let examsPageLimit = 16;
 let selectedPlan = "semanal";
 let authMode = "login"; // 'login' ou 'register'
@@ -650,8 +651,32 @@ function setupEventListeners() {
     });
   }
 
-  // Search Inputs
-  safeAddListener("dashboard-search-input", "input", filterAndRenderExams);
+  // Search Inputs & Sorting Controls
+  safeAddListener("dashboard-search-input", "input", () => {
+    const input = document.getElementById("dashboard-search-input");
+    const clearBtn = document.getElementById("btn-clear-search");
+    if (clearBtn) {
+      clearBtn.style.display = (input && input.value.trim().length > 0) ? "block" : "none";
+    }
+    examsPageLimit = 16;
+    filterAndRenderExams();
+  });
+
+  safeAddListener("btn-clear-search", "click", () => {
+    const input = document.getElementById("dashboard-search-input");
+    const clearBtn = document.getElementById("btn-clear-search");
+    if (input) input.value = "";
+    if (clearBtn) clearBtn.style.display = "none";
+    examsPageLimit = 16;
+    filterAndRenderExams();
+  });
+
+  safeAddListener("dashboard-sort-select", "change", (e) => {
+    activeExamSort = e.target.value;
+    examsPageLimit = 16;
+    filterAndRenderExams();
+  });
+
   safeAddListener("lessons-search-input", "input", filterAndRenderLessons);
 }
 
@@ -1067,6 +1092,32 @@ function filterAndRenderExams() {
     );
   }
 
+  // Ordenação Inteligente
+  list.sort((a, b) => {
+    if (activeExamSort === "year-desc") {
+      const diff = (Number(b.year) || 0) - (Number(a.year) || 0);
+      return diff !== 0 ? diff : (a.subject_name || "").localeCompare(b.subject_name || "");
+    }
+    if (activeExamSort === "year-asc") {
+      const diff = (Number(a.year) || 0) - (Number(b.year) || 0);
+      return diff !== 0 ? diff : (a.subject_name || "").localeCompare(b.subject_name || "");
+    }
+    if (activeExamSort === "subject-asc") {
+      const diff = (a.subject_name || "").localeCompare(b.subject_name || "");
+      return diff !== 0 ? diff : (Number(b.year) || 0) - (Number(a.year) || 0);
+    }
+    if (activeExamSort === "university-asc") {
+      const diff = (a.university || "").localeCompare(b.university || "");
+      return diff !== 0 ? diff : (Number(b.year) || 0) - (Number(a.year) || 0);
+    }
+    if (activeExamSort === "questions-desc") {
+      const qa = (a.question_count !== undefined && a.question_count !== null) ? Number(a.question_count) : 40;
+      const qb = (b.question_count !== undefined && b.question_count !== null) ? Number(b.question_count) : 40;
+      return qb - qa;
+    }
+    return 0;
+  });
+
   const totalFiltered = list.length;
 
   // Atualizar badge de contagem de exames no cabeçalho
@@ -1091,8 +1142,13 @@ function filterAndRenderExams() {
         activeUniversity = "all";
         activeSubject = "all";
         activeYear = "all";
+        activeExamSort = "year-desc";
         examsPageLimit = 16;
         if (searchInput) searchInput.value = "";
+        const clearBtn = document.getElementById("btn-clear-search");
+        if (clearBtn) clearBtn.style.display = "none";
+        const sortSel = document.getElementById("dashboard-sort-select");
+        if (sortSel) sortSel.value = "year-desc";
         renderUniversityAndYearFilters();
         filterAndRenderExams();
       });
@@ -1110,11 +1166,12 @@ function filterAndRenderExams() {
       completedInfo = userProgressCache.find(p => p.exam_id === exam.id);
     }
 
+    const subjCat = getSubjectCategory(exam.subject_name);
     const univName = exam.university || "UEM";
     const univSlug = getUniversityBadgeClass(univName);
 
     const card = document.createElement("div");
-    card.className = "exam-card";
+    card.className = `exam-card theme-${subjCat.id}`;
 
     const qCount = (exam.question_count !== undefined && exam.question_count !== null) ? Number(exam.question_count) : 40;
     const isReady = qCount > 0;
@@ -1155,7 +1212,10 @@ function filterAndRenderExams() {
     card.innerHTML = `
       <div>
         <div class="exam-card-header">
-          <h4 class="exam-card-title">${escapeHtml(exam.subject_name)}</h4>
+          <div class="exam-card-title-group">
+            <span class="exam-subject-pill theme-badge-${subjCat.id}">${subjCat.label}</span>
+            <h4 class="exam-card-title">${escapeHtml(exam.subject_name)}</h4>
+          </div>
           <div class="exam-badges-wrap">
             <span class="badge-university ${univSlug}">${escapeHtml(univName)}</span>
             <span class="badge-year">${exam.year}</span>
@@ -2803,102 +2863,6 @@ async function submitManualPayment() {
   } catch (e) {
     alert("Erro de conexão ao servidor.");
   }
-}
-
-// --- PESQUISA E FILTROS DE CONTEÚDO ---
-
-function filterAndRenderExams() {
-  const container = document.getElementById("exams-list-grid");
-  const query = (document.getElementById("dashboard-search-input").value || "").toLowerCase().trim();
-  
-  const filtered = currentLevelExams.filter(exam => {
-    return exam.subject_name.toLowerCase().includes(query) ||
-           exam.level_name.toLowerCase().includes(query) ||
-           exam.year.toString().includes(query);
-  });
-
-  container.innerHTML = "";
-
-  if (filtered.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">Nenhum simulador corresponde à sua pesquisa.</p>`;
-    return;
-  }
-
-  const completedExams = userProgressCache || [];
-  const isPremium = userProfile ? userProfile.isPremium : false;
-
-  filtered.forEach(exam => {
-    const examItem = document.createElement("div");
-    examItem.className = "exam-item";
-    
-    const finished = completedExams.find(c => c.exam_id === exam.id);
-    const scoreHtml = finished ? `<span class="exam-tag" style="background: var(--success-light); color: #065f46; font-weight: 600;">Nota: ${finished.score}/${finished.total}</span>` : "";
-
-    examItem.innerHTML = `
-      <div class="exam-info-main">
-        <h4>${exam.subject_name} - ${exam.year}</h4>
-        <div class="exam-tags">
-          <span class="exam-tag">${exam.level_name}</span>
-          <span class="exam-tag">${exam.duration_minutes} Minutos</span>
-          ${scoreHtml}
-          ${!isPremium ? `<span class="exam-tag premium-badge">Grátis (Parcial)</span>` : `<span class="exam-tag premium-badge" style="background: var(--success);">Premium Desbloqueado</span>`}
-        </div>
-      </div>
-      <div class="exam-actions">
-        <button class="btn btn-primary btn-sm start-exam-btn" data-exam-id="${exam.id}">
-          Iniciar
-        </button>
-      </div>
-    `;
-    container.appendChild(examItem);
-  });
-
-  document.querySelectorAll(".start-exam-btn").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      const examId = e.currentTarget.getAttribute("data-exam-id");
-      startExam(examId);
-    });
-  });
-}
-
-function filterAndRenderLessons() {
-  const container = document.getElementById("lessons-list-container");
-  const query = (document.getElementById("lessons-search-input").value || "").toLowerCase().trim();
-  
-  const filtered = currentLessons.filter(l => {
-    return l.title.toLowerCase().includes(query) ||
-           l.summary.toLowerCase().includes(query) ||
-           l.subject.toLowerCase().includes(query) ||
-           l.level.toLowerCase().includes(query);
-  });
-
-  container.innerHTML = "";
-
-  if (filtered.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); width: 100%;">Nenhuma explicação corresponde à sua pesquisa.</p>`;
-    return;
-  }
-
-  filtered.forEach(l => {
-    const card = document.createElement("div");
-    card.className = "lesson-card";
-    
-    const badgeHtml = l.is_premium === 1 
-      ? `<span class="exam-tag premium-badge" style="margin-left: auto;">Premium</span>` 
-      : `<span class="exam-tag" style="margin-left: auto; background: var(--success-light); color: #065f46; border: none;">Grátis</span>`;
-
-    card.innerHTML = `
-      <h4>${l.title} ${badgeHtml}</h4>
-      <p>${l.summary}</p>
-      <div class="lesson-card-meta">
-        <span style="color: var(--primary); text-transform: uppercase;">${l.subject}</span>
-        <span style="color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">Nível: ${l.level.toUpperCase()}</span>
-      </div>
-    `;
-    
-    card.addEventListener("click", () => viewLesson(l.id));
-    container.appendChild(card);
-  });
 }
 
 // --- CONSOLA ADMINISTRATIVA (ADMIN CONSOLE) ---

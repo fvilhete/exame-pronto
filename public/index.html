@@ -832,7 +832,12 @@
 
         <!-- Explanation box, hidden initially -->
         <div class="explanation-box" id="quiz-explanation-box">
-          <h4>💡 Resolução Explicada:</h4>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+            <h4 style="margin: 0;">💡 Resolução Explicada:</h4>
+            <button type="button" class="btn-speech-audio" id="quiz-tts-explanation-btn" title="Ouvir Resolução por Voz">
+              <span>🔊 Ouvir Explicação</span>
+            </button>
+          </div>
           <p id="quiz-explanation-text">Explicação detalhada da questão.</p>
         </div>
       </div>

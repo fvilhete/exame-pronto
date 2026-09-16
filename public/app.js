@@ -28,6 +28,8 @@ let activeYear = "all";
 let activeExamSort = "year-desc";
 let showAllYears = false;
 let examsPageLimit = 16;
+let userFavorites = JSON.parse(localStorage.getItem("examepronto_favorites") || "[]");
+let currentAudioUtterance = null;
 let selectedPlan = "semanal";
 let authMode = "login"; // 'login' ou 'register'
 let activePayment = null; // Guardar dados da transação pendente
@@ -542,6 +544,7 @@ function setupEventListeners() {
   // Sound, Speech & Proctoring listeners
   safeAddListener("btn-sound-toggle", "click", toggleSound);
   safeAddListener("quiz-tts-btn", "click", speakCurrentQuizQuestion);
+  safeAddListener("quiz-tts-explanation-btn", "click", speakCurrentQuizExplanation);
   safeAddListener("quiz-focus-btn", "click", toggleFocusMode);
   safeAddListener("quiz-download-paper-btn", "click", downloadExamPaperPdf);
   safeAddListener("quiz-hint-btn", "click", showPedagogicalHint);
@@ -837,11 +840,128 @@ function getUniversityBadgeClass(univ) {
   if (u.includes('up') || u.includes('pedagogica')) return 'up';
   if (u.includes('zambeze')) return 'unizambeze';
   if (u.includes('lurio')) return 'unilurio';
-  if (u.includes('isri')) return 'minedh';
+  if (u.includes('pungue')) return 'unipungue';
+  if (u.includes('rovuma')) return 'unirovuma';
+  if (u.includes('licungo')) return 'unilicungo';
+  if (u.includes('isri') || u.includes('ujc')) return 'isri';
+  if (u.includes('acipol')) return 'acipol';
+  if (u.includes('iscisa')) return 'iscisa';
   if (u.includes('minedh')) return 'minedh';
   if (u.includes('inatro')) return 'inatro';
   if (u.includes('cambridge')) return 'cambridge';
   return 'uem';
+}
+
+// 2. Classificação de Dificuldade do Exame
+function getExamDifficulty(exam) {
+  const s = (exam.subject_name || '').toLowerCase();
+  const lvl = (exam.level || '').toLowerCase();
+
+  if (lvl.includes('primario') || lvl.includes('10a') || s.includes('geral') || s.includes('introdução') || s.includes('sinais')) {
+    return { level: 'easy', label: 'Acessível', icon: '🟢' };
+  }
+  if (s.includes('matemática i') || s.includes('matematica i') || s.includes('física i') || s.includes('fisica i') || s.includes('química i') || s.includes('quimica i') || s.includes('a-level') || s.includes('desenho')) {
+    return { level: 'hard', label: 'Desafiador', icon: '🔴' };
+  }
+  return { level: 'medium', label: 'Intermédio', icon: '🟡' };
+}
+
+// 3. Sistema de Favoritos / Provas Guardadas
+function toggleFavoriteExam(examId, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  const idx = userFavorites.indexOf(examId);
+  if (idx > -1) {
+    userFavorites.splice(idx, 1);
+  } else {
+    userFavorites.push(examId);
+  }
+  localStorage.setItem("examepronto_favorites", JSON.stringify(userFavorites));
+
+  // Atualizar visual dos botões de estrela e contadores
+  document.querySelectorAll(`.btn-favorite-card[data-id="${examId}"]`).forEach(btn => {
+    const isFav = userFavorites.includes(examId);
+    btn.classList.toggle('active', isFav);
+    btn.innerHTML = isFav ? '★' : '☆';
+    btn.title = isFav ? 'Remover dos Guardados' : 'Guardar Prova';
+  });
+
+  const favCountBadge = document.getElementById("filter-fav-count");
+  if (favCountBadge) favCountBadge.textContent = userFavorites.length;
+
+  if (activeSubject === "favorites") {
+    filterAndRenderExams();
+  }
+}
+
+// 4. Explicador por Áudio (Web Speech Synthesis)
+function cleanTextForSpeech(raw) {
+  if (!raw) return "";
+  let clean = raw.replace(/<[^>]*>/g, " "); // remover tags HTML
+  clean = clean.replace(/\$([^\$]+)\$/g, "$1"); // remover delimitadores KaTeX
+  clean = clean.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1 sobre $2"); // frações
+  clean = clean.replace(/\\sqrt\{([^}]+)\}/g, "raiz quadrada de $1"); // raízes
+  clean = clean.replace(/\\times/g, " vezes ");
+  clean = clean.replace(/\\cdot/g, " vezes ");
+  clean = clean.replace(/\\pm/g, " mais ou menos ");
+  clean = clean.replace(/\\approx/g, " aproximadamente ");
+  clean = clean.replace(/\\pi/g, " pi ");
+  clean = clean.replace(/\\alpha|\\beta|\\gamma|\\theta/g, " ângulo ");
+  clean = clean.replace(/\\rightarrow/g, " resulta em ");
+  clean = clean.replace(/\\[a-zA-Z]+/g, " "); // remover comandos LaTeX residuais
+  return clean.replace(/\s+/g, " ").trim();
+}
+
+function toggleSpeechAudio(textToSpeak, btnElement) {
+  if (!('speechSynthesis' in window)) {
+    alert("O seu navegador não suporta sintetizador de voz nativo.");
+    return;
+  }
+
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    if (btnElement) {
+      btnElement.classList.remove('speaking');
+      btnElement.innerHTML = `<span>🔊 Ouvir</span>`;
+    }
+    return;
+  }
+
+  const cleanText = cleanTextForSpeech(textToSpeak);
+  if (!cleanText) return;
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  // Procurar vozes em Português
+  const voices = window.speechSynthesis.getVoices();
+  const ptVoice = voices.find(v => v.lang.startsWith('pt')) || null;
+  if (ptVoice) utterance.voice = ptVoice;
+  utterance.lang = 'pt-PT';
+
+  if (btnElement) {
+    btnElement.classList.add('speaking');
+    btnElement.innerHTML = `<span>⏹️ Parar Áudio</span>`;
+  }
+
+  utterance.onend = () => {
+    if (btnElement) {
+      btnElement.classList.remove('speaking');
+      btnElement.innerHTML = `<span>🔊 Ouvir</span>`;
+    }
+  };
+
+  utterance.onerror = () => {
+    if (btnElement) {
+      btnElement.classList.remove('speaking');
+      btnElement.innerHTML = `<span>🔊 Ouvir</span>`;
+    }
+  };
+
+  window.speechSynthesis.speak(utterance);
 }
 
 async function renderExamsList() {
@@ -955,38 +1075,70 @@ function renderUniversityAndYearFilters() {
     const u = (e.university || 'UEM').trim();
     univCounts[u] = (univCounts[u] || 0) + 1;
   });
-  const univKeys = Object.keys(univCounts).sort();
 
-  // Renderizar pills de universidade
+  // Renderizar pills de universidade com cobertura nacional completa
   univPillsContainer.innerHTML = "";
   
   const allUnivPill = document.createElement("button");
   allUnivPill.type = "button";
   allUnivPill.className = `filter-pill ${activeUniversity === 'all' ? 'active' : ''}`;
-  allUnivPill.innerHTML = `🏛️ Todas <span class="pill-count">${exams.length}</span>`;
+  allUnivPill.innerHTML = `🏛️ Todas as Instituições <span class="pill-count">${exams.length}</span>`;
   allUnivPill.addEventListener("click", () => {
     activeUniversity = "all";
     examsPageLimit = 16;
-    if (univLabel) univLabel.textContent = "Todas";
+    if (univLabel) univLabel.textContent = "Todas as Instituições";
     renderUniversityAndYearFilters();
     filterAndRenderExams();
   });
   univPillsContainer.appendChild(allUnivPill);
 
-  univKeys.forEach(u => {
-    const pill = document.createElement("button");
-    pill.type = "button";
-    pill.className = `filter-pill ${activeUniversity.toLowerCase() === u.toLowerCase() ? 'active' : ''}`;
-    pill.innerHTML = `<span>${escapeHtml(u)}</span> <span class="pill-count">${univCounts[u]}</span>`;
-    pill.addEventListener("click", () => {
-      activeUniversity = u;
-      examsPageLimit = 16;
-      if (univLabel) univLabel.textContent = u;
-      renderUniversityAndYearFilters();
-      filterAndRenderExams();
+  if (activeLevel === 'superior') {
+    const mozInstitutions = [
+      { id: 'UEM', label: '🎓 UEM', name: 'Universidade Eduardo Mondlane' },
+      { id: 'UP', label: '🏫 UP', name: 'Universidade Pedagógica' },
+      { id: 'UniZambeze', label: '🌊 UniZambeze', name: 'Universidade Zambeze' },
+      { id: 'UniLúrio', label: '🌿 UniLúrio', name: 'Universidade Lúrio' },
+      { id: 'UniPúnguè', label: '⛰️ UniPúnguè', name: 'Universidade Púnguè' },
+      { id: 'UniRovuma', label: '🌍 UniRovuma', name: 'Universidade Rovuma' },
+      { id: 'UniLicungo', label: '🏛️ UniLicungo', name: 'Universidade Licungo' },
+      { id: 'ISRI', label: '🌐 ISRI / UJC', name: 'Inst. Superior de Relações Internacionais / UJC' },
+      { id: 'ACIPOL', label: '🛡️ ACIPOL', name: 'Academia de Ciências Policiais' },
+      { id: 'ISCISA', label: '🏥 ISCISA', name: 'Inst. Superior de Ciências de Saúde' }
+    ];
+
+    mozInstitutions.forEach(inst => {
+      const count = univCounts[inst.id] || 0;
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = `filter-pill ${activeUniversity.toLowerCase() === inst.id.toLowerCase() ? 'active' : ''}`;
+      pill.innerHTML = `<span>${inst.label}</span> <span class="pill-count">${count > 0 ? count : 'Breve'}</span>`;
+      pill.title = inst.name;
+      pill.addEventListener("click", () => {
+        activeUniversity = inst.id;
+        examsPageLimit = 16;
+        if (univLabel) univLabel.textContent = inst.name;
+        renderUniversityAndYearFilters();
+        filterAndRenderExams();
+      });
+      univPillsContainer.appendChild(pill);
     });
-    univPillsContainer.appendChild(pill);
-  });
+  } else {
+    const univKeys = Object.keys(univCounts).sort();
+    univKeys.forEach(u => {
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = `filter-pill ${activeUniversity.toLowerCase() === u.toLowerCase() ? 'active' : ''}`;
+      pill.innerHTML = `<span>${escapeHtml(u)}</span> <span class="pill-count">${univCounts[u]}</span>`;
+      pill.addEventListener("click", () => {
+        activeUniversity = u;
+        examsPageLimit = 16;
+        if (univLabel) univLabel.textContent = u;
+        renderUniversityAndYearFilters();
+        filterAndRenderExams();
+      });
+      univPillsContainer.appendChild(pill);
+    });
+  }
 
   if (univLabel) {
     univLabel.textContent = activeUniversity === "all" ? "Todas" : activeUniversity;
@@ -1023,6 +1175,23 @@ function renderUniversityAndYearFilters() {
       filterAndRenderExams();
     });
     subjectPillsContainer.appendChild(allSubjectPill);
+
+    // Pill "⭐ Guardados / Favoritos"
+    const favCount = exams.filter(e => userFavorites.includes(e.id)).length;
+    const favPill = document.createElement("button");
+    favPill.type = "button";
+    favPill.className = `filter-pill ${activeSubject === 'favorites' ? 'active' : ''}`;
+    favPill.style.color = activeSubject === 'favorites' ? '#ffffff' : '#f59e0b';
+    favPill.style.borderColor = '#f59e0b';
+    favPill.innerHTML = `⭐ Guardados <span class="pill-count" id="filter-fav-count">${favCount}</span>`;
+    favPill.addEventListener("click", () => {
+      activeSubject = "favorites";
+      examsPageLimit = 16;
+      if (subjectLabel) subjectLabel.textContent = "⭐ Provas Guardadas / Favoritas";
+      renderUniversityAndYearFilters();
+      filterAndRenderExams();
+    });
+    subjectPillsContainer.appendChild(favPill);
 
     const subjectKeys = Object.keys(subjectCounts).sort((a, b) => {
       return subjectMeta[a].name.localeCompare(subjectMeta[b].name);
@@ -1143,8 +1312,10 @@ function filterAndRenderExams() {
     list = list.filter(e => (e.university || "UEM").toLowerCase() === activeUniversity.toLowerCase());
   }
 
-  // Filtro por Disciplina
-  if (activeSubject !== "all") {
+  // Filtro por Disciplina ou Favoritos
+  if (activeSubject === "favorites") {
+    list = list.filter(e => userFavorites.includes(e.id));
+  } else if (activeSubject !== "all") {
     list = list.filter(e => getSubjectCategory(e.subject_name).id === activeSubject);
   }
 
@@ -1201,10 +1372,15 @@ function filterAndRenderExams() {
   container.innerHTML = "";
 
   if (totalFiltered === 0) {
+    const isFavEmpty = activeSubject === "favorites";
     container.innerHTML = `
       <div style="text-align: center; color: var(--text-secondary); width: 100%; padding: 40px 20px; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px dashed var(--border-color); grid-column: 1 / -1;">
-        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Nenhum exame encontrado com estes filtros</p>
-        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 15px;">Tente alterar os filtros de instituição, disciplina ou ano.</p>
+        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">
+          ${isFavEmpty ? '⭐ Nenhuma prova guardada como favorita ainda' : 'Nenhum exame encontrado com estes filtros'}
+        </p>
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 15px;">
+          ${isFavEmpty ? 'Clique no ícone de estrela (☆) em qualquer exame para adicioná-lo aos seus favoritos.' : 'Tente alterar os filtros de instituição, disciplina ou ano.'}
+        </p>
         <button type="button" class="btn btn-sm btn-outline" id="btn-reset-exam-filters">↺ Limpar Todos os Filtros</button>
       </div>
     `;
@@ -1241,6 +1417,8 @@ function filterAndRenderExams() {
     const subjCat = getSubjectCategory(exam.subject_name);
     const univName = exam.university || "UEM";
     const univSlug = getUniversityBadgeClass(univName);
+    const diff = getExamDifficulty(exam);
+    const isFav = userFavorites.includes(exam.id);
 
     const card = document.createElement("div");
     card.className = `exam-card theme-${subjCat.id}`;
@@ -1285,12 +1463,18 @@ function filterAndRenderExams() {
       <div>
         <div class="exam-card-header">
           <div class="exam-card-title-group">
-            <span class="exam-subject-pill theme-badge-${subjCat.id}">${subjCat.label}</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span class="exam-subject-pill theme-badge-${subjCat.id}">${subjCat.label}</span>
+              <button type="button" class="btn-favorite-card ${isFav ? 'active' : ''}" data-id="${exam.id}" title="${isFav ? 'Remover dos Guardados' : 'Guardar Prova'}">
+                ${isFav ? '★' : '☆'}
+              </button>
+            </div>
             <h4 class="exam-card-title">${escapeHtml(exam.subject_name)}</h4>
           </div>
           <div class="exam-badges-wrap">
             <span class="badge-university ${univSlug}">${escapeHtml(univName)}</span>
             <span class="badge-year">${exam.year}</span>
+            <span class="badge-difficulty ${diff.level}">${diff.icon} ${diff.label}</span>
             ${badgeHtml}
           </div>
         </div>
@@ -1305,6 +1489,14 @@ function filterAndRenderExams() {
     `;
 
     container.appendChild(card);
+  });
+
+  // Action listeners para Favoritos
+  container.querySelectorAll(".btn-favorite-card").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const examId = e.currentTarget.getAttribute("data-id");
+      toggleFavoriteExam(examId, e);
+    });
   });
 
   // Action listeners para Modo Estudo e Simular Prova
@@ -1519,6 +1711,21 @@ function renderQuestion() {
   document.getElementById("quiz-exam-title").textContent = `${modeBadge}: ${exam.subject_name} (${exam.year})${univLabel}`;
   document.getElementById("quiz-question-counter").textContent = `Pergunta ${currentQuiz.currentIndex + 1} de ${exam.questions.length}`;
   document.getElementById("quiz-question-number").textContent = `QUESTÃO ${question.number}`;
+
+  // Parar qualquer áudio em reprodução anterior e resetar botões
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
+  const ttsBtn = document.getElementById("quiz-tts-btn");
+  if (ttsBtn) {
+    ttsBtn.classList.remove("speaking");
+    ttsBtn.innerHTML = `<span>🔊 Ouvir Pergunta</span>`;
+  }
+  const ttsExplBtn = document.getElementById("quiz-tts-explanation-btn");
+  if (ttsExplBtn) {
+    ttsExplBtn.classList.remove("speaking");
+    ttsExplBtn.innerHTML = `<span>🔊 Ouvir Explicação</span>`;
+  }
   
   if (question.text === "[🔒 Conteúdo Premium Bloqueado]") {
     clearInterval(currentQuiz.timerInterval);
@@ -3547,8 +3754,18 @@ function speakCurrentQuizQuestion() {
   if (!currentQuiz.exam || !currentQuiz.exam.questions) return;
   const q = currentQuiz.exam.questions[currentQuiz.currentIndex];
   if (!q) return;
+  const btn = document.getElementById("quiz-tts-btn");
   const fullText = `Questão ${q.number}. ${q.text}. Opções: ${q.options.join('. ')}`;
-  speakText(fullText);
+  toggleSpeechAudio(fullText, btn);
+}
+
+function speakCurrentQuizExplanation() {
+  if (!currentQuiz.exam || !currentQuiz.exam.questions) return;
+  const q = currentQuiz.exam.questions[currentQuiz.currentIndex];
+  if (!q || !q.explanation) return;
+  const btn = document.getElementById("quiz-tts-explanation-btn");
+  const fullText = `Resolução explicada da questão ${q.number}: ${q.explanation}`;
+  toggleSpeechAudio(fullText, btn);
 }
 
 // --- GAMIFICAÇÃO: STREAK & META DIÁRIA ---

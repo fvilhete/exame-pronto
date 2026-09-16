@@ -229,7 +229,20 @@
                 </div>
               </div>
 
-              <!-- 2. Linha de Anos -->
+              <!-- 2. Linha de Disciplinas / Matérias -->
+              <div id="subject-filter-wrapper" style="margin-bottom: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                    📚 Filtrar por Disciplina:
+                  </span>
+                  <span id="selected-subject-label" style="font-size: 0.8rem; color: #10b981; font-weight: 600;">Todas as Disciplinas</span>
+                </div>
+                <div class="filter-pills-row" id="subject-filter-pills">
+                  <!-- JS vai preencher os pills de disciplinas -->
+                </div>
+              </div>
+
+              <!-- 3. Linha de Anos -->
               <div id="year-filter-wrapper">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                   <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
@@ -246,6 +259,21 @@
 
             <div class="exams-grid" id="exams-list-grid">
               <!-- JS will populate this list from Server Database -->
+            </div>
+
+            <!-- Controles Modernos de Paginação / Carregar Mais -->
+            <div id="exams-pagination-container" style="display: none; justify-content: center; align-items: center; flex-direction: column; gap: 10px; margin-top: 25px; padding: 15px;">
+              <div id="exams-pagination-info" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                A mostrar exames...
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                <button type="button" class="btn btn-outline" id="exams-load-more-btn" style="min-width: 180px; font-weight: 600;">
+                  ➕ Carregar Mais (+16)
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" id="exams-show-all-btn" style="padding: 6px 14px; font-size: 0.8rem;">
+                  Mostrar Todos
+                </button>
+              </div>
             </div>
           </div>
         </div>

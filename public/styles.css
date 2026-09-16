@@ -589,11 +589,18 @@ main {
   color: var(--text-secondary);
 }
 
-/* Exams List */
+/* Exams List - Grelha Responsiva Multi-Coluna (Padrão Internacional) */
 .exams-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .exams-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 .exam-item {

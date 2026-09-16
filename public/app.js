@@ -23,7 +23,9 @@ let currentQuiz = {
 
 let activeLevel = "superior";
 let activeUniversity = "all";
+let activeSubject = "all";
 let activeYear = "all";
+let examsPageLimit = 16;
 let selectedPlan = "semanal";
 let authMode = "login"; // 'login' ou 'register'
 let activePayment = null; // Guardar dados da transação pendente
@@ -411,7 +413,9 @@ function setupEventListeners() {
       selectedCard.classList.add("active");
       activeLevel = selectedCard.getAttribute("data-level");
       activeUniversity = "all";
+      activeSubject = "all";
       activeYear = "all";
+      examsPageLimit = 16;
       renderExamsList();
     });
   });
@@ -842,10 +846,29 @@ async function renderExamsList() {
   }
 }
 
+function getSubjectCategory(subjectName) {
+  const s = (subjectName || '').toLowerCase();
+  if (s.includes('matemát') || s.includes('matemat')) return { id: 'matematica', name: 'Matemática', label: '📐 Matemática' };
+  if (s.includes('físic') || s.includes('fisic')) return { id: 'fisica', name: 'Física', label: '⚡ Física' };
+  if (s.includes('biolog')) return { id: 'biologia', name: 'Biologia', label: '🧬 Biologia' };
+  if (s.includes('químic') || s.includes('quimic')) return { id: 'quimica', name: 'Química', label: '🧪 Química' };
+  if (s.includes('portugu')) return { id: 'portugues', name: 'Português', label: '📖 Português' };
+  if (s.includes('histór') || s.includes('histor')) return { id: 'historia', name: 'História', label: '🏛️ História' };
+  if (s.includes('geograf')) return { id: 'geografia', name: 'Geografia', label: '🌍 Geografia' };
+  if (s.includes('filosof')) return { id: 'filosofia', name: 'Filosofia', label: '🤔 Filosofia' };
+  if (s.includes('ingl') || s.includes('english')) return { id: 'ingles', name: 'Inglês', label: '🇬🇧 Inglês' };
+  if (s.includes('franc')) return { id: 'frances', name: 'Francês', label: '🇫🇷 Francês' };
+  if (s.includes('desenh') || s.includes('geometria')) return { id: 'desenho', name: 'Desenho', label: '📐 Desenho' };
+  if (s.includes('condu') || s.includes('código') || s.includes('codigo') || s.includes('sinais')) return { id: 'conducao', name: 'Condução', label: '🚗 Condução' };
+  return { id: 'outras', name: 'Geral', label: '📚 Outras Áreas' };
+}
+
 function renderUniversityAndYearFilters() {
   const univPillsContainer = document.getElementById("university-filter-pills");
+  const subjectPillsContainer = document.getElementById("subject-filter-pills");
   const yearPillsContainer = document.getElementById("year-filter-pills");
   const univLabel = document.getElementById("selected-university-label");
+  const subjectLabel = document.getElementById("selected-subject-label");
   const yearLabel = document.getElementById("selected-year-label");
 
   if (!univPillsContainer || !yearPillsContainer) return;
@@ -863,12 +886,13 @@ function renderUniversityAndYearFilters() {
   // Renderizar pills de universidade
   univPillsContainer.innerHTML = "";
   
-  // Pill "Todas"
   const allUnivPill = document.createElement("button");
+  allUnivPill.type = "button";
   allUnivPill.className = `filter-pill ${activeUniversity === 'all' ? 'active' : ''}`;
   allUnivPill.innerHTML = `🏛️ Todas <span class="pill-count">${exams.length}</span>`;
   allUnivPill.addEventListener("click", () => {
     activeUniversity = "all";
+    examsPageLimit = 16;
     if (univLabel) univLabel.textContent = "Todas";
     renderUniversityAndYearFilters();
     filterAndRenderExams();
@@ -877,10 +901,12 @@ function renderUniversityAndYearFilters() {
 
   univKeys.forEach(u => {
     const pill = document.createElement("button");
+    pill.type = "button";
     pill.className = `filter-pill ${activeUniversity.toLowerCase() === u.toLowerCase() ? 'active' : ''}`;
     pill.innerHTML = `<span>${escapeHtml(u)}</span> <span class="pill-count">${univCounts[u]}</span>`;
     pill.addEventListener("click", () => {
       activeUniversity = u;
+      examsPageLimit = 16;
       if (univLabel) univLabel.textContent = u;
       renderUniversityAndYearFilters();
       filterAndRenderExams();
@@ -892,10 +918,73 @@ function renderUniversityAndYearFilters() {
     univLabel.textContent = activeUniversity === "all" ? "Todas" : activeUniversity;
   }
 
-  // 2. Contagens de Anos (filtrado pela universidade selecionada se houver, ou geral)
+  // 2. Contagens de Disciplinas (reativas à universidade selecionada)
+  if (subjectPillsContainer) {
+    subjectPillsContainer.innerHTML = "";
+    const subjectCounts = {};
+    const subjectMeta = {};
+
+    exams.forEach(e => {
+      if (activeUniversity === 'all' || (e.university && e.university.toLowerCase() === activeUniversity.toLowerCase())) {
+        const cat = getSubjectCategory(e.subject_name);
+        subjectCounts[cat.id] = (subjectCounts[cat.id] || 0) + 1;
+        subjectMeta[cat.id] = cat;
+      }
+    });
+
+    const matchingUnivCount = activeUniversity === 'all' 
+      ? exams.length 
+      : exams.filter(e => (e.university || '').toLowerCase() === activeUniversity.toLowerCase()).length;
+
+    // Pill "Todas as Disciplinas"
+    const allSubjectPill = document.createElement("button");
+    allSubjectPill.type = "button";
+    allSubjectPill.className = `filter-pill ${activeSubject === 'all' ? 'active' : ''}`;
+    allSubjectPill.innerHTML = `📚 Todas <span class="pill-count">${matchingUnivCount}</span>`;
+    allSubjectPill.addEventListener("click", () => {
+      activeSubject = "all";
+      examsPageLimit = 16;
+      if (subjectLabel) subjectLabel.textContent = "Todas as Disciplinas";
+      renderUniversityAndYearFilters();
+      filterAndRenderExams();
+    });
+    subjectPillsContainer.appendChild(allSubjectPill);
+
+    const subjectKeys = Object.keys(subjectCounts).sort((a, b) => {
+      return subjectMeta[a].name.localeCompare(subjectMeta[b].name);
+    });
+
+    subjectKeys.forEach(sId => {
+      const meta = subjectMeta[sId];
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = `filter-pill ${activeSubject === sId ? 'active' : ''}`;
+      pill.innerHTML = `<span>${meta.label}</span> <span class="pill-count">${subjectCounts[sId]}</span>`;
+      pill.addEventListener("click", () => {
+        activeSubject = sId;
+        examsPageLimit = 16;
+        if (subjectLabel) subjectLabel.textContent = meta.name;
+        renderUniversityAndYearFilters();
+        filterAndRenderExams();
+      });
+      subjectPillsContainer.appendChild(pill);
+    });
+
+    if (subjectLabel) {
+      if (activeSubject === "all") {
+        subjectLabel.textContent = "Todas as Disciplinas";
+      } else if (subjectMeta[activeSubject]) {
+        subjectLabel.textContent = subjectMeta[activeSubject].name;
+      }
+    }
+  }
+
+  // 3. Contagens de Anos (reativas à universidade e disciplina selecionadas)
   const yearCounts = {};
   exams.forEach(e => {
-    if (activeUniversity === 'all' || (e.university && e.university.toLowerCase() === activeUniversity.toLowerCase())) {
+    const matchUniv = activeUniversity === 'all' || (e.university && e.university.toLowerCase() === activeUniversity.toLowerCase());
+    const matchSubj = activeSubject === 'all' || getSubjectCategory(e.subject_name).id === activeSubject;
+    if (matchUniv && matchSubj) {
       const y = String(e.year || '2025').trim();
       yearCounts[y] = (yearCounts[y] || 0) + 1;
     }
@@ -905,16 +994,19 @@ function renderUniversityAndYearFilters() {
   // Renderizar pills de ano
   yearPillsContainer.innerHTML = "";
 
-  // Pill "Todos os Anos"
-  const matchingUnivCount = activeUniversity === 'all' 
-    ? exams.length 
-    : exams.filter(e => (e.university || '').toLowerCase() === activeUniversity.toLowerCase()).length;
+  const matchingFilterCount = exams.filter(e => {
+    const matchUniv = activeUniversity === 'all' || (e.university && e.university.toLowerCase() === activeUniversity.toLowerCase());
+    const matchSubj = activeSubject === 'all' || getSubjectCategory(e.subject_name).id === activeSubject;
+    return matchUniv && matchSubj;
+  }).length;
 
   const allYearPill = document.createElement("button");
+  allYearPill.type = "button";
   allYearPill.className = `filter-pill ${activeYear === 'all' ? 'active' : ''}`;
-  allYearPill.innerHTML = `📅 Todos <span class="pill-count">${matchingUnivCount}</span>`;
+  allYearPill.innerHTML = `📅 Todos <span class="pill-count">${matchingFilterCount}</span>`;
   allYearPill.addEventListener("click", () => {
     activeYear = "all";
+    examsPageLimit = 16;
     if (yearLabel) yearLabel.textContent = "Todos os Anos";
     renderUniversityAndYearFilters();
     filterAndRenderExams();
@@ -923,10 +1015,12 @@ function renderUniversityAndYearFilters() {
 
   yearKeys.forEach(y => {
     const pill = document.createElement("button");
+    pill.type = "button";
     pill.className = `filter-pill ${String(activeYear) === String(y) ? 'active' : ''}`;
     pill.innerHTML = `<span>${escapeHtml(y)}</span> <span class="pill-count">${yearCounts[y]}</span>`;
     pill.addEventListener("click", () => {
       activeYear = y;
+      examsPageLimit = 16;
       if (yearLabel) yearLabel.textContent = y;
       renderUniversityAndYearFilters();
       filterAndRenderExams();
@@ -952,6 +1046,11 @@ function filterAndRenderExams() {
     list = list.filter(e => (e.university || "UEM").toLowerCase() === activeUniversity.toLowerCase());
   }
 
+  // Filtro por Disciplina
+  if (activeSubject !== "all") {
+    list = list.filter(e => getSubjectCategory(e.subject_name).id === activeSubject);
+  }
+
   // Filtro por Ano
   if (activeYear !== "all") {
     list = list.filter(e => String(e.year || "").trim() === String(activeYear).trim());
@@ -968,25 +1067,44 @@ function filterAndRenderExams() {
     );
   }
 
+  const totalFiltered = list.length;
+
   // Atualizar badge de contagem de exames no cabeçalho
   const countBadge = document.getElementById("exams-count-badge");
   if (countBadge) {
-    countBadge.textContent = `${list.length} Exame${list.length === 1 ? '' : 's'} Disponíve${list.length === 1 ? 'l' : 'is'}`;
+    countBadge.textContent = `${totalFiltered} Exame${totalFiltered === 1 ? '' : 's'} Disponíve${totalFiltered === 1 ? 'l' : 'is'}`;
   }
 
   container.innerHTML = "";
 
-  if (list.length === 0) {
+  if (totalFiltered === 0) {
     container.innerHTML = `
       <div style="text-align: center; color: var(--text-secondary); width: 100%; padding: 40px 20px; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px dashed var(--border-color); grid-column: 1 / -1;">
-        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Nenhum exame encontrado</p>
-        <p style="font-size: 0.88rem; color: var(--text-secondary);">Tente alterar o filtro de universidade, ano ou limpar a busca.</p>
+        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Nenhum exame encontrado com estes filtros</p>
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 15px;">Tente alterar os filtros de instituição, disciplina ou ano.</p>
+        <button type="button" class="btn btn-sm btn-outline" id="btn-reset-exam-filters">↺ Limpar Todos os Filtros</button>
       </div>
     `;
+    const resetBtn = document.getElementById("btn-reset-exam-filters");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        activeUniversity = "all";
+        activeSubject = "all";
+        activeYear = "all";
+        examsPageLimit = 16;
+        if (searchInput) searchInput.value = "";
+        renderUniversityAndYearFilters();
+        filterAndRenderExams();
+      });
+    }
+    const pagContainer = document.getElementById("exams-pagination-container");
+    if (pagContainer) pagContainer.style.display = "none";
     return;
   }
 
-  list.forEach(exam => {
+  const pageList = list.slice(0, examsPageLimit);
+
+  pageList.forEach(exam => {
     let completedInfo = null;
     if (userProgressCache) {
       completedInfo = userProgressCache.find(p => p.exam_id === exam.id);
@@ -1071,6 +1189,37 @@ function filterAndRenderExams() {
       startExam(examId, 'exam');
     });
   });
+
+  // Controlo de Paginação / Carregar Mais
+  const pagContainer = document.getElementById("exams-pagination-container");
+  const pagInfo = document.getElementById("exams-pagination-info");
+  const loadMoreBtn = document.getElementById("exams-load-more-btn");
+  const showAllBtn = document.getElementById("exams-show-all-btn");
+
+  if (pagContainer && pagInfo && loadMoreBtn && showAllBtn) {
+    if (totalFiltered > examsPageLimit) {
+      pagContainer.style.display = "flex";
+      pagInfo.textContent = `A mostrar ${pageList.length} de ${totalFiltered} exames`;
+      loadMoreBtn.style.display = "inline-flex";
+      showAllBtn.style.display = "inline-flex";
+
+      loadMoreBtn.onclick = () => {
+        examsPageLimit += 16;
+        filterAndRenderExams();
+      };
+      showAllBtn.onclick = () => {
+        examsPageLimit = totalFiltered;
+        filterAndRenderExams();
+      };
+    } else if (totalFiltered > 16) {
+      pagContainer.style.display = "flex";
+      pagInfo.textContent = `Todos os ${totalFiltered} exames carregados com sucesso`;
+      loadMoreBtn.style.display = "none";
+      showAllBtn.style.display = "none";
+    } else {
+      pagContainer.style.display = "none";
+    }
+  }
 }
 
 // --- SISTEMA DE SEÇÃO ---

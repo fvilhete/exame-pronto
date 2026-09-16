@@ -26,6 +26,7 @@ let activeUniversity = "all";
 let activeSubject = "all";
 let activeYear = "all";
 let activeExamSort = "year-desc";
+let showAllYears = false;
 let examsPageLimit = 16;
 let selectedPlan = "semanal";
 let authMode = "login"; // 'login' ou 'register'
@@ -863,11 +864,59 @@ async function renderExamsList() {
       }
     }
 
+    updateHeroBanner(activeLevel, currentLevelExams);
     renderUniversityAndYearFilters();
     filterAndRenderExams();
 
   } catch (e) {
     container.innerHTML = `<p style="text-align: center; color: var(--error); width: 100%; padding: 30px;">Erro ao ligar ao servidor de exames.</p>`;
+  }
+}
+
+function updateHeroBanner(level, exams) {
+  const badge = document.getElementById("hero-category-badge");
+  const title = document.getElementById("hero-category-title");
+  const sub = document.getElementById("hero-category-sub");
+  const statExams = document.getElementById("hero-stat-exams");
+  const statQuestions = document.getElementById("hero-stat-questions");
+
+  if (!title) return;
+
+  const totalQ = (exams || []).reduce((sum, e) => {
+    return sum + (Number(e.question_count) || 40);
+  }, 0);
+
+  if (statExams) statExams.textContent = (exams || []).length;
+  if (statQuestions) statQuestions.textContent = totalQ > 0 ? totalQ.toLocaleString('pt-MZ') : '8.520';
+
+  if (level === "superior") {
+    if (badge) badge.textContent = "📚 Admissão Universitária (UEM & UP)";
+    title.textContent = "Exames de Admissão Ensino Superior";
+    if (sub) sub.textContent = "Provas oficiais de acesso à Universidade Eduardo Mondlane (UEM) e Universidade Pedagógica (UP) com resoluções.";
+  } else if (level === "12a") {
+    if (badge) badge.textContent = "🎓 Ensino Secundário Geral (ESG)";
+    title.textContent = "Exames Nacionais da 12ª Classe";
+    if (sub) sub.textContent = "Simuladores oficiais do MINEDH para conclusão da 12ª Classe com cronómetro oficial e nota.";
+  } else if (level === "10a") {
+    if (badge) badge.textContent = "📘 Ensino Secundário (1º Ciclo)";
+    title.textContent = "Exames Nacionais da 10ª Classe";
+    if (sub) sub.textContent = "Provas oficiais do MINEDH de fim de ciclo secundário com gabaritos oficiais.";
+  } else if (level === "primario") {
+    if (badge) badge.textContent = "✏️ Ensino Primário Completo";
+    title.textContent = "Exames da 7ª Classe (Primário)";
+    if (sub) sub.textContent = "Simuladores didáticos de preparação com explicações ilustradas para o ensino primário.";
+  } else if (level === "tecnico") {
+    if (badge) badge.textContent = "🔧 Formação Técnico-Profissional";
+    title.textContent = "Exames de Acesso ao Ensino Técnico";
+    if (sub) sub.textContent = "Provas de admissão para Institutos Industriais, Comerciais, de Saúde e Formação de Professores.";
+  } else if (level === "cambridge") {
+    if (badge) badge.textContent = "🌍 Currículo Internacional";
+    title.textContent = "Cambridge International (IGCSE & A-Level)";
+    if (sub) sub.textContent = "Mathematics, Physics, Chemistry e Biology formulados em KaTeX com padrões internacionais.";
+  } else if (level === "conducao") {
+    if (badge) badge.textContent = "🚗 Código & Sinais de Trânsito";
+    title.textContent = "Simulador Oficial de Carta de Condução (INATRO)";
+    if (sub) sub.textContent = "Perguntas oficiais sobre legislação rodoviária, sinais de trânsito e mecânica automóvel básica.";
   }
 }
 
@@ -1038,7 +1087,12 @@ function renderUniversityAndYearFilters() {
   });
   yearPillsContainer.appendChild(allYearPill);
 
-  yearKeys.forEach(y => {
+  // Exibição Inteligente de Anos (Recentes em Destaque + Expansão Suave)
+  const isOlderYearSelected = yearKeys.slice(7).includes(String(activeYear));
+  const effectiveShowAll = showAllYears || isOlderYearSelected;
+  const displayYears = (yearKeys.length > 8 && !effectiveShowAll) ? yearKeys.slice(0, 7) : yearKeys;
+
+  displayYears.forEach(y => {
     const pill = document.createElement("button");
     pill.type = "button";
     pill.className = `filter-pill ${String(activeYear) === String(y) ? 'active' : ''}`;
@@ -1052,6 +1106,24 @@ function renderUniversityAndYearFilters() {
     });
     yearPillsContainer.appendChild(pill);
   });
+
+  if (yearKeys.length > 8) {
+    const togglePill = document.createElement("button");
+    togglePill.type = "button";
+    togglePill.className = "filter-pill";
+    togglePill.style.borderColor = "var(--primary)";
+    togglePill.style.color = "var(--primary)";
+    togglePill.style.background = "rgba(79, 70, 229, 0.08)";
+    togglePill.style.fontWeight = "700";
+    togglePill.innerHTML = effectiveShowAll
+      ? `<span>▴ Recolher Anos Antigos</span>`
+      : `<span>📅 Mais Anos (${yearKeys[yearKeys.length - 1]} - ${yearKeys[7]}) ▾</span>`;
+    togglePill.addEventListener("click", () => {
+      showAllYears = !effectiveShowAll;
+      renderUniversityAndYearFilters();
+    });
+    yearPillsContainer.appendChild(togglePill);
+  }
 
   if (yearLabel) {
     yearLabel.textContent = activeYear === "all" ? "Todos os Anos" : activeYear;

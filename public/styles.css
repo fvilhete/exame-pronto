@@ -495,8 +495,21 @@ main {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 30px;
+  align-items: start;
+}
+
+.main-column {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.sidebar {
+  min-width: 320px;
+  max-width: 350px;
+  width: 100%;
 }
 
 .uni-section-title {
@@ -592,11 +605,17 @@ main {
 /* Exams List - Grelha Responsiva Multi-Coluna (Padrão Internacional) */
 .exams-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 
-@media (max-width: 640px) {
+@media (min-width: 1441px) {
+  .exams-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
   .exams-grid {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -1984,28 +2003,18 @@ footer {
 
 .filter-pills-row {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: thin;
-}
-
-.filter-pills-row::-webkit-scrollbar {
-  height: 4px;
-}
-
-.filter-pills-row::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-width: 100%;
 }
 
 .filter-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
+  gap: 5px;
+  padding: 5px 12px;
   border-radius: 50px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);

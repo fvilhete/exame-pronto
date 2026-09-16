@@ -16,9 +16,15 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false
   },
-  max: 4,
-  idleTimeoutMillis: 15000,
-  connectionTimeoutMillis: 5000
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+  keepAlive: true
+});
+
+// Tratamento anti-crash de erro em clientes inativos do pool (resiliência com Supabase)
+pool.on('error', (err, client) => {
+  console.warn('⚠️ [PostgreSQL Pool] Conexão ociosa redefinida pelo servidor remoto:', err.message);
 });
 
 

@@ -998,7 +998,9 @@ function filterAndRenderExams() {
     const card = document.createElement("div");
     card.className = "exam-card";
 
-    let badgeHtml = `<span class="exam-tag free">Grátis</span>`;
+    const qCount = (exam.question_count !== undefined && exam.question_count !== null) ? Number(exam.question_count) : 40;
+    const isReady = qCount > 0;
+    let badgeHtml = isReady ? `<span class="exam-tag free">Grátis</span>` : `<span class="badge-draft-exam">Em Catalogação</span>`;
     let scoreBadge = "";
     if (completedInfo) {
       const pct = Math.round((completedInfo.score / completedInfo.total) * 100);
@@ -1015,6 +1017,23 @@ function filterAndRenderExams() {
       `;
     }
 
+    const actionButtons = isReady ? `
+      <div class="exam-card-actions">
+        <button class="btn btn-sm btn-outline btn-study-exam" data-id="${exam.id}" title="Modo Estudo: Resolução sem pressão de tempo com explicações passo a passo e dicas">
+          📖 Modo Estudo
+        </button>
+        <button class="btn btn-sm btn-primary btn-start-exam" data-id="${exam.id}" title="Simular Prova: Simulação oficial cronometrada com contagem regressiva">
+          ⏱️ Simular Prova
+        </button>
+      </div>
+    ` : `
+      <div class="exam-card-actions">
+        <button class="btn btn-sm btn-outline" disabled style="opacity: 0.65; cursor: not-allowed; width: 100%; border-style: dashed;">
+          ⏳ Brevemente Disponível
+        </button>
+      </div>
+    `;
+
     card.innerHTML = `
       <div>
         <div class="exam-card-header">
@@ -1028,17 +1047,10 @@ function filterAndRenderExams() {
         <div class="exam-card-meta">
           <span>📚 ${escapeHtml(exam.level_name)}</span>
           <span>⏱️ ${exam.duration_minutes || 120} Min</span>
-          <span>📝 40 Questões Oficiais</span>
+          <span class="exam-qcount-tag">📝 ${isReady ? `${qCount} Questões` : '0 Questões'}</span>
         </div>
       </div>
-      <div class="exam-card-actions">
-        <button class="btn btn-sm btn-outline btn-study-exam" data-id="${exam.id}" title="Modo Estudo: Resolução sem pressão de tempo com explicações passo a passo e dicas">
-          📖 Modo Estudo
-        </button>
-        <button class="btn btn-sm btn-primary btn-start-exam" data-id="${exam.id}" title="Simular Prova: Simulação oficial cronometrada com contagem regressiva">
-          ⏱️ Simular Prova
-        </button>
-      </div>
+      ${actionButtons}
       ${scoreBadge}
     `;
 
@@ -1124,6 +1136,11 @@ async function startExam(examId, mode = 'exam') {
 
     const exam = await res.json();
     
+    if (!exam || !exam.questions || exam.questions.length === 0) {
+      alert("⚠️ Este exame ainda está em fase de catalogação e não possui questões ativas.");
+      return;
+    }
+
     currentQuiz.exam = exam;
     currentQuiz.mode = mode; // 'exam' ou 'study'
     currentQuiz.currentIndex = 0;
@@ -1205,7 +1222,16 @@ function renderMathFormulas(element) {
 
 function renderQuestion() {
   const exam = currentQuiz.exam;
+  if (!exam || !exam.questions || exam.questions.length === 0) {
+    showToast("⚠️ Nenhuma questão disponível para este exame.", "warning");
+    showSection("dashboard");
+    return;
+  }
   const question = exam.questions[currentQuiz.currentIndex];
+  if (!question) {
+    finishQuiz(false);
+    return;
+  }
 
   const modeBadge = currentQuiz.mode === 'study' ? '📖 Modo Estudo' : '⏱️ Simulado Oficial';
   const univLabel = exam.university ? ` - ${exam.university}` : '';
@@ -1435,6 +1461,26 @@ function initQuizScratchpad() {
       updateBrush();
     });
   });
+
+  // Modo Translúcido (Permite ver a questão ao fundo)
+  const translucentBtn = document.getElementById("scratchpad-translucent-btn");
+  let isTranslucent = false;
+  if (translucentBtn) {
+    translucentBtn.addEventListener("click", () => {
+      isTranslucent = !isTranslucent;
+      if (isTranslucent) {
+        modal.classList.add("translucent-mode");
+        translucentBtn.classList.add("active-state");
+        translucentBtn.textContent = "📄 Quadro Opaco";
+        showToast("👁️ Modo Translúcido (vê a questão ao fundo)", "info");
+      } else {
+        modal.classList.remove("translucent-mode");
+        translucentBtn.classList.remove("active-state");
+        translucentBtn.textContent = "👁️ Ver Questão";
+        showToast("📄 Modo Opaco Ativo", "info");
+      }
+    });
+  }
 
   // Modo Borracha
   if (eraserBtn) {

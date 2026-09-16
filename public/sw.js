@@ -1,5 +1,6 @@
-const CACHE_NAME = 'examepronto-v3.8-cache';
+const CACHE_NAME = 'examepronto-v3.9-cache';
 const IMAGE_CACHE_NAME = 'examepronto-images-v1';
+const API_CACHE_NAME = 'examepronto-api-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -21,7 +22,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME && key !== IMAGE_CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== IMAGE_CACHE_NAME && key !== API_CACHE_NAME) {
             return caches.delete(key);
           }
         })
@@ -31,12 +32,35 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Ignorar pedidos que não sejam GET ou rotas de API
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+  if (event.request.method !== 'GET') {
     return;
   }
 
-  // 1. Cache-First para Imagens de Exames (/exam_images/)
+  // 1. Stale-While-Revalidate para Catálogo de Exames (/api/exams)
+  if (event.request.url.includes('/api/exams') && !event.request.url.includes('/api/exams/')) {
+    event.respondWith(
+      caches.open(API_CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          const fetchPromise = fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => cachedResponse);
+
+          return cachedResponse || fetchPromise;
+        });
+      })
+    );
+    return;
+  }
+
+  // Ignorar pedidos de outras APIs dinâmicas (auth, pagamentos, vouchers)
+  if (event.request.url.includes('/api/')) {
+    return;
+  }
+
+  // 2. Cache-First para Imagens de Exames (/exam_images/)
   // Economiza largura de banda móvel dos estudantes e acelera revisões
   if (event.request.url.includes('/exam_images/')) {
     event.respondWith(

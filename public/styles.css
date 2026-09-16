@@ -2522,5 +2522,52 @@ body.dark-theme .scratchpad-footer {
   color: #94a3b8;
 }
 
+/* Modo Translúcido do Quadro de Rascunho (Permite ver a questão ao fundo) */
+.scratchpad-modal.translucent-mode {
+  background: rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(2px);
+}
+
+.scratchpad-modal.translucent-mode .scratchpad-box {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-theme .scratchpad-modal.translucent-mode .scratchpad-box {
+  background: rgba(30, 41, 59, 0.82);
+  border-color: rgba(51, 65, 85, 0.8);
+}
+
+.scratchpad-modal.translucent-mode .scratchpad-canvas-container {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+body.dark-theme .scratchpad-modal.translucent-mode .scratchpad-canvas-container {
+  background-color: rgba(11, 19, 41, 0.65);
+}
+
+.scratchpad-tool-btn.active-state {
+  background: var(--primary, #2563eb);
+  color: #ffffff;
+  border-color: var(--primary, #2563eb);
+}
+
+.exam-qcount-tag {
+  font-weight: 600;
+  color: #0284c7;
+}
+
+.badge-draft-exam {
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 0.72rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid #fde68a;
+}
+
+
 
 

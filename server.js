@@ -25,7 +25,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Content-Security-Policy', "default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:;");
+  res.setHeader('Content-Security-Policy', "default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https: blob:;");
   next();
 });
 
@@ -258,23 +258,32 @@ app.get('/api/user/profile', requireAuth, (req, res) => {
 
 app.get('/api/exams', (req, res) => {
   const { level, university, year } = req.query;
-  let query = "SELECT id, level, level_name, subject, subject_name, year, duration_minutes, COALESCE(university, 'UEM') as university FROM exams WHERE 1=1";
+  let query = `
+    SELECT e.id, e.level, e.level_name, e.subject, e.subject_name, e.year, e.duration_minutes, 
+           COALESCE(e.university, 'UEM') as university,
+           COALESCE(qc.q_count, 0)::int as question_count
+    FROM exams e
+    LEFT JOIN (
+      SELECT exam_id, count(*) as q_count FROM questions GROUP BY exam_id
+    ) qc ON e.id = qc.exam_id
+    WHERE 1=1
+  `;
   let params = [];
 
   if (level) {
-    query += " AND level = ?";
+    query += " AND e.level = ?";
     params.push(level);
   }
   if (university && university !== 'all') {
-    query += " AND university = ?";
+    query += " AND e.university = ?";
     params.push(university);
   }
   if (year && year !== 'all') {
-    query += " AND year = ?";
+    query += " AND e.year = ?";
     params.push(parseInt(year, 10));
   }
 
-  query += " ORDER BY year DESC, subject_name ASC";
+  query += " ORDER BY e.year DESC, e.subject_name ASC";
 
   db.all(query, params, (err, rows) => {
     if (err) {

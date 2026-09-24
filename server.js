@@ -145,7 +145,7 @@ function checkPremiumUser(userId) {
 // --- ROTAS DE AUTENTICAÇÃO ---
 
 app.post('/api/auth/register', (req, res) => {
-  const { phone, password } = req.body;
+  const { phone, password, province } = req.body;
 
   if (!phone || !password) {
     return res.status(400).json({ error: 'Número de telefone e palavra-passe são obrigatórios.' });
@@ -162,9 +162,10 @@ app.post('/api/auth/register', (req, res) => {
   const adminPhone = process.env.ADMIN_PHONE || '840000000';
   const cleanAdminPhone = adminPhone.replace(/\D/g, '');
   const isAdmin = (cleanPhone === cleanAdminPhone) ? 1 : 0;
+  const userProvince = province || 'Maputo Cidade';
 
-  const query = `INSERT INTO users (phone, password_hash, is_admin) VALUES (?, ?, ?)`;
-  db.run(query, [cleanPhone, passwordHash, isAdmin], function(err) {
+  const query = `INSERT INTO users (phone, password_hash, is_admin, province) VALUES (?, ?, ?, ?)`;
+  db.run(query, [cleanPhone, passwordHash, isAdmin, userProvince], function(err) {
     if (err) {
       if (err.message && err.message.includes('UNIQUE constraint failed')) {
         return res.status(400).json({ error: 'Este número de telefone já está registado.' });
@@ -176,7 +177,13 @@ app.post('/api/auth/register', (req, res) => {
     res.status(201).json({
       message: 'Utilizador criado com sucesso.',
       token,
-      user: { id: this.lastID, phone: cleanPhone, isPremium: false, isAdmin: isAdmin === 1 }
+      user: { 
+        id: this.lastID, 
+        phone: cleanPhone, 
+        province: userProvince, 
+        isPremium: false, 
+        isAdmin: isAdmin === 1 
+      }
     });
   });
 });
@@ -218,6 +225,7 @@ app.post('/api/auth/login', (req, res) => {
         user: {
           id: finalUser.id,
           phone: finalUser.phone,
+          province: finalUser.province || 'Maputo Cidade',
           isPremium,
           premiumExpires: finalUser.premium_until,
           isAdmin: finalUser.is_admin === 1
@@ -237,7 +245,7 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.get('/api/user/profile', requireAuth, (req, res) => {
-  db.get("SELECT id, phone, premium_until, is_admin FROM users WHERE id = ?", [req.user.id], (err, user) => {
+  db.get("SELECT id, phone, premium_until, is_admin, province FROM users WHERE id = ?", [req.user.id], (err, user) => {
     if (err || !user) {
       return res.status(404).json({ error: 'Utilizador não encontrado.' });
     }
@@ -246,10 +254,26 @@ app.get('/api/user/profile', requireAuth, (req, res) => {
     res.json({
       id: user.id,
       phone: user.phone,
+      province: user.province || 'Maputo Cidade',
       isPremium,
       premiumExpires: user.premium_until,
       isAdmin: user.is_admin === 1
     });
+  });
+});
+
+app.put('/api/user/province', requireAuth, (req, res) => {
+  const { province } = req.body;
+  const validProvinces = [
+    "Maputo Cidade", "Maputo Província", "Gaza", "Inhambane", 
+    "Sofala", "Manica", "Tete", "Zambézia", "Nampula", "Niassa", "Cabo Delgado"
+  ];
+  if (!province || !validProvinces.includes(province)) {
+    return res.status(400).json({ error: "Província inválida." });
+  }
+  db.run("UPDATE users SET province = ? WHERE id = ?", [province, req.user.id], function(err) {
+    if (err) return res.status(500).json({ error: "Erro ao atualizar província." });
+    res.json({ message: "Província atualizada com sucesso!", province });
   });
 });
 
@@ -514,6 +538,82 @@ app.get('/api/games/leaderboard', (req, res) => {
     });
 
     res.json(maskedRows);
+  });
+});
+
+// 3. Obter Ranking Geral por Província (Liga Moçambicana)
+app.get('/api/leagues/provinces', (req, res) => {
+  const query = `
+    SELECT 
+      COALESCE(u.province, 'Maputo Cidade') as province,
+      COUNT(DISTINCT u.id)::int as active_students,
+      COALESCE(SUM(gs.score), 0)::int as total_points,
+      COALESCE(MAX(gs.score), 0)::int as top_score
+    FROM users u
+    LEFT JOIN game_scores gs ON gs.user_id = u.id
+    GROUP BY COALESCE(u.province, 'Maputo Cidade')
+    ORDER BY total_points DESC, active_students DESC;
+  `;
+  db.all(query, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Erro ao consultar ranking provincial." });
+
+    const allProvinces = [
+      "Maputo Cidade", "Maputo Província", "Gaza", "Inhambane", 
+      "Sofala", "Manica", "Tete", "Zambézia", "Nampula", "Niassa", "Cabo Delgado"
+    ];
+
+    const map = {};
+    (rows || []).forEach(r => { map[r.province] = r; });
+
+    const fullList = allProvinces.map(p => {
+      return map[p] || {
+        province: p,
+        active_students: 0,
+        total_points: 0,
+        top_score: 0
+      };
+    });
+
+    fullList.sort((a, b) => b.total_points - a.total_points || b.active_students - a.active_students);
+    res.json(fullList);
+  });
+});
+
+// 4. Obter Placar Semanal da Liga (com filtro opcional por província)
+app.get('/api/leagues/leaderboard', (req, res) => {
+  const { province } = req.query;
+  let query = `
+    SELECT 
+      u.id as user_id,
+      u.phone,
+      COALESCE(u.province, 'Maputo Cidade') as province,
+      COALESCE(SUM(gs.score), 0)::int as total_points,
+      COUNT(gs.id)::int as games_played
+    FROM users u
+    JOIN game_scores gs ON gs.user_id = u.id
+  `;
+  const params = [];
+  if (province && province !== 'all') {
+    query += ` WHERE COALESCE(u.province, 'Maputo Cidade') = ?`;
+    params.push(province);
+  }
+  query += `
+    GROUP BY u.id, u.phone, u.province
+    ORDER BY total_points DESC
+    LIMIT 15;
+  `;
+  db.all(query, params, (err, rows) => {
+    if (err) return res.status(500).json({ error: "Erro ao consultar placar da liga." });
+    const masked = (rows || []).map(r => {
+      const p = r.phone || '840000000';
+      return {
+        phone: p.substring(0, 3) + '***' + p.substring(6),
+        province: r.province,
+        total_points: r.total_points,
+        games_played: r.games_played
+      };
+    });
+    res.json(masked);
   });
 });
 
@@ -1103,6 +1203,33 @@ app.post('/api/admin/generator/toggle', requireAdmin, (req, res) => {
   } else {
     contentEngine.stopAutoGeneratorWorker();
     res.json({ message: 'Agendador de conteúdo contínuo PAUSADO.', isActive: false });
+  }
+});
+
+// 18. Pipeline OCR - Estado e Métricas
+const ocrPipeline = require('./scripts/ocr_transcribe_up');
+
+app.get('/api/admin/ocr/status', requireAdmin, async (req, res) => {
+  try {
+    const stats = await ocrPipeline.getOcrStatus();
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao consultar estado do OCR: ' + err.message });
+  }
+});
+
+// 19. Pipeline OCR - Processar Lote
+app.post('/api/admin/ocr/process', requireAdmin, async (req, res) => {
+  const { exam_id, limit, dryRun } = req.body;
+  try {
+    const batchRes = await ocrPipeline.processOcrBatch({
+      examId: exam_id || null,
+      limit: parseInt(limit) || 40,
+      dryRun: Boolean(dryRun)
+    });
+    res.json(batchRes);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao processar lote de OCR: ' + err.message });
   }
 });
 

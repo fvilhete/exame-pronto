@@ -58,6 +58,11 @@
           </span>
         </div>
         
+        <!-- Indicador de Conectividade PWA (Offline / Online) -->
+        <div id="network-status-badge" class="network-badge online" title="Estado da Ligação">
+          <span class="network-dot"></span> <span id="network-status-text">Online</span>
+        </div>
+
         <!-- Controlo de Efeitos Sonoros -->
         <button class="btn btn-sm btn-outline" id="btn-sound-toggle" title="Ativar/Desativar Efeitos Sonoros" style="padding: 6px 10px; font-size: 0.8rem;">🔊 Som: ON</button>
         
@@ -639,23 +644,44 @@
         <div class="game-leaderboard-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow); height: fit-content;">
           <h3 class="uni-section-title"><span></span>Tabela de Líderes</h3>
           
-          <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-            <button class="btn btn-sm btn-outline active" id="btn-leaderboard-math" style="flex: 1; font-size: 0.75rem;">Math Rush</button>
-            <button class="btn btn-sm btn-outline" id="btn-leaderboard-quiz" style="flex: 1; font-size: 0.75rem;">Moz Quiz</button>
+          <div style="display: flex; gap: 4px; margin-bottom: 15px;">
+            <button class="btn btn-sm btn-outline active" id="btn-leaderboard-math" style="flex: 1; font-size: 0.72rem; padding: 5px 3px;">Math Rush</button>
+            <button class="btn btn-sm btn-outline" id="btn-leaderboard-quiz" style="flex: 1; font-size: 0.72rem; padding: 5px 3px;">Moz Quiz</button>
+            <button class="btn btn-sm btn-outline" id="btn-leaderboard-provinces" style="flex: 1; font-size: 0.72rem; padding: 5px 3px; font-weight: 700; color: #f59e0b;">🏆 Províncias</button>
           </div>
 
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;" id="leaderboard-table">
-            <thead>
-              <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
-                <th style="padding: 8px 5px;">Pos</th>
-                <th style="padding: 8px 5px;">Telefone</th>
-                <th style="padding: 8px 5px; text-align: right;">Pontos</th>
-              </tr>
-            </thead>
-            <tbody id="leaderboard-tbody">
-              <!-- Loaded via API -->
-            </tbody>
-          </table>
+          <!-- Standard Leaderboard Table -->
+          <div id="leaderboard-standard-container">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;" id="leaderboard-table">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                  <th style="padding: 8px 5px;">Pos</th>
+                  <th style="padding: 8px 5px;">Telefone</th>
+                  <th style="padding: 8px 5px; text-align: right;">Pontos</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboard-tbody">
+                <!-- Loaded via API -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Provincial League & Tournament Container -->
+          <div id="leaderboard-provincial-container" style="display: none;">
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 10px; margin-bottom: 12px; text-align: center;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.5px;">⏳ Torneio Semanal</span>
+              <div id="league-countdown-text" style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); margin-top: 2px;">Encerra em: 3d 14h</div>
+            </div>
+
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: flex; justify-content: space-between;">
+              <span>Província</span>
+              <span>Pts Acumulados</span>
+            </div>
+
+            <div id="provinces-ranking-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto;">
+              <!-- Populated dynamically via loadProvincialLeague() -->
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1402,6 +1428,23 @@
             <label for="auth-password-input">Palavra-passe (ou PIN):</label>
             <input type="password" id="auth-password-input" class="auth-input-text" placeholder="Insira a sua senha" required>
           </div>
+
+          <div class="form-group" id="auth-province-group" style="display: none;">
+            <label for="auth-province-select">A Tua Província (para a Liga Nacional):</label>
+            <select id="auth-province-select" class="auth-input-text" style="width: 100%; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-sm);">
+              <option value="Maputo Cidade">🏙️ Maputo Cidade</option>
+              <option value="Maputo Província">🌴 Maputo Província</option>
+              <option value="Gaza">🌊 Gaza</option>
+              <option value="Inhambane">🥥 Inhambane</option>
+              <option value="Sofala">🚢 Sofala (Beira)</option>
+              <option value="Manica">⛰️ Manica (Chimoio)</option>
+              <option value="Tete">⚡ Tete</option>
+              <option value="Zambézia">🌴 Zambézia (Quelimane)</option>
+              <option value="Nampula">🏛️ Nampula</option>
+              <option value="Niassa">🌊 Niassa</option>
+              <option value="Cabo Delgado">🏖️ Cabo Delgado</option>
+            </select>
+          </div>
           
           <button type="submit" class="btn btn-primary" id="auth-submit-btn" style="width: 100%; margin-top: 10px;">
             Entrar
@@ -1515,7 +1558,10 @@
     </div>
   </div>
 
+  <!-- Container Oficial de Impressão de Cadernos em Formato A4 -->
+  <div id="printable-exam-paper-container" style="display: none;"></div>
+
   <!-- Scripts com Cache Busting -->
-  <script src="app.js?v=3.9"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>

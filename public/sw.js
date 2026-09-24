@@ -1,6 +1,8 @@
-const CACHE_NAME = 'examepronto-v3.9-cache';
+const CACHE_NAME = 'examepronto-v4.0-cache';
 const IMAGE_CACHE_NAME = 'examepronto-images-v1';
-const API_CACHE_NAME = 'examepronto-api-v1';
+const API_CACHE_NAME = 'examepronto-api-v2';
+const EXT_CACHE_NAME = 'examepronto-ext-v1';
+
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -22,7 +24,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME && key !== IMAGE_CACHE_NAME && key !== API_CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== IMAGE_CACHE_NAME && key !== API_CACHE_NAME && key !== EXT_CACHE_NAME) {
             return caches.delete(key);
           }
         })
@@ -36,8 +38,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. Stale-While-Revalidate para Catálogo de Exames (/api/exams)
-  if (event.request.url.includes('/api/exams') && !event.request.url.includes('/api/exams/')) {
+  const url = event.request.url;
+
+  // 1. Stale-While-Revalidate para Catálogo de Exames e Provas (/api/exams e /api/exams/:id)
+  // Permite resolver simuladores 100% offline sem saldo de dados
+  if (url.includes('/api/exams')) {
     event.respondWith(
       caches.open(API_CACHE_NAME).then((cache) => {
         return cache.match(event.request).then((cachedResponse) => {
@@ -55,14 +60,33 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Ignorar pedidos de outras APIs dinâmicas (auth, pagamentos, vouchers)
-  if (event.request.url.includes('/api/')) {
+  // 2. Cache-First para Recursos Externos (KaTeX CDN e Google Fonts)
+  if (url.includes('cdn.jsdelivr.net') || url.includes('fonts.gstatic.com') || url.includes('fonts.googleapis.com')) {
+    event.respondWith(
+      caches.open(EXT_CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => cachedResponse);
+        });
+      })
+    );
     return;
   }
 
-  // 2. Cache-First para Imagens de Exames (/exam_images/)
-  // Economiza largura de banda móvel dos estudantes e acelera revisões
-  if (event.request.url.includes('/exam_images/')) {
+  // Ignorar pedidos de outras APIs dinâmicas que exigem autenticação ativa em tempo real
+  if (url.includes('/api/auth/') || url.includes('/api/payments/') || url.includes('/api/vouchers/')) {
+    return;
+  }
+
+  // 3. Cache-First para Imagens e Diagramas de Exames (/exam_images/)
+  if (url.includes('/exam_images/')) {
     event.respondWith(
       caches.open(IMAGE_CACHE_NAME).then((cache) => {
         return cache.match(event.request).then((cachedResponse) => {
@@ -81,7 +105,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Network-First para ficheiros de código (garante atualizações instantâneas)
+  // 4. Network-First com Fallback Offline para Ficheiros da Aplicação (App Shell)
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
@@ -94,7 +118,6 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(() => {
-        // Fallback para cache se estiver offline
         return caches.match(event.request);
       })
   );

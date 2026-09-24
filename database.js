@@ -114,6 +114,14 @@ const db = {
   pool: pool
 };
 
+// Migração idempotente para colunas de Província e Ligas Regionais
+pool.query(`
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS province VARCHAR(100) DEFAULT 'Maputo Cidade';
+  ALTER TABLE game_scores ADD COLUMN IF NOT EXISTS province VARCHAR(100) DEFAULT 'Maputo Cidade';
+`, (err) => {
+  if (err) console.warn('⚠️ [Database] Aviso na migração de províncias:', err.message);
+});
+
 console.log('Base de dados: Camada de compatibilidade Supabase/PostgreSQL inicializada.');
 
 module.exports = db;

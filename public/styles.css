@@ -2437,6 +2437,79 @@ footer {
   100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
+/* Indicador de Rede PWA Offline / Online */
+.network-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: default;
+  transition: all 0.2s ease;
+}
+
+.network-badge.online .network-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.network-badge.offline {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+
+.network-badge.offline .network-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+/* Itens da Liga Provincial */
+.province-rank-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  font-size: 0.82rem;
+  transition: transform 0.15s ease;
+}
+
+.province-rank-item:hover {
+  transform: translateX(2px);
+  border-color: var(--primary);
+}
+
+.province-rank-item.top-1 {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.35);
+  font-weight: 700;
+}
+
+.province-rank-item.top-2 {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.35);
+  font-weight: 600;
+}
+
+.province-rank-item.top-3 {
+  background: rgba(217, 119, 6, 0.08);
+  border-color: rgba(217, 119, 6, 0.25);
+}
+
 .badge-year {
   font-size: 0.75rem;
   font-weight: 700;
@@ -2863,6 +2936,172 @@ body.dark-theme .scratchpad-modal.translucent-mode .scratchpad-canvas-container 
   padding: 2px 8px;
   border-radius: 20px;
   border: 1px solid #fde68a;
+}
+
+/* ===================================================
+   MODO DE IMPRESSÃO OFICIAL: CADERNO A4 EM PDF
+=================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm 14mm 12mm;
+  }
+
+  body.print-paper {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  }
+
+  body.print-paper header,
+  body.print-paper nav,
+  body.print-paper footer,
+  body.print-paper .sidebar,
+  body.print-paper .dashboard-header,
+  body.print-paper .education-level-selector,
+  body.print-paper .filter-section,
+  body.print-paper .hero-banner,
+  body.print-paper section,
+  body.print-paper #floating-whatsapp-btn,
+  body.print-paper #toast-container,
+  body.print-paper .quiz-lightbox-overlay,
+  body.print-paper .scratchpad-modal {
+    display: none !important;
+  }
+
+  body.print-paper #printable-exam-paper-container {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #0f172a !important;
+  }
+
+  .print-header {
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .print-republic {
+    font-size: 13pt;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .print-ministry {
+    font-size: 10.5pt;
+    font-weight: 600;
+    margin: 3px 0;
+    color: #1e293b;
+  }
+
+  .print-brand {
+    font-size: 8.5pt;
+    color: #64748b;
+    margin: 2px 0 6px 0;
+  }
+
+  .print-title-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 10.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .print-instructions {
+    border-left: 3px solid #2563eb;
+    background: #f8fafc;
+    padding: 6px 10px;
+    margin-bottom: 14px;
+    font-size: 8.5pt;
+    color: #334155;
+    font-style: italic;
+  }
+
+  .print-question-item {
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border-bottom: 1px dotted #e2e8f0;
+    padding-bottom: 8px;
+  }
+
+  .print-question-title {
+    font-weight: 700;
+    font-size: 10pt;
+    margin-bottom: 4px;
+    color: #0f172a;
+  }
+
+  .print-question-image {
+    max-width: 240px;
+    max-height: 150px;
+    object-fit: contain;
+    margin: 6px 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    display: block;
+  }
+
+  .print-options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 14px;
+    margin-left: 10px;
+    font-size: 9pt;
+  }
+
+  .print-option-line {
+    display: flex;
+    gap: 6px;
+  }
+
+  .print-answer-sheet {
+    margin-top: 20px;
+    border-top: 2px dashed #0f172a;
+    padding-top: 12px;
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .print-sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    margin: 10px 0;
+  }
+
+  .print-sheet-cell {
+    border: 1px solid #94a3b8;
+    padding: 4px 6px;
+    text-align: center;
+    font-size: 7.5pt;
+    border-radius: 3px;
+    background: #fafafa;
+  }
+
+  .print-solutions-box {
+    margin-top: 20px;
+    border-top: 2px solid #10b981;
+    padding-top: 12px;
+    page-break-before: always;
+    break-before: page;
+  }
 }
 
 

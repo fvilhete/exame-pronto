@@ -178,6 +178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   initAudioSystem();
   initStudyStreak();
+  initNetworkStatus();
   
   if (jwtToken) {
     await checkAuthStatus();
@@ -347,6 +348,76 @@ function showToast(message, type = "info") {
     toast.style.animation = "toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards";
     setTimeout(() => toast.remove(), 300);
   }, 3500);
+}
+
+// --- MONITORIZAÇÃO DE REDE PWA E SINCRONIZAÇÃO OFFLINE ---
+
+function initNetworkStatus() {
+  const badge = document.getElementById("network-status-badge");
+  const textEl = document.getElementById("network-status-text");
+
+  function updateStatus() {
+    const isOnline = navigator.onLine;
+    if (badge && textEl) {
+      if (isOnline) {
+        badge.className = "network-badge online";
+        badge.title = "Ligação à Internet ativa. Sincronização em tempo real.";
+        textEl.textContent = "Online";
+      } else {
+        badge.className = "network-badge offline";
+        badge.title = "Modo Offline ativo. Os exames favoritados e o catálogo continuam acessíveis.";
+        textEl.textContent = "Offline";
+      }
+    }
+  }
+
+  window.addEventListener("online", () => {
+    updateStatus();
+    showToast("📶 Ligação restabelecida! A sincronizar progresso...", "success");
+    syncOfflineProgress();
+  });
+
+  window.addEventListener("offline", () => {
+    updateStatus();
+    showToast("⚡ Entrou em Modo Offline. Pode continuar a resolver os seus exames guardados!", "info");
+  });
+
+  updateStatus();
+  syncOfflineProgress();
+}
+
+async function syncOfflineProgress() {
+  if (!navigator.onLine || !jwtToken) return;
+  const raw = localStorage.getItem("examepronto_offline_progress");
+  if (!raw) return;
+
+  try {
+    const queue = JSON.parse(raw);
+    if (!Array.isArray(queue) || queue.length === 0) return;
+
+    let syncedCount = 0;
+    for (const item of queue) {
+      try {
+        const res = await fetch("/api/user/progress", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${jwtToken}`
+          },
+          body: JSON.stringify(item)
+        });
+        if (res.ok) syncedCount++;
+      } catch (err) {}
+    }
+
+    localStorage.removeItem("examepronto_offline_progress");
+    if (syncedCount > 0) {
+      showToast(`☁️ Sincronizados ${syncedCount} teste(s) resolvidos offline!`, "success");
+      await fetchUserProgress();
+    }
+  } catch (e) {
+    console.error("Erro na sincronização offline:", e);
+  }
 }
 
 function safeAddListener(idOrEl, event, handler) {
@@ -520,6 +591,11 @@ function setupEventListeners() {
   safeAddListener("game-card-quiz", "click", startMozQuiz);
   safeAddListener("game-card-duel", "click", startDuelGame);
   safeAddListener("game-card-flashcards", "click", startFlashcardsGame);
+  
+  // Leaderboard & Provincial League Tabs
+  safeAddListener("btn-leaderboard-math", "click", () => loadLeaderboard("math_rush"));
+  safeAddListener("btn-leaderboard-quiz", "click", () => loadLeaderboard("moz_quiz"));
+  safeAddListener("btn-leaderboard-provinces", "click", () => loadLeaderboard("provinces"));
   
   document.querySelectorAll(".btn-game-back").forEach(btn => {
     btn.addEventListener("click", openGamesLobby);
@@ -703,6 +779,8 @@ function openAuthModal() {
   document.getElementById("auth-success-alert").style.display = "none";
   document.getElementById("auth-phone-input").value = "";
   document.getElementById("auth-password-input").value = "";
+  const provGroup = document.getElementById("auth-province-group");
+  if (provGroup) provGroup.style.display = "none";
   document.getElementById("auth-overlay").style.display = "flex";
   document.getElementById("auth-phone-input").focus();
 }
@@ -710,23 +788,28 @@ function openAuthModal() {
 function toggleAuthMode() {
   document.getElementById("auth-error-alert").style.display = "none";
   document.getElementById("auth-success-alert").style.display = "none";
+  const provGroup = document.getElementById("auth-province-group");
   
   if (authMode === "login") {
     authMode = "register";
     document.getElementById("auth-title").textContent = "Registar Nova Conta";
     document.getElementById("auth-submit-btn").textContent = "Criar Conta";
     document.getElementById("auth-toggle-link").innerHTML = 'Já tem conta? <span style="color: var(--primary); font-weight: 600; cursor: pointer;">Faça Login aqui</span>';
+    if (provGroup) provGroup.style.display = "block";
   } else {
     authMode = "login";
     document.getElementById("auth-title").textContent = "Iniciar Sessão";
     document.getElementById("auth-submit-btn").textContent = "Entrar";
     document.getElementById("auth-toggle-link").innerHTML = 'Não tem conta? <span style="color: var(--primary); font-weight: 600; cursor: pointer;">Registe-se aqui</span>';
+    if (provGroup) provGroup.style.display = "none";
   }
 }
 
 async function submitAuth() {
   const phone = document.getElementById("auth-phone-input").value.replace(/\D/g, "");
   const password = document.getElementById("auth-password-input").value;
+  const provSelect = document.getElementById("auth-province-select");
+  const province = provSelect ? provSelect.value : "Maputo Cidade";
   const errorAlert = document.getElementById("auth-error-alert");
   const successAlert = document.getElementById("auth-success-alert");
 
@@ -745,7 +828,7 @@ async function submitAuth() {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, password })
+      body: JSON.stringify({ phone, password, province })
     });
 
     const data = await res.json();
@@ -875,8 +958,14 @@ function toggleFavoriteExam(examId, event) {
   const idx = userFavorites.indexOf(examId);
   if (idx > -1) {
     userFavorites.splice(idx, 1);
+    showToast("Prova removida dos guardados.", "info");
   } else {
     userFavorites.push(examId);
+    // Pré-carregar para o Service Worker guardar em cache offline
+    fetch(`/api/exams/${examId}`, {
+      headers: jwtToken ? { "Authorization": `Bearer ${jwtToken}` } : {}
+    }).catch(() => {});
+    showToast("⭐ Prova guardada e pronta para estudo offline!", "success");
   }
   localStorage.setItem("examepronto_favorites", JSON.stringify(userFavorites));
 
@@ -1443,12 +1532,15 @@ function filterAndRenderExams() {
     }
 
     const actionButtons = isReady ? `
-      <div class="exam-card-actions">
-        <button class="btn btn-sm btn-outline btn-study-exam" data-id="${exam.id}" title="Modo Estudo: Resolução sem pressão de tempo com explicações passo a passo e dicas">
+      <div class="exam-card-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn btn-sm btn-outline btn-study-exam" data-id="${exam.id}" style="flex: 1; min-width: 105px;" title="Modo Estudo: Resolução sem pressão de tempo com explicações passo a passo e dicas">
           📖 Modo Estudo
         </button>
-        <button class="btn btn-sm btn-primary btn-start-exam" data-id="${exam.id}" title="Simular Prova: Simulação oficial cronometrada com contagem regressiva">
+        <button class="btn btn-sm btn-primary btn-start-exam" data-id="${exam.id}" style="flex: 1; min-width: 105px;" title="Simular Prova: Simulação oficial cronometrada com contagem regressiva">
           ⏱️ Simular Prova
+        </button>
+        <button type="button" class="btn btn-sm btn-outline btn-download-pdf-exam" data-id="${exam.id}" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; color: #1e3a8a; border-color: rgba(30, 58, 138, 0.28);" title="Baixar Caderno Oficial de Exame em Formato A4 (PDF)">
+          📥 Baixar Caderno A4 (PDF)
         </button>
       </div>
     ` : `
@@ -1511,6 +1603,14 @@ function filterAndRenderExams() {
     btn.addEventListener("click", (e) => {
       const examId = e.currentTarget.getAttribute("data-id");
       startExam(examId, 'exam');
+    });
+  });
+
+  container.querySelectorAll(".btn-download-pdf-exam").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const examId = e.currentTarget.getAttribute("data-id");
+      downloadExamPaperPdf(examId);
     });
   });
 
@@ -2100,17 +2200,36 @@ async function finishQuiz(timeOut = false) {
     date: new Date().toLocaleDateString("pt-MZ")
   };
 
-  try {
-    await fetch("/api/user/progress", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${jwtToken}`
-      },
-      body: JSON.stringify(progressData)
-    });
-  } catch (e) {
-    console.error("Erro ao salvar progresso:", e);
+  if (!navigator.onLine) {
+    try {
+      const offlineQueue = JSON.parse(localStorage.getItem("examepronto_offline_progress") || "[]");
+      offlineQueue.push(progressData);
+      localStorage.setItem("examepronto_offline_progress", JSON.stringify(offlineQueue));
+      showToast("⚡ Modo Offline: Resultado guardado no dispositivo. Será sincronizado com a internet!", "info");
+    } catch (err) {}
+  } else {
+    try {
+      await fetch("/api/user/progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${jwtToken}`
+        },
+        body: JSON.stringify(progressData)
+      });
+    } catch (e) {
+      try {
+        const offlineQueue = JSON.parse(localStorage.getItem("examepronto_offline_progress") || "[]");
+        offlineQueue.push(progressData);
+        localStorage.setItem("examepronto_offline_progress", JSON.stringify(offlineQueue));
+        showToast("⚡ Guardado offline temporariamente devido a oscilação de rede.", "info");
+      } catch (err) {}
+    }
+  }
+
+  // Pontuação para a Liga Provincial Moçambicana
+  if (jwtToken && correctCount > 0) {
+    submitGameScore("math_rush", correctCount * 10);
   }
 
   const percentage = Math.round((correctCount / totalQuestions) * 100);
@@ -2830,23 +2949,32 @@ async function submitGameScore(gameName, score) {
   }
 }
 
-// 4. Carregar Leaderboard
+// 4. Carregar Leaderboard (Math, Quiz ou Liga Provincial)
 async function loadLeaderboard(gameName) {
   activeLeaderboardGame = gameName;
   
-  // Toggle classes nos botões
   const btnMath = document.getElementById("btn-leaderboard-math");
   const btnQuiz = document.getElementById("btn-leaderboard-quiz");
+  const btnProvinces = document.getElementById("btn-leaderboard-provinces");
+  const standardContainer = document.getElementById("leaderboard-standard-container");
+  const provincialContainer = document.getElementById("leaderboard-provincial-container");
 
-  if (gameName === "math_rush") {
-    btnMath.classList.add("active");
-    btnQuiz.classList.remove("active");
-  } else {
-    btnMath.classList.remove("active");
-    btnQuiz.classList.add("active");
+  if (btnMath) btnMath.classList.toggle("active", gameName === "math_rush");
+  if (btnQuiz) btnQuiz.classList.toggle("active", gameName === "moz_quiz");
+  if (btnProvinces) btnProvinces.classList.toggle("active", gameName === "provinces");
+
+  if (gameName === "provinces") {
+    if (standardContainer) standardContainer.style.display = "none";
+    if (provincialContainer) provincialContainer.style.display = "block";
+    await loadProvincialLeague();
+    return;
   }
 
+  if (standardContainer) standardContainer.style.display = "block";
+  if (provincialContainer) provincialContainer.style.display = "none";
+
   const tbody = document.getElementById("leaderboard-tbody");
+  if (!tbody) return;
   tbody.innerHTML = `<tr><td colspan="3" style="text-align: center;">A carregar ranking...</td></tr>`;
 
   try {
@@ -2879,6 +3007,63 @@ async function loadLeaderboard(gameName) {
 
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--error);">Erro ao ligar ao servidor.</td></tr>`;
+  }
+}
+
+// 5. Liga Provincial e Torneio Semanal
+async function loadProvincialLeague() {
+  const container = document.getElementById("provinces-ranking-list");
+  const countdownEl = document.getElementById("league-countdown-text");
+  if (!container) return;
+
+  // Atualizar contador regressivo até Domingo 23:59:59
+  if (countdownEl) {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Domingo
+    const daysUntilSunday = (7 - dayOfWeek) % 7;
+    const endOfWeek = new Date(now);
+    endOfWeek.setDate(now.getDate() + daysUntilSunday);
+    endOfWeek.setHours(23, 59, 59, 999);
+    const diffMs = endOfWeek - now;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    const remHours = diffHours % 24;
+    countdownEl.textContent = `Encerra em: ${diffDays}d ${remHours}h`;
+  }
+
+  container.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 15px; font-size: 0.8rem;">A carregar Liga Provincial...</div>`;
+
+  try {
+    const res = await fetch("/api/leagues/provinces");
+    if (!res.ok) throw new Error("Erro na API");
+    const provinces = await res.json();
+
+    container.innerHTML = "";
+    provinces.forEach((p, idx) => {
+      let rankBadge = `${idx + 1}º`;
+      let rankClass = "";
+      if (idx === 0) { rankBadge = "🥇 1º"; rankClass = "top-1"; }
+      else if (idx === 1) { rankBadge = "🥈 2º"; rankClass = "top-2"; }
+      else if (idx === 2) { rankBadge = "🥉 3º"; rankClass = "top-3"; }
+
+      const row = document.createElement("div");
+      row.className = `province-rank-item ${rankClass}`;
+      row.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-weight: 800; min-width: 28px;">${rankBadge}</span>
+          <div>
+            <div style="font-weight: 700; color: var(--text-primary);">${escapeHtml(p.province)}</div>
+            <div style="font-size: 0.7rem; color: var(--text-secondary);">${p.active_students} estudantes ativos</div>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 800; color: var(--primary);">${p.total_points.toLocaleString('pt-MZ')} pts</div>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  } catch (e) {
+    container.innerHTML = `<div style="text-align: center; color: var(--error); padding: 10px; font-size: 0.8rem;">Erro ao carregar dados da Liga.</div>`;
   }
 }
 
@@ -4119,74 +4304,140 @@ async function redeemVoucherCode() {
 
 // --- GERAÇÃO DE CADERNO DE EXAME EM PDF PARA IMPRESSÃO ---
 
-function downloadExamPaperPdf() {
-  if (!currentQuiz.exam) return;
-  const exam = currentQuiz.exam;
+// --- GERAÇÃO DE CADERNO DE EXAME EM PDF PARA IMPRESSÃO (A4) ---
+
+async function downloadExamPaperPdf(examId) {
+  let exam = null;
+  if (!examId && currentQuiz && currentQuiz.exam) {
+    exam = currentQuiz.exam;
+  } else if (examId) {
+    showToast("📄 A preparar Caderno Oficial A4...", "info");
+    try {
+      const res = await fetch(`/api/exams/${examId}`, {
+        headers: jwtToken ? { "Authorization": `Bearer ${jwtToken}` } : {}
+      });
+      if (!res.ok) throw new Error("Erro ao carregar exame");
+      exam = await res.json();
+    } catch (e) {
+      showToast("Não foi possível carregar os dados para impressão.", "error");
+      return;
+    }
+  }
+
+  if (!exam || !exam.questions || exam.questions.length === 0) {
+    showToast("⚠️ Este exame ainda não possui questões disponíveis para impressão.", "warning");
+    return;
+  }
+
   const container = document.getElementById("printable-exam-paper-container");
   if (!container) return;
 
-  const title = `${exam.subject_name} - ${exam.level_name} (${exam.year})`;
-  
+  const univ = exam.university || "UEM";
+  let institutionHeading = "UNIVERSIDADE EDUARDO MONDLANE";
+  if (univ.includes("UP")) institutionHeading = "UNIVERSIDADE PEDAGÓGICA DE MAPUTO";
+  else if (univ.includes("Zambeze")) institutionHeading = "UNIVERSIDADE ZAMBEZE";
+  else if (univ.includes("Lúrio") || univ.includes("Lurio")) institutionHeading = "UNIVERSIDADE LÚRIO";
+  else if (univ.includes("Púnguè") || univ.includes("Pungue")) institutionHeading = "UNIVERSIDADE PÚNGUÈ";
+  else if (univ.includes("Rovuma")) institutionHeading = "UNIVERSIDADE ROVUMA";
+  else if (univ.includes("Licungo")) institutionHeading = "UNIVERSIDADE LICUNGO";
+  else if (univ.includes("ISRI") || univ.includes("UJC")) institutionHeading = "INSTITUTO SUPERIOR DE RELAÇÕES INTERNACIONAIS / UJC";
+  else if (univ.includes("ACIPOL")) institutionHeading = "ACADEMIA DE CIÊNCIAS POLICIAIS (ACIPOL)";
+  else if (univ.includes("ISCISA")) institutionHeading = "INSTITUTO SUPERIOR DE CIÊNCIAS DE SAÚDE (ISCISA)";
+  else if (univ.includes("MINEDH") || (exam.level && exam.level.includes("12a")) || (exam.level && exam.level.includes("10a"))) {
+    institutionHeading = "MINISTÉRIO DA EDUCAÇÃO E DESENVOLVIMENTO HUMANO";
+  } else if (univ.includes("INATRO") || (exam.level && exam.level.includes("conducao"))) {
+    institutionHeading = "INSTITUTO NACIONAL DOS TRANSPORTES RODOVIÁRIOS (INATRO)";
+  }
+
+  const title = `${exam.subject_name} • ${exam.year}`;
+  const totalQuestions = exam.questions.length;
+  const duration = exam.durationMinutes || exam.duration_minutes || 120;
+
   let questionsHtml = "";
   exam.questions.forEach((q, idx) => {
     let optionsHtml = "";
-    q.options.forEach((opt, oIdx) => {
-      const letter = String.fromCharCode(65 + oIdx);
-      optionsHtml += `<div style="margin-left: 20px; margin-top: 4px;"><strong>${letter})</strong> ${opt}</div>`;
-    });
+    if (Array.isArray(q.options) && q.options.length > 0) {
+      optionsHtml = '<div class="print-options-grid">';
+      q.options.forEach((opt, oIdx) => {
+        const letter = String.fromCharCode(65 + oIdx);
+        const cleanOpt = opt.replace(/^[A-E]\)\s*/i, '');
+        optionsHtml += `
+          <div class="print-option-line">
+            <strong>${letter})</strong> <span>${escapeHtml(cleanOpt)}</span>
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+    }
+
+    let imgHtml = "";
+    if (q.image_url) {
+      imgHtml = `<div style="text-align: center; margin: 6px 0;"><img src="${q.image_url}" class="print-question-image" alt="Figura Q${idx+1}"></div>`;
+    }
 
     questionsHtml += `
-      <div style="margin-bottom: 20px; page-break-inside: avoid;">
-        <div style="font-weight: bold; margin-bottom: 6px;">Questão ${idx + 1}. ${q.text}</div>
+      <div class="print-question-item">
+        <div class="print-question-title">${idx + 1}. ${escapeHtml(q.text)}</div>
+        ${imgHtml}
         ${optionsHtml}
       </div>
     `;
   });
 
-  // Grelha de respostas
+  // Grelha de respostas oficial
   let gridBubbles = "";
-  for (let i = 1; i <= exam.questions.length; i++) {
+  for (let i = 1; i <= totalQuestions; i++) {
     gridBubbles += `
-      <div style="display: inline-block; width: 85px; margin: 4px; padding: 4px; border: 1px solid #94a3b8; text-align: center; font-size: 0.75rem;">
+      <div class="print-sheet-cell">
         <strong>Q${i}:</strong> [A] [B] [C] [D]
       </div>
     `;
   }
 
   container.innerHTML = `
-    <div style="border-bottom: 3px double #1e3a8a; padding-bottom: 15px; margin-bottom: 20px; text-align: center;">
-      <h2 style="margin: 0; color: #1e3a8a; font-size: 1.4rem;">REPÚBLICA DE MOÇAMBIQUE</h2>
-      <h3 style="margin: 4px 0; font-size: 1.1rem; color: #334155;">MINISTÉRIO DA EDUCAÇÃO E DESENVOLVIMENTO HUMANO / INATRO</h3>
-      <h4 style="margin: 4px 0; color: #475569; font-weight: normal;">ExamePronto | Vilhete Solutions</h4>
-      <div style="margin-top: 10px; padding: 8px; background: #f1f5f9; border-radius: 4px; font-weight: bold;">
-        CADERNO OFICIAL DE EXAME: ${title.toUpperCase()} (Duração: ${exam.duration_minutes || 120} Minutos)
+    <div class="print-header">
+      <div class="print-republic">República de Moçambique</div>
+      <div class="print-ministry">${institutionHeading}</div>
+      <div class="print-brand">ExamePronto • Central Oficial de Preparação e Estudos de Moçambique</div>
+      <div class="print-title-box">
+        <span>CADERNO OFICIAL: ${title.toUpperCase()}</span>
+        <span>DURAÇÃO: ${duration} MINUTOS</span>
       </div>
     </div>
 
-    <div style="margin-bottom: 20px; font-size: 0.85rem; font-style: italic; color: #475569;">
-      <strong>Instruções ao Candidato:</strong> Leia atentamente todas as perguntas. Cada questão possui apenas uma resposta correta. Preencha a grelha de respostas no final a tinta azul ou preta.
+    <div class="print-instructions">
+      <strong>Instruções ao Candidato:</strong> 1. Verifique se o caderno contém todas as ${totalQuestions} perguntas numeradas sequencialmente. 2. Cada questão possui apenas uma opção correta. 3. Preencha a Grelha Oficial de Respostas a tinta azul ou preta. Rascunhos não são considerados na pontuação oficial.
     </div>
 
-    <div style="font-size: 0.95rem; line-height: 1.5;">
+    <div class="print-questions-body">
       ${questionsHtml}
     </div>
 
-    <div style="margin-top: 30px; border-top: 2px dashed #1e3a8a; padding-top: 15px; page-break-inside: avoid;">
-      <h4 style="text-align: center; margin-bottom: 10px;">GRELHA OFICIAL DE RESPOSTAS</h4>
-      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;">
+    <div class="print-answer-sheet">
+      <div style="text-align: center; margin-bottom: 8px;">
+        <h3 style="margin: 0; font-size: 11pt; text-transform: uppercase;">Grelha Oficial de Respostas</h3>
+        <p style="margin: 2px 0; font-size: 8pt; color: #475569;">Preencha o círculo ou quadrado correspondente à opção escolhida.</p>
+      </div>
+      <div class="print-sheet-grid">
         ${gridBubbles}
       </div>
-      <p style="text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 15px;">
-        Caderno emitido por ExamePronto 3.2 | Propriedade de Vilhete Solutions - Moçambique.
-      </p>
+      <div style="display: flex; justify-content: space-between; font-size: 8pt; color: #64748b; margin-top: 15px; border-top: 1px solid #cbd5e1; padding-top: 8px;">
+        <span>Nome do Aluno / Candidato: __________________________________________________</span>
+        <span>Assinatura: ___________________________</span>
+      </div>
     </div>
   `;
 
+  // Renderizar KaTeX formulas no container de impressão
+  renderMathFormulas(container);
+
   document.body.className = "print-paper";
-  window.print();
   setTimeout(() => {
-    document.body.className = "";
-  }, 1000);
+    window.print();
+    setTimeout(() => {
+      document.body.className = "";
+    }, 1200);
+  }, 350);
 }
 
 

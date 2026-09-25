@@ -3503,3 +3503,423 @@ body.dark-theme .scratchpad-modal.translucent-mode .scratchpad-canvas-container 
     box-shadow: none;
   }
 }
+
+/* =============================================================================
+   VERSÃO 9.0: EDTECH WORLD-CLASS (DUOLINGO, GRADEO, KHAN, CODEMAO, UDEMY)
+   ============================================================================= */
+
+/* 1. SISTEMA DE LIGAS (5 DIVISÕES DUOLINGO) */
+.league-division-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-league-tier {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-league-tier:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-league-tier.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.league-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  font-size: 0.82rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.league-user-row:hover {
+  transform: translateX(2px);
+  border-color: var(--primary);
+}
+
+.league-user-row.zone-promotion {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.06), var(--bg-primary));
+}
+
+.league-user-row.zone-relegation {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.05), var(--bg-primary));
+}
+
+.league-rank-num {
+  font-weight: 800;
+  width: 22px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.league-rank-num.rank-1 { color: #f59e0b; font-size: 1.1rem; }
+.league-rank-num.rank-2 { color: #94a3b8; font-size: 1.05rem; }
+.league-rank-num.rank-3 { color: #b45309; font-size: 1rem; }
+
+.league-user-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin: 0 10px;
+}
+
+.league-user-phone {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.league-user-prov {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.league-xp-badge {
+  font-weight: 800;
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.1);
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* 2. LEITOR ÓPTICO DE GABARITO (GRADEO / ZIPGRADE OMR) */
+.omr-reticle-overlay {
+  position: absolute;
+  top: 10%;
+  left: 8%;
+  right: 8%;
+  bottom: 12%;
+  border: 2px dashed rgba(16, 185, 129, 0.7);
+  border-radius: 8px;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+}
+
+.reticle-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: #10b981;
+  border-style: solid;
+}
+
+.reticle-corner.top-left { top: -2px; left: -2px; border-width: 4px 0 0 4px; }
+.reticle-corner.top-right { top: -2px; right: -2px; border-width: 4px 4px 0 0; }
+.reticle-corner.bottom-left { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; }
+.reticle-corner.bottom-right { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; }
+
+.reticle-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #10b981, transparent);
+  box-shadow: 0 0 8px #10b981;
+  animation: scanLaser 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes scanLaser {
+  0% { top: 5%; opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { top: 95%; opacity: 0.4; }
+}
+
+.reticle-hint {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.85);
+  color: #10b981;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+  letter-spacing: 0.4px;
+}
+
+.omr-detected-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.82rem;
+}
+
+.omr-q-num {
+  font-weight: 700;
+  width: 32px;
+  color: var(--text-secondary);
+}
+
+.omr-opt-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.omr-opt-chip {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.omr-opt-chip.active {
+  background: #10b981;
+  color: white;
+  border-color: #059669;
+  box-shadow: 0 2px 5px rgba(16, 185, 129, 0.4);
+}
+
+.omr-confidence-pill {
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.omr-confidence-pill.high { background: rgba(16, 185, 129, 0.15); color: #059669; }
+.omr-confidence-pill.medium { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.omr-confidence-pill.low { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+/* 3. ÁRVORE DE COMPETÊNCIAS & TREINO CIRÚRGICO (KHAN ACADEMY) */
+.skill-node-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.skill-node-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.skill-node-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.skill-icon-bubble {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.skill-info h4 {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.skill-info p {
+  margin: 2px 0 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.skill-progress-bar {
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 10px 0 8px 0;
+}
+
+.skill-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.skill-progress-fill.tier-gold { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.skill-progress-fill.tier-blue { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.skill-progress-fill.tier-yellow { background: linear-gradient(90deg, #eab308, #fef08a); }
+.skill-progress-fill.tier-gray { background: #94a3b8; }
+
+.skill-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+}
+
+/* 4. A ROTA DO CALOIRO (CAMPANHA NARRATIVA CODEMAO) */
+.campaign-province-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.campaign-province-card.completed {
+  border-color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.04), var(--bg-primary));
+}
+
+.campaign-province-card.locked {
+  opacity: 0.6;
+  filter: grayscale(0.85);
+  pointer-events: none;
+}
+
+.province-badge-step {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.province-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+  color: var(--text-primary);
+}
+
+.province-boss-box {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px dashed rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-top: 12px;
+}
+
+.province-boss-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.province-boss-desc {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* 5. MICRO-AULAS EM 90 SEGUNDOS (UDEMY / COURSERA) */
+.micro-lesson-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease;
+}
+
+.micro-lesson-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.micro-tag-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+  width: fit-content;
+  margin-bottom: 8px;
+}
+
+.micro-takeaway-box {
+  background: var(--bg-primary);
+  border-left: 3px solid #10b981;
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  margin: 10px 0;
+}
+
+/* 6. FÓRUM COMUNITÁRIO DE RESOLUÇÕES */
+.community-sol-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 0.84rem;
+}
+
+.community-sol-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.btn-upvote {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-upvote:hover {
+  border-color: #10b981;
+  color: #10b981;
+}
+

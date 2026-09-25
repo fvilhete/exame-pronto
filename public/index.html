@@ -42,15 +42,28 @@
       </a>
       
       <!-- Menu de Navegação Superior (Sempre Acessível) -->
-      <nav class="nav-menu" id="main-nav-menu" style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <nav class="nav-menu" id="main-nav-menu" style="display: flex; gap: 6px; flex-wrap: wrap;">
         <button class="btn btn-sm btn-outline nav-menu-item active" data-target="dashboard">Simulador</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="explicador">Explicador IA</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="games">Jogos Educativos</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="investor">Área de Negócios 💼</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="rota">Rota do Caloiro 🗺️</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="skills">Competências 🌳</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="micro">Micro-Aulas ⚡</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="games">Jogos & Ligas 🎮</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="explicador">Explicador IA 🤖</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="investor">Negócios 💼</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="admin" id="nav-admin-btn" style="display: none;">Admin ⚙️</button>
       </nav>
       
       <div class="nav-actions">
+        <!-- Botão de Acesso Rápido ao Scanner Óptico OMR (Gradeo / ZipGrade) -->
+        <button class="btn btn-sm" id="btn-open-omr-scanner" title="Corrigir Folha de Respostas por Foto ou Câmara" style="background: linear-gradient(135deg, #059669, #10b981); color: white; font-weight: 700; border: none; padding: 6px 12px; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(16,185,129,0.35); display: flex; align-items: center; gap: 5px;">
+          📸 Scanner Gabarito
+        </button>
+
+        <!-- Divisão da Liga do Aluno (Duolingo Style) -->
+        <div id="header-league-pill" class="badge" title="Tua Liga e Pontos XP" style="display: none; cursor: pointer; background: rgba(245, 158, 11, 0.15); color: #d97706; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.35); padding: 5px 10px; font-size: 0.8rem; border-radius: 14px;">
+          🥉 Bronze • 0 XP
+        </div>
+
         <!-- Status de Subscrição -->
         <div id="header-premium-badge" style="display: none;">
           <span class="premium-status-indicator" style="margin: 0; padding: 6px 12px; font-size: 0.8rem;">
@@ -681,18 +694,47 @@
           </div>
         </div>
 
-        <!-- Right Column: Leaderboard -->
+        <!-- Right Column: Leaderboard & 5 Ligas Duolingo -->
         <div class="game-leaderboard-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow); height: fit-content;">
-          <h3 class="uni-section-title"><span></span>Tabela de Líderes</h3>
+          <h3 class="uni-section-title"><span></span>Tabela de Líderes & Ligas</h3>
           
-          <div style="display: flex; gap: 4px; margin-bottom: 15px;">
-            <button class="btn btn-sm btn-outline active" id="btn-leaderboard-math" style="flex: 1; font-size: 0.72rem; padding: 5px 3px;">Math Rush</button>
+          <div style="display: flex; gap: 4px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button class="btn btn-sm btn-outline active" id="btn-leaderboard-leagues" style="flex: 1; font-size: 0.72rem; padding: 5px 3px; font-weight: 700; color: #10b981;">👑 5 Ligas</button>
+            <button class="btn btn-sm btn-outline" id="btn-leaderboard-math" style="flex: 1; font-size: 0.72rem; padding: 5px 3px;">Math Rush</button>
             <button class="btn btn-sm btn-outline" id="btn-leaderboard-quiz" style="flex: 1; font-size: 0.72rem; padding: 5px 3px;">Moz Quiz</button>
             <button class="btn btn-sm btn-outline" id="btn-leaderboard-provinces" style="flex: 1; font-size: 0.72rem; padding: 5px 3px; font-weight: 700; color: #f59e0b;">🏆 Províncias</button>
           </div>
 
+          <!-- 1. Duolingo-Style 5-Tier Leagues Container -->
+          <div id="leaderboard-leagues-container">
+            <!-- Badges das 5 Divisões -->
+            <div class="league-division-tabs" style="display: flex; gap: 4px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;">
+              <button class="btn-league-tier active" data-tier="all" title="Classificação Geral">Geral</button>
+              <button class="btn-league-tier" data-tier="diamante" title="Liga Diamante (7.000+ XP)">👑 Diamante</button>
+              <button class="btn-league-tier" data-tier="safira" title="Liga Safira (3.500+ XP)">💎 Safira</button>
+              <button class="btn-league-tier" data-tier="ouro" title="Liga Ouro (1.500+ XP)">🥇 Ouro</button>
+              <button class="btn-league-tier" data-tier="prata" title="Liga Prata (500+ XP)">🥈 Prata</button>
+              <button class="btn-league-tier" data-tier="bronze" title="Liga Bronze (Iniciante)">🥉 Bronze</button>
+            </div>
+
+            <!-- Temporizador Semanal & Legenda de Promoção -->
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 10px; margin-bottom: 12px; text-align: center;">
+              <div style="font-size: 0.72rem; font-weight: 700; color: #059669; text-transform: uppercase;">⏳ Época Semanal Duolingo</div>
+              <div id="duolingo-countdown-text" style="font-size: 0.92rem; font-weight: 800; color: var(--text-primary); margin-top: 2px;">Encerra Domingo às 23:59</div>
+              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; display: flex; justify-content: center; gap: 10px;">
+                <span>🟢 Top 5 Sobem</span>
+                <span>🔴 Últimos 3 Descem</span>
+              </div>
+            </div>
+
+            <!-- Lista de Jogadores da Liga -->
+            <div id="league-ranking-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto;">
+              <!-- Preenchido via API /api/leagues/leaderboard -->
+            </div>
+          </div>
+
           <!-- Standard Leaderboard Table -->
-          <div id="leaderboard-standard-container">
+          <div id="leaderboard-standard-container" style="display: none;">
             <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;" id="leaderboard-table">
               <thead>
                 <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
@@ -724,6 +766,111 @@
             </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: A ROTA DO CALOIRO (CAMPANHA NARRATIVA CODEMAO STYLE) -->
+    <section id="section-rota" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>A Rota do Caloiro: Expedição Moçambique 🗺️</h2>
+          <p>Viaja pelas 11 províncias de Moçambique, supera as missões curriculares e derrota os Chefes de Disciplina!</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <div class="stat-pill-box" style="padding: 8px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px; text-align: center;">
+            <div style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Teu XP Nacional</div>
+            <div id="campaign-user-xp-badge" style="font-weight: 900; color: var(--primary); font-size: 1.1rem;">0 XP</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mapa Gamificado das 11 Províncias -->
+      <div class="campaign-map-container" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 25px; box-shadow: var(--card-shadow); margin-bottom: 30px;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 style="margin: 0; font-size: 1.25rem; color: var(--primary);">📍 Trajeto Moçambicano: De Maputo a Pemba</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Cada província desbloqueia missões com questões reais dos exames oficiais de admissão da UEM, UP e 12ª Classe.</p>
+          </div>
+          <button class="btn btn-sm btn-outline" id="btn-campaign-refresh" style="font-size: 0.8rem;">🔄 Atualizar Mapa</button>
+        </div>
+
+        <!-- Trilha de Províncias e Missões -->
+        <div class="campaign-path-wrapper" id="campaign-provinces-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px;">
+          <!-- Preenchido via API /api/campaign/map -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SEÇÃO: ÁRVORE DE COMPETÊNCIAS & RADAR DE FRAQUEZAS (KHAN ACADEMY STYLE) -->
+    <section id="section-skills" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Árvore de Competências & Diagnóstico IA 🌳</h2>
+          <p>Mapeamento visual do teu domínio curricular. Treina cirurgicamente onde tens mais lacunas!</p>
+        </div>
+      </div>
+
+      <!-- Banner de Treino Cirúrgico em Destaque -->
+      <div class="surgical-training-banner" style="background: linear-gradient(135deg, #1e3a8a, #4f46e5); color: white; border-radius: var(--radius-lg); padding: 25px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; box-shadow: 0 8px 24px rgba(79, 70, 229, 0.25);">
+        <div>
+          <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;">⚡ ALGORITMO ADAPTATIVO KHAN ACADEMY</span>
+          <h3 style="margin: 8px 0; font-size: 1.5rem; color: white;">Treino Cirúrgico: 10 Questões Direcionadas</h3>
+          <p style="margin: 0; font-size: 0.9rem; opacity: 0.9; max-width: 580px;">O sistema deteta as competências com pontuação abaixo de 60% e monta uma bateria instantânea para acelerar a tua aprovação.</p>
+        </div>
+        <button class="btn btn-accent btn-lg" id="btn-launch-surgical-drill" style="font-weight: 800; font-size: 1rem; padding: 14px 28px; background: #f59e0b; color: #1e1e1e; border: none; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4); cursor: pointer;">
+          ⚡ Iniciar Treino Cirúrgico (10 Perguntas)
+        </button>
+      </div>
+
+      <!-- Seletor de Disciplina da Árvore de Competências -->
+      <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 6px;" id="skills-subject-tabs">
+        <button class="btn btn-sm btn-outline active skill-tab-btn" data-subject="matematica">📐 Matemática</button>
+        <button class="btn btn-sm btn-outline skill-tab-btn" data-subject="fisica">🚀 Física</button>
+        <button class="btn btn-sm btn-outline skill-tab-btn" data-subject="quimica">🧪 Química</button>
+        <button class="btn btn-sm btn-outline skill-tab-btn" data-subject="biologia">🧬 Biologia</button>
+        <button class="btn btn-sm btn-outline skill-tab-btn" data-subject="portugues">📖 Português</button>
+      </div>
+
+      <!-- Painel Principal de Competências -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 25px;" class="skills-layout-grid">
+        <!-- Árvore de Nós Curriculares -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 25px; box-shadow: var(--card-shadow);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
+            <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary);" id="skills-current-subject-title">📐 Competências de Matemática</h3>
+            <span id="skills-mastery-average-badge" class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; padding: 4px 10px; border-radius: 12px;">Domínio Médio: Carregando...</span>
+          </div>
+
+          <!-- Grelha de Competências -->
+          <div id="skills-nodes-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px;">
+            <!-- Preenchido dinamicamente via JS -->
+          </div>
+        </div>
+
+        <!-- Radar de Fraquezas & Recomendações Pedagógicas -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 25px; box-shadow: var(--card-shadow); height: fit-content;">
+          <h3 style="margin: 0 0 15px 0; font-size: 1.15rem; color: var(--primary);">🎯 Radar de Fraquezas</h3>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 15px;">Tópicos que necessitam de treino imediato antes do exame oficial:</p>
+
+          <div id="skills-weaknesses-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Preenchido dinamicamente -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: MICRO-AULAS EM 90 SEGUNDOS (UDEMY / COURSERA STYLE) -->
+    <section id="section-micro" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Micro-Aulas & Dicas em 90 Segundos ⚡</h2>
+          <p>Macetes moçambicanos de resolução rápida para exames da UEM/UP e regras cruciais de Condução INATRO.</p>
+        </div>
+      </div>
+
+      <div id="micro-lessons-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        <!-- Preenchido via API /api/micro-lessons -->
       </div>
     </section>
 
@@ -1848,7 +1995,192 @@
     </div>
   </div>
 
+  <!-- Modal 4: Leitor Óptico de Gabarito por Câmara (Estilo Gradeo / ZipGrade) -->
+  <div id="omr-scanner-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog omr-dialog" style="max-width: 820px; width: 95%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #065f46, #059669); color: white;">
+        <h3 style="font-size: 1.15rem; color: white; display: flex; align-items: center; gap: 8px;">
+          📸 Leitor Óptico de Gabarito (OMR Gradeo)
+        </h3>
+        <button type="button" class="modal-close-btn" id="omr-modal-close-btn" style="color: white;">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px;">
+        
+        <!-- Configuração do Exame a Corrigir -->
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px; margin-bottom: 18px; display: grid; grid-template-columns: 2fr 1fr; gap: 15px; align-items: center;" class="omr-config-row">
+          <div>
+            <label for="omr-exam-select" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 5px;">
+              Exame Oficial para Correção:
+            </label>
+            <select id="omr-exam-select" class="chat-input" style="width: 100%; font-size: 0.85rem; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <option value="">A carregar exames disponíveis...</option>
+            </select>
+          </div>
+          <div>
+            <label for="omr-sheet-questions-count" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 5px;">
+              Formato da Folha:
+            </label>
+            <select id="omr-sheet-questions-count" class="chat-input" style="width: 100%; font-size: 0.85rem; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <option value="20" selected>20 Questões (Padrão UEM/UP)</option>
+              <option value="40">40 Questões (Caderno Completo)</option>
+              <option value="15">15 Questões (Simulado Rápido)</option>
+              <option value="30">30 Questões (INATRO Condução)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Área de Câmara / Upload com Viewfinder -->
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px;" class="omr-scan-grid">
+          
+          <!-- Viewfinder Esquerda -->
+          <div class="omr-viewfinder-box" style="position: relative; background: #0f172a; border-radius: var(--radius-md); overflow: hidden; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <video id="omr-video-feed" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+            <canvas id="omr-preview-canvas" style="width: 100%; height: auto; max-height: 380px; display: block; object-fit: contain;"></canvas>
+
+            <!-- Overlay de Enquadramento da Folha (Retângulo Guia) -->
+            <div id="omr-reticle-overlay" class="omr-reticle-overlay">
+              <div class="reticle-corner top-left"></div>
+              <div class="reticle-corner top-right"></div>
+              <div class="reticle-corner bottom-left"></div>
+              <div class="reticle-corner bottom-right"></div>
+              <div class="reticle-scan-line"></div>
+              <span class="reticle-hint">Alinhe a folha de respostas nas 4 marcas</span>
+            </div>
+
+            <!-- Controles de Captura -->
+            <div style="position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 10px; z-index: 10; padding: 0 10px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm btn-primary" id="btn-omr-start-camera" style="background: rgba(37, 99, 235, 0.9); backdrop-filter: blur(4px);">
+                📹 Ativar Câmara
+              </button>
+              <button type="button" class="btn btn-sm btn-accent" id="btn-omr-capture-frame" style="background: rgba(16, 185, 129, 0.95); backdrop-filter: blur(4px); font-weight: 700; display: none;">
+                ⚡ Escanear Folha
+              </button>
+              <label class="btn btn-sm btn-outline" style="background: rgba(255, 255, 255, 0.85); color: #1e293b; cursor: pointer; margin: 0; backdrop-filter: blur(4px);">
+                📁 Carregar Foto
+                <input type="file" id="omr-file-input" accept="image/*" capture="environment" style="display: none;">
+              </label>
+            </div>
+          </div>
+
+          <!-- Grelha de Conferência Direita -->
+          <div class="omr-review-box" style="display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary);">
+                Respostas Lidas pelo Algoritmo:
+              </span>
+              <span id="omr-read-status" class="badge" style="background: rgba(100, 116, 139, 0.15); color: var(--text-secondary); font-size: 0.72rem;">
+                Aguardando leitura
+              </span>
+            </div>
+
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 10px;">
+              Podes clicar em qualquer opção para retificar antes de submeter a correção final:
+            </p>
+
+            <div id="omr-detected-table-container" style="flex: 1; max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px; background: var(--bg-primary);">
+              <div style="text-align: center; color: var(--text-secondary); padding: 40px 10px; font-size: 0.82rem;">
+                Aponte a câmara para a folha de respostas A4 oficial ou carregue uma fotografia para processamento imediato em 2 segundos.
+              </div>
+            </div>
+
+            <!-- Botão de Finalização -->
+            <button type="button" class="btn btn-primary" id="btn-omr-submit-grade" disabled style="width: 100%; margin-top: 15px; font-weight: 800; background: linear-gradient(135deg, #059669, #10b981); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); cursor: pointer;">
+              ✓ Validar e Corrigir Gabarito Oficial
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Painel de Relatório Imediato Pós-Correção OMR -->
+        <div id="omr-results-panel" style="display: none; margin-top: 20px; background: var(--bg-primary); border: 2px solid #10b981; border-radius: var(--radius-md); padding: 20px; animation: fadeIn 0.3s;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 1.1rem; font-weight: 800; color: #059669; display: flex; align-items: center; gap: 6px;">
+              🎉 Gabarito Corrigido com Sucesso!
+            </span>
+            <span id="omr-xp-earned-badge" class="badge" style="background: rgba(245, 158, 11, 0.15); color: #d97706; font-weight: 800; padding: 4px 10px; border-radius: 12px;">
+              +60 XP Ganho
+            </span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 15px;">
+            <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-size: 1.4rem; font-weight: 800; color: #10b981;" id="omr-res-score">16 / 20</div>
+              <div style="font-size: 0.7rem; color: var(--text-secondary);">Acertos</div>
+            </div>
+            <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-size: 1.4rem; font-weight: 800; color: var(--primary);" id="omr-res-percent">80%</div>
+              <div style="font-size: 0.7rem; color: var(--text-secondary);">Aproveitamento</div>
+            </div>
+            <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-size: 1.4rem; font-weight: 800; color: #059669;" id="omr-res-grade20">16.0 / 20</div>
+              <div style="font-size: 0.7rem; color: var(--text-secondary);">Nota Moçambique</div>
+            </div>
+            <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-size: 1.4rem; font-weight: 800; color: #8b5cf6;" id="omr-res-tri">780 PTS</div>
+              <div style="font-size: 0.7rem; color: var(--text-secondary);">Score TRI</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" id="btn-omr-gen-cert" style="flex: 1; background: linear-gradient(135deg, #1e3a8a, #2563eb); font-weight: 700;">
+              📜 Emitir Certificado com QR Code
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-omr-close-and-view" style="flex: 1;">
+              🔍 Ver Resolução de Todas as Perguntas
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Fórum de Resoluções Alternativas e Peer Learning (Coursera / Udemy Style) -->
+  <div id="community-solutions-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog" style="max-width: 650px; width: 95%;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+          💬 Resoluções da Comunidade & Dicas Rápidas
+        </h3>
+        <button type="button" class="modal-close-btn" id="solutions-modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px;">
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 15px;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);" id="solutions-modal-qnum">QUESTÃO 1</span>
+          <p style="font-size: 0.88rem; margin: 4px 0 0 0; font-weight: 600;" id="solutions-modal-qtext">Enunciado da questão...</p>
+        </div>
+
+        <!-- Lista de Resoluções Existentes -->
+        <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--text-primary);">Resoluções Publicadas por Estudantes & Professores:</h4>
+        <div id="solutions-list-container" style="display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; margin-bottom: 20px;">
+          <!-- Preenchido via API /api/questions/:id/solutions -->
+        </div>
+
+        <!-- Formulário para Partilhar Resolução Alternativa (+25 XP) -->
+        <div style="background: var(--bg-primary); border: 1px dashed var(--primary); border-radius: var(--radius-md); padding: 15px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">Partilha o teu Macete ou Passo a Passo</span>
+            <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #d97706; font-size: 0.72rem; font-weight: 700;">+25 XP</span>
+          </div>
+
+          <textarea id="community-solution-input" class="chat-input" placeholder="Explica como resolveste de forma simples e rápida..." style="width: 100%; min-height: 70px; padding: 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box; margin-bottom: 8px; resize: vertical;"></textarea>
+          
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="text" id="community-shortcut-input" class="chat-input" placeholder="Dica de 1 linha (ex: Use f'(x)=0 em 15s)" style="flex: 1; font-size: 0.8rem; padding: 8px 10px;">
+            <button type="button" class="btn btn-primary" id="btn-submit-community-solution" style="font-weight: 700; padding: 8px 16px; font-size: 0.85rem;">
+              Publicar Resolução 🚀
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts com Cache Busting -->
-  <script src="app.js?v=4.0"></script>
+  <script src="omr_engine.js?v=9.0"></script>
+  <script src="app.js?v=9.0"></script>
 </body>
 </html>

@@ -251,19 +251,36 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.get('/api/user/profile', requireAuth, (req, res) => {
-  db.get("SELECT id, phone, premium_until, is_admin, province FROM users WHERE id = ?", [req.user.id], (err, user) => {
+  db.get("SELECT id, phone, premium_until, is_admin, province, league_tier, xp_points, tri_proficiency, glicko_rating, mastery_data, campaign_progress FROM users WHERE id = ?", [req.user.id], (err, user) => {
     if (err || !user) {
       return res.status(404).json({ error: 'Utilizador não encontrado.' });
     }
     const now = new Date().getTime();
     const isPremium = user.premium_until > now;
+
+    let parsedMastery = {};
+    if (user.mastery_data) {
+      try { parsedMastery = JSON.parse(user.mastery_data); } catch(e) {}
+    }
+
+    let parsedCampaign = { unlocked_provinces: ['maputo_prov'], completed_missions: [] };
+    if (user.campaign_progress) {
+      try { parsedCampaign = JSON.parse(user.campaign_progress); } catch(e) {}
+    }
+
     res.json({
       id: user.id,
       phone: user.phone,
       province: user.province || 'Maputo Cidade',
       isPremium,
       premiumExpires: user.premium_until,
-      isAdmin: user.is_admin === 1
+      isAdmin: user.is_admin === 1,
+      leagueTier: user.league_tier || 'bronze',
+      xpPoints: user.xp_points || 0,
+      triProficiency: user.tri_proficiency || 500,
+      glickoRating: user.glicko_rating || 1500,
+      masteryData: parsedMastery,
+      campaignProgress: parsedCampaign
     });
   });
 });
@@ -657,15 +674,21 @@ app.post('/api/user/progress', requireAuth, (req, res) => {
       return res.status(500).json({ error: 'Erro ao salvar progresso: ' + err.message });
     }
 
-    // Atualizar a proficiência TRI do utilizador na tabela de utilizadores
+    // Atualizar a proficiência TRI e atribuir XP de conclusão (+50 XP base + bónus de nota)
+    const percentage = Math.round((score / Math.max(1, total)) * 100);
+    const xpBonus = 50 + Math.round(percentage * 0.5);
+
     db.run(
-      'UPDATE users SET tri_proficiency = ? WHERE id = ?',
-      [triMetrics.triScore, req.user.id],
-      () => {}
+      'UPDATE users SET tri_proficiency = ?, xp_points = COALESCE(xp_points, 0) + ? WHERE id = ?',
+      [triMetrics.triScore, xpBonus, req.user.id],
+      () => {
+        updateUserLeagueTier(req.user.id);
+      }
     );
 
     res.status(201).json({
       message: 'Progresso guardado com sucesso.',
+      xpEarned: xpBonus,
       triMetrics: {
         triScore: triMetrics.triScore,
         grade20: triMetrics.grade20,
@@ -849,6 +872,607 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
     if (err) return res.status(500).json({ error: 'Erro ao atualizar estado do reporte.' });
     res.json({ message: 'Estado do reporte atualizado.', changes: this.changes });
   });
+});
+
+// =============================================================================
+// --- VERSÃO 9.0: EDTECH WORLD-CLASS (GRADEO, DUOLINGO, KHAN ACADEMY, CODEMAO, COURSERA & UDEMY) ---
+// =============================================================================
+
+function updateUserLeagueTier(userId, callback) {
+  if (!userId) return callback && callback('bronze');
+  db.get('SELECT xp_points FROM users WHERE id = ?', [userId], (err, user) => {
+    if (err || !user) return callback && callback('bronze');
+    const xp = user.xp_points || 0;
+    let tier = 'bronze';
+    if (xp >= 7000) tier = 'diamante';
+    else if (xp >= 3500) tier = 'safira';
+    else if (xp >= 1500) tier = 'ouro';
+    else if (xp >= 500) tier = 'prata';
+
+    db.run('UPDATE users SET league_tier = ? WHERE id = ?', [tier, userId], () => {
+      if (callback) callback(tier);
+    });
+  });
+}
+
+// 1. LEITOR ÓPTICO DE GABARITO (OMR) ESTILO GRADEO / ZIPGRADE
+app.post('/api/omr/submit', authenticateToken, (req, res) => {
+  const { examId, scannedAnswers, imageMetadata } = req.body;
+  if (!examId || !scannedAnswers) {
+    return res.status(400).json({ error: 'Identificador do exame e respostas escaneadas são obrigatórios.' });
+  }
+
+  db.all('SELECT number, correct_option, explanation, difficulty_b, discrimination_a FROM questions WHERE exam_id = ? ORDER BY number ASC', [examId], (err, questions) => {
+    if (err || !questions || questions.length === 0) {
+      return res.status(404).json({ error: 'Exame não encontrado ou sem questões registadas na base de dados.' });
+    }
+
+    db.get('SELECT title, subject_name, level_name FROM exams WHERE id = ?', [examId], (errExam, exam) => {
+      const examTitle = exam ? (exam.title || `${exam.subject_name} (${exam.level_name})`) : examId;
+      const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+
+      let correctCount = 0;
+      let wrongCount = 0;
+      let blankCount = 0;
+      const questionResults = [];
+      const responsesList = [];
+
+      questions.forEach((q, idx) => {
+        const qNum = q.number || (idx + 1);
+        const scan = scannedAnswers[qNum] || { choice: null };
+        const studentChoice = typeof scan === 'object' ? scan.choice : scan;
+
+        let correctLetter = 'A';
+        if (typeof q.correct_option === 'number') {
+          correctLetter = optionLetters[q.correct_option] || 'A';
+        } else if (typeof q.correct_option === 'string') {
+          const parsed = parseInt(q.correct_option, 10);
+          if (!isNaN(parsed) && parsed >= 0 && parsed < optionLetters.length) {
+            correctLetter = optionLetters[parsed];
+          } else {
+            correctLetter = q.correct_option.toUpperCase().trim();
+          }
+        }
+
+        const isCorrect = studentChoice && studentChoice.toUpperCase() === correctLetter;
+        if (!studentChoice) blankCount++;
+        else if (isCorrect) correctCount++;
+        else wrongCount++;
+
+        questionResults.push({
+          number: qNum,
+          studentChoice: studentChoice || '—',
+          correctChoice: correctLetter,
+          isCorrect,
+          confidence: scan.confidence || 0.9,
+          explanation: q.explanation || 'Resolução oficial disponível na plataforma.'
+        });
+
+        responsesList.push({
+          isCorrect,
+          difficulty: q.difficulty_b || 0,
+          discrimination: q.discrimination_a || 1.0
+        });
+      });
+
+      const total = questions.length;
+      const percentage = Math.round((correctCount / total) * 100);
+      const grade20 = Math.round(((correctCount / total) * 20) * 10) / 10;
+      const triMetrics = calculateTRIMetrics(responsesList);
+
+      const userId = req.user ? req.user.id : null;
+      const userPhone = req.user ? req.user.phone : null;
+
+      const insertSql = `
+        INSERT INTO optical_scans 
+        (user_id, user_phone, exam_id, exam_title, scanned_answers, total_questions, correct_count, percentage, tri_score, grade_20, image_metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      db.run(insertSql, [
+        userId,
+        userPhone,
+        examId,
+        examTitle,
+        JSON.stringify(scannedAnswers),
+        total,
+        correctCount,
+        percentage,
+        triMetrics.triScore,
+        grade20,
+        imageMetadata ? JSON.stringify(imageMetadata) : null
+      ], function(errInsert) {
+        if (userId) {
+          const xpBonus = 60 + Math.round(percentage * 0.4);
+          db.run(
+            `UPDATE users SET xp_points = COALESCE(xp_points, 0) + ?, tri_proficiency = ? WHERE id = ?`,
+            [xpBonus, triMetrics.triScore, userId],
+            () => {
+              updateUserLeagueTier(userId);
+            }
+          );
+
+          db.run(
+            `INSERT INTO progress (user_id, exam_id, score, total, date) VALUES (?, ?, ?, ?, ?)`,
+            [userId, examId, correctCount, total, new Date().toLocaleDateString('pt-MZ')],
+            () => {}
+          );
+        }
+
+        res.json({
+          success: true,
+          examId,
+          examTitle,
+          totalQuestions: total,
+          correctCount,
+          wrongCount,
+          blankCount,
+          percentage,
+          grade20,
+          triMetrics,
+          xpEarned: userId ? (60 + Math.round(percentage * 0.4)) : 0,
+          questionResults
+        });
+      });
+    });
+  });
+});
+
+// 2. SISTEMA DE LIGAS COM 5 DIVISÕES (DUOLINGO STYLE)
+app.get('/api/leagues/leaderboard', (req, res) => {
+  const targetTier = (req.query.tier || 'all').toLowerCase();
+  
+  let query = `
+    SELECT id, phone, province, xp_points, league_tier, tri_proficiency, glicko_rating
+    FROM users
+    WHERE xp_points > 0
+  `;
+  const params = [];
+  if (targetTier !== 'all' && ['bronze', 'prata', 'ouro', 'safira', 'diamante'].includes(targetTier)) {
+    query += ` AND LOWER(league_tier) = ?`;
+    params.push(targetTier);
+  }
+  query += ` ORDER BY xp_points DESC LIMIT 50`;
+
+  db.all(query, params, (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Erro ao carregar ranking da liga.' });
+
+    const totalCount = rows ? rows.length : 0;
+    const rankedUsers = (rows || []).map((u, idx) => {
+      const rank = idx + 1;
+      let statusZone = 'safe';
+      if (rank <= 5) statusZone = 'promotion';
+      else if (rank > totalCount - 3 && totalCount >= 10) statusZone = 'relegation';
+
+      const phone = u.phone || '+258 840000000';
+      const maskedPhone = phone.length > 6 
+        ? phone.substring(0, 4) + ' ••• ' + phone.substring(phone.length - 2)
+        : phone;
+
+      return {
+        rank,
+        id: u.id,
+        phone: maskedPhone,
+        province: u.province || 'Maputo Cidade',
+        xp: u.xp_points || 0,
+        leagueTier: u.league_tier || 'bronze',
+        triScore: u.tri_proficiency || 500,
+        glicko: u.glicko_rating || 1500,
+        statusZone
+      };
+    });
+
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const daysUntilSunday = (7 - dayOfWeek) % 7;
+    const nextSunday = new Date(now);
+    nextSunday.setDate(now.getDate() + (daysUntilSunday === 0 && now.getHours() >= 23 ? 7 : daysUntilSunday));
+    nextSunday.setHours(23, 59, 59, 999);
+    const diffMs = Math.max(0, nextSunday.getTime() - now.getTime());
+    const daysLeft = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hoursLeft = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    res.json({
+      tier: targetTier,
+      timeRemaining: `${daysLeft}d ${hoursLeft}h`,
+      tiers: [
+        { id: 'bronze', name: 'Liga Bronze', icon: '🥉', minXp: 0, desc: 'Iniciante dos Exames' },
+        { id: 'prata', name: 'Liga Prata', icon: '🥈', minXp: 500, desc: 'Candidato Comprometido' },
+        { id: 'ouro', name: 'Liga Ouro', icon: '🥇', minXp: 1500, desc: 'Elite Académica' },
+        { id: 'safira', name: 'Liga Safira', icon: '💎', minXp: 3500, desc: 'Mestre Pré-Universitário' },
+        { id: 'diamante', name: 'Liga Diamante', icon: '👑', minXp: 7000, desc: 'Lenda Nacional Moçambicana' }
+      ],
+      leaderboard: rankedUsers
+    });
+  });
+});
+
+app.post('/api/user/add-xp', requireAuth, (req, res) => {
+  const { amount, reason } = req.body;
+  const xpToAdd = Math.min(Math.max(parseInt(amount) || 10, 1), 500);
+
+  db.run('UPDATE users SET xp_points = COALESCE(xp_points, 0) + ? WHERE id = ?', [xpToAdd, req.user.id], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao atribuir XP.' });
+    updateUserLeagueTier(req.user.id, () => {
+      db.get('SELECT xp_points, league_tier FROM users WHERE id = ?', [req.user.id], (err2, u) => {
+        res.json({
+          success: true,
+          addedXp: xpToAdd,
+          totalXp: u ? u.xp_points : 0,
+          leagueTier: u ? u.league_tier : 'bronze',
+          reason: reason || 'Atividade educativa'
+        });
+      });
+    });
+  });
+});
+
+// 3. ÁRVORE DE COMPETÊNCIAS & TREINO CIRÚRGICO (KHAN ACADEMY)
+const CURRICULUM_SKILLS = {
+  matematica: [
+    { id: 'mat_alg', name: 'Álgebra e Polinómios', level: 1, icon: '📐', desc: 'Fatorização, Produtos Notáveis e Raízes' },
+    { id: 'mat_eq', name: 'Equações e Inequações', level: 1, icon: '⚖️', desc: 'Exponenciais, Logaritmos e Módulos' },
+    { id: 'mat_trig', name: 'Trigonometria Plana', level: 2, icon: '📐', desc: 'Círculo trigonométrico, identidades e equações' },
+    { id: 'mat_func', name: 'Funções e Gráficos', level: 2, icon: '📈', desc: 'Domínio, contra-domínio, limites e continuidade' },
+    { id: 'mat_calc', name: 'Cálculo Diferencial', level: 3, icon: '∫', desc: 'Derivadas, retas tangentes e otimização' },
+    { id: 'mat_geom', name: 'Geometria Analítica & Espacial', level: 3, icon: '🔷', desc: 'Vetores, retas, planos e sólidos' },
+    { id: 'mat_estat', name: 'Probabilidades e Estatística', level: 2, icon: '🎲', desc: 'Análise combinatória e distribuições' }
+  ],
+  fisica: [
+    { id: 'fis_cin', name: 'Cinemática Escalar & Vetorial', level: 1, icon: '🚀', desc: 'MRU, MRUV, MCU e lançamentos' },
+    { id: 'fis_din', name: 'Dinâmica e Leis de Newton', level: 1, icon: '⚙️', desc: 'Forças, atrito, trabalho e energia' },
+    { id: 'fis_hid', name: 'Hidrostática e Fluídos', level: 2, icon: '💧', desc: 'Pressão, impulso e princípio de Pascal' },
+    { id: 'fis_term', name: 'Termodinâmica & Gases', level: 2, icon: '🌡️', desc: 'Calorimetria, ciclos e leis térmicas' },
+    { id: 'fis_elec', name: 'Eletrostática e Circuitos', level: 3, icon: '⚡', desc: 'Campo elétrico, potencial, resistores e Kirchhoff' },
+    { id: 'fis_mag', name: 'Eletromagnetismo & Indução', level: 3, icon: '🧲', desc: 'Força magnética, fluxo e Lei de Faraday' },
+    { id: 'fis_ond', name: 'Óptica e Ondulatória', level: 2, icon: '🌊', desc: 'Espelhos, refração e acústica' }
+  ],
+  quimica: [
+    { id: 'qui_ger', name: 'Estrutura Atómica e Tabela', level: 1, icon: '⚛️', desc: 'Distribuição eletrónica e propriedades periódicas' },
+    { id: 'qui_lig', name: 'Ligações Químicas e Geometria', level: 1, icon: '🔗', desc: 'Iónica, covalente e polaridade' },
+    { id: 'qui_est', name: 'Estequiometria e Soluções', level: 2, icon: '🧪', desc: 'Massa molar, gases e concentrações molares' },
+    { id: 'qui_ter', name: 'Termoquímica e Cinética', level: 2, icon: '🔥', desc: 'Entalpia, velocidade e fatores de reação' },
+    { id: 'qui_equ', name: 'Equilíbrio Químico e pH', level: 3, icon: '⚖️', desc: 'Kc, Kp, Le Chatelier e ácidos/bases' },
+    { id: 'qui_org', name: 'Química Orgânica & Funções', level: 3, icon: '🧬', desc: 'Hidrocarbonetos, álcoois, ácidos e reações' }
+  ],
+  biologia: [
+    { id: 'bio_cel', name: 'Citologia e Metabolismo', level: 1, icon: '🔬', desc: 'Organelos, fotossíntese e respiração' },
+    { id: 'bio_gen', name: 'Genética e Biologia Molecular', level: 2, icon: '🧬', desc: 'Leis de Mendel, DNA, RNA e síntese proteica' },
+    { id: 'bio_fisi', name: 'Fisiologia Humana e Saúde', level: 2, icon: '❤️', desc: 'Sistemas circulatório, nervoso e imunitário' },
+    { id: 'bio_eco', name: 'Ecologia e Meio Ambiente', level: 1, icon: '🌱', desc: 'Cadeias tróficas, ciclos biogeoquímicos e conservação' }
+  ],
+  portugues: [
+    { id: 'por_morf', name: 'Morfossintaxe da Língua', level: 1, icon: '✍️', desc: 'Classes de palavras e funções sintáticas' },
+    { id: 'por_text', name: 'Interpretação e Tipologia Textual', level: 1, icon: '📖', desc: 'Texto expositivo, argumentativo e jornalístico' },
+    { id: 'por_lit', name: 'Literatura Moçambicana e Africana', level: 2, icon: '📚', desc: 'Craveirinha, Noémia de Sousa, Mia Couto e periodização' },
+    { id: 'por_reg', name: 'Regência, Crase e Pontuação', level: 2, icon: '🖋️', desc: 'Norma culta e correção sintática' }
+  ]
+};
+
+app.get('/api/skills/tree', authenticateToken, (req, res) => {
+  const subject = (req.query.subject || 'matematica').toLowerCase();
+  const skills = CURRICULUM_SKILLS[subject] || CURRICULUM_SKILLS.matematica;
+
+  if (!req.user) {
+    const publicSkills = skills.map(s => ({
+      ...s,
+      mastery: 0,
+      tierColor: 'gray',
+      tierLabel: 'Não Iniciado',
+      recommendedDrill: false
+    }));
+    return res.json({ subject, skills: publicSkills, userMasteryAverage: 0 });
+  }
+
+  db.get('SELECT mastery_data FROM users WHERE id = ?', [req.user.id], (err, u) => {
+    let masteryMap = {};
+    if (u && u.mastery_data) {
+      try { masteryMap = JSON.parse(u.mastery_data); } catch (e) {}
+    }
+
+    let sum = 0;
+    const skillsWithProgress = skills.map(s => {
+      const mastery = masteryMap[s.id] !== undefined ? masteryMap[s.id] : Math.floor(Math.random() * 35 + 25);
+      sum += mastery;
+
+      let tierLabel = 'Em Prática';
+      let tierColor = 'yellow';
+      if (mastery === 0) { tierLabel = 'Não Iniciado'; tierColor = 'gray'; }
+      else if (mastery >= 85) { tierLabel = 'Mestre (Coroa)'; tierColor = 'gold'; }
+      else if (mastery >= 60) { tierLabel = 'Proficiente'; tierColor = 'blue'; }
+
+      return {
+        ...s,
+        mastery,
+        tierColor,
+        tierLabel,
+        recommendedDrill: mastery < 60
+      };
+    });
+
+    const average = Math.round(sum / (skills.length || 1));
+    res.json({ subject, skills: skillsWithProgress, userMasteryAverage: average });
+  });
+});
+
+app.get('/api/skills/surgical-quiz', (req, res) => {
+  const subject = (req.query.subject || '').toLowerCase();
+  
+  let query = `
+    SELECT q.id, q.exam_id, q.number, q.text, q.options, q.correct_option, q.explanation, q.difficulty_b,
+           e.subject_name, e.level_name, e.year
+    FROM questions q
+    JOIN exams e ON q.exam_id = e.id
+  `;
+  const params = [];
+  if (subject) {
+    query += ` WHERE LOWER(e.subject) LIKE ? OR LOWER(e.subject_name) LIKE ?`;
+    params.push(`%${subject}%`, `%${subject}%`);
+  }
+  query += ` ORDER BY RANDOM() LIMIT 10`;
+
+  db.all(query, params, (err, questions) => {
+    if (err || !questions || questions.length === 0) {
+      return res.status(404).json({ error: 'Nenhuma questão encontrada para treino cirúrgico.' });
+    }
+
+    const formatted = questions.map(q => {
+      let parsedOptions = [];
+      try {
+        parsedOptions = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+      } catch (e) {
+        parsedOptions = [];
+      }
+      return {
+        id: q.id,
+        examId: q.exam_id,
+        number: q.number,
+        text: q.text,
+        options: parsedOptions,
+        correct_option: q.correct_option,
+        explanation: q.explanation,
+        difficulty: q.difficulty_b || 0,
+        subject: q.subject_name,
+        examMeta: `${q.subject_name} (${q.year || 2024})`
+      };
+    });
+
+    res.json({
+      title: '⚡ Treino Cirúrgico IA (Foco em Lacunas)',
+      total: formatted.length,
+      questions: formatted
+    });
+  });
+});
+
+app.post('/api/skills/update-mastery', requireAuth, (req, res) => {
+  const { skillId, scoreDelta } = req.body;
+  if (!skillId) return res.status(400).json({ error: 'skillId é obrigatório.' });
+
+  db.get('SELECT mastery_data FROM users WHERE id = ?', [req.user.id], (err, u) => {
+    let map = {};
+    if (u && u.mastery_data) {
+      try { map = JSON.parse(u.mastery_data); } catch(e) {}
+    }
+    const current = map[skillId] || 30;
+    const nextVal = Math.min(100, Math.max(0, current + (parseInt(scoreDelta) || 10)));
+    map[skillId] = nextVal;
+
+    db.run('UPDATE users SET mastery_data = ? WHERE id = ?', [JSON.stringify(map), req.user.id], () => {
+      res.json({ success: true, skillId, mastery: nextVal });
+    });
+  });
+});
+
+// 4. A ROTA DO CALOIRO (CAMPANHA NARRATIVA CODEMAO STYLE)
+const PROVINCE_CAMPAIGN_DATA = [
+  { id: 'maputo_prov', name: 'Maputo Província', step: 1, capital: 'Matola', bossName: 'Guardião da Matola', bossDesc: 'Mestre da Álgebra Elementar', requiredXp: 0, theme: 'industrial' },
+  { id: 'maputo_cid', name: 'Maputo Cidade', step: 2, capital: 'Maputo', bossName: 'Catedrático do Campus UEM', bossDesc: 'Mestre de Funções e Derivadas', requiredXp: 150, theme: 'capital' },
+  { id: 'gaza', name: 'Gaza', step: 3, capital: 'Xai-Xai', bossName: 'Comandante de Chokwé', bossDesc: 'Estrategista de Cinemática e Forças', requiredXp: 400, theme: 'limpopo' },
+  { id: 'inhambane', name: 'Inhambane', step: 4, capital: 'Inhambane', bossName: 'Navegador de Tofo', bossDesc: 'Sábio de Estequiometria e Soluções', requiredXp: 800, theme: 'ocean' },
+  { id: 'sofala', name: 'Sofala', step: 5, capital: 'Beira', bossName: 'Engenheiro do Chiveve', bossDesc: 'Mestre da Termodinâmica', requiredXp: 1300, theme: 'port' },
+  { id: 'manica', name: 'Manica', step: 6, capital: 'Chimoio', bossName: 'Guardião do Monte Binga', bossDesc: 'Soberano da Geometria e Trigonometria', requiredXp: 2000, theme: 'mountain' },
+  { id: 'tete', name: 'Tete', step: 7, capital: 'Tete', bossName: 'Caldeireiro de Moatize', bossDesc: 'Mestre dos Circuitos Elétricos', requiredXp: 2800, theme: 'coal' },
+  { id: 'zambezia', name: 'Zambézia', step: 8, capital: 'Quelimane', bossName: 'Barão dos Palmares', bossDesc: 'Especialista em Genética e Citologia', requiredXp: 3800, theme: 'palm' },
+  { id: 'nampula', name: 'Nampula', step: 9, capital: 'Nampula', bossName: 'Mestre da Ilha de Moçambique', bossDesc: 'Guardião dos Clássicos Literários', requiredXp: 5000, theme: 'historic' },
+  { id: 'niassa', name: 'Niassa', step: 10, capital: 'Lichinga', bossName: 'Ermita do Lago Niassa', bossDesc: 'Mestre das Ondas e Hidrostática', requiredXp: 6500, theme: 'lake' },
+  { id: 'cabo_delgado', name: 'Cabo Delgado', step: 11, capital: 'Pemba', bossName: 'O Rei do Caloiro Moçambicano', bossDesc: 'Desafio Final Multidisciplinar', requiredXp: 8500, theme: 'final' }
+];
+
+app.get('/api/campaign/map', authenticateToken, (req, res) => {
+  let userProgress = { unlocked_provinces: ['maputo_prov'], completed_missions: [] };
+  let userXp = 0;
+
+  if (req.user) {
+    db.get('SELECT campaign_progress, xp_points FROM users WHERE id = ?', [req.user.id], (err, u) => {
+      if (u) {
+        userXp = u.xp_points || 0;
+        if (u.campaign_progress) {
+          try { userProgress = JSON.parse(u.campaign_progress); } catch (e) {}
+        }
+      }
+      return respondMap();
+    });
+  } else {
+    respondMap();
+  }
+
+  function respondMap() {
+    const enrichedProvinces = PROVINCE_CAMPAIGN_DATA.map((p, idx) => {
+      const isUnlocked = userProgress.unlocked_provinces.includes(p.id) || (idx === 0) || (userXp >= p.requiredXp);
+      const isCompleted = userProgress.completed_missions.includes(`boss_${p.id}`);
+      return {
+        ...p,
+        isUnlocked,
+        isCompleted,
+        missions: [
+          { id: `${p.id}_m1`, title: 'Missão 1: Patrulha Teórica', xpReward: 30, questionsCount: 3, done: userProgress.completed_missions.includes(`${p.id}_m1`) },
+          { id: `${p.id}_m2`, title: 'Missão 2: Exercícios de Fixação', xpReward: 50, questionsCount: 4, done: userProgress.completed_missions.includes(`${p.id}_m2`) },
+          { id: `boss_${p.id}`, title: `⚔️ Chefe Provincial: ${p.bossName}`, xpReward: 150, isBoss: true, questionsCount: 5, done: isCompleted }
+        ]
+      };
+    });
+
+    res.json({
+      title: 'A Rota do Caloiro: Expedição pelas 11 Províncias',
+      userXp,
+      provinces: enrichedProvinces
+    });
+  }
+});
+
+app.post('/api/campaign/complete-mission', requireAuth, (req, res) => {
+  const { provinceId, missionId } = req.body;
+  if (!provinceId || !missionId) {
+    return res.status(400).json({ error: 'Dados da missão inválidos.' });
+  }
+
+  db.get('SELECT campaign_progress, xp_points FROM users WHERE id = ?', [req.user.id], (err, u) => {
+    let progress = { unlocked_provinces: ['maputo_prov'], completed_missions: [] };
+    if (u && u.campaign_progress) {
+      try { progress = JSON.parse(u.campaign_progress); } catch (e) {}
+    }
+
+    if (!progress.completed_missions.includes(missionId)) {
+      progress.completed_missions.push(missionId);
+    }
+
+    const isBoss = missionId.startsWith('boss_');
+    const xpBonus = isBoss ? 150 : 40;
+
+    const curIdx = PROVINCE_CAMPAIGN_DATA.findIndex(p => p.id === provinceId);
+    if (isBoss && curIdx >= 0 && curIdx < PROVINCE_CAMPAIGN_DATA.length - 1) {
+      const nextProv = PROVINCE_CAMPAIGN_DATA[curIdx + 1].id;
+      if (!progress.unlocked_provinces.includes(nextProv)) {
+        progress.unlocked_provinces.push(nextProv);
+      }
+    }
+
+    db.run(
+      'UPDATE users SET campaign_progress = ?, xp_points = COALESCE(xp_points, 0) + ? WHERE id = ?',
+      [JSON.stringify(progress), xpBonus, req.user.id],
+      () => {
+        updateUserLeagueTier(req.user.id);
+        res.json({
+          success: true,
+          xpEarned: xpBonus,
+          missionId,
+          progress
+        });
+      }
+    );
+  });
+});
+
+// 5. FÓRUM DE RESOLUÇÕES ALTERNATIVAS & MICRO-AULAS (COURSERA / UDEMY)
+app.get('/api/questions/:id/solutions', (req, res) => {
+  const questionId = parseInt(req.params.id);
+  db.all(
+    'SELECT * FROM community_solutions WHERE question_id = ? ORDER BY is_verified_teacher DESC, upvotes DESC, created_at DESC LIMIT 20',
+    [questionId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Erro ao consultar resoluções.' });
+      res.json(rows || []);
+    }
+  );
+});
+
+app.post('/api/questions/:id/solutions', authenticateToken, (req, res) => {
+  const questionId = parseInt(req.params.id);
+  const { solutionText, shortcutTip, timeToSolveSec, authorName, authorProvince, examId } = req.body;
+
+  if (!solutionText || solutionText.trim().length < 10) {
+    return res.status(400).json({ error: 'A resolução deve conter pelo menos 10 caracteres explicativos.' });
+  }
+
+  const name = authorName || (req.user ? req.user.phone : 'Estudante Moçambicano');
+  const province = authorProvince || (req.user ? req.user.province : 'Maputo Cidade');
+  const userId = req.user ? req.user.id : null;
+  const isTeacher = req.user ? req.user.isAdmin : false;
+
+  const sql = `
+    INSERT INTO community_solutions 
+    (question_id, exam_id, author_name, author_province, user_id, solution_text, shortcut_tip, time_to_solve_sec, is_verified_teacher)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.run(sql, [
+    questionId,
+    examId || null,
+    name,
+    province,
+    userId,
+    solutionText,
+    shortcutTip || null,
+    parseInt(timeToSolveSec) || 60,
+    isTeacher ? 1 : 0
+  ], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao publicar resolução.' });
+    
+    if (userId) {
+      db.run('UPDATE users SET xp_points = COALESCE(xp_points, 0) + 25 WHERE id = ?', [userId], () => {});
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Resolução publicada com sucesso! Ganhaste +25 XP pela tua contribuição comunitária.',
+      solutionId: this.lastID
+    });
+  });
+});
+
+app.post('/api/solutions/:id/upvote', (req, res) => {
+  const solutionId = parseInt(req.params.id);
+  db.run('UPDATE community_solutions SET upvotes = COALESCE(upvotes, 0) + 1 WHERE id = ?', [solutionId], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao votar na resolução.' });
+    res.json({ success: true, message: 'Voto contabilizado!' });
+  });
+});
+
+app.get('/api/micro-lessons', (req, res) => {
+  const microLessons = [
+    {
+      id: 'ml_1',
+      title: 'Macete UEM: Vértice de Parábola em 15 Segundos',
+      subject: 'Matemática',
+      duration: '90s',
+      tag: 'Cálculo Rápido',
+      summary: 'Como encontrar o ponto máximo/mínimo usando derivada imediata f\'(x)=0 sem memorizar fórmulas longas de delta.',
+      keyTakeaway: 'Deriva o polinómio: para y = ax² + bx + c, faz 2ax + b = 0 => x = -b/(2a). Em 5 segundos achas a resposta em exames da UEM!',
+      exampleProblem: 'Exame UEM: Determine o valor máximo de f(x) = -2x² + 8x - 3. Derivada: -4x + 8 = 0 => x = 2. f(2) = 5.'
+    },
+    {
+      id: 'ml_2',
+      title: 'Lei de Ohm & Resistores em Paralelo Sem Frações',
+      subject: 'Física',
+      duration: '90s',
+      tag: 'Eletricidade',
+      summary: 'Macete do Produto pela Soma para resolver circuitos de 2 e 3 resistores sem calcular MMC.',
+      keyTakeaway: 'Para 2 resistores: Req = (R1 * R2) / (R1 + R2). Se forem iguais, divide pelo número de resistores: R/N!',
+      exampleProblem: 'Dois resistores de 6Ω e 3Ω em paralelo: Req = (6*3)/(6+3) = 18/9 = 2Ω instantâneo.'
+    },
+    {
+      id: 'ml_3',
+      title: 'Regra Rápida de Balanceamento Redox',
+      subject: 'Química',
+      duration: '90s',
+      tag: 'Química Geral',
+      summary: 'Método MACHO (Metal, Ametal, Carbono, Hidrogénio, Oxigénio) para balancear qualquer equação em 30 segundos.',
+      keyTakeaway: 'Siga sempre a ordem mnemónica: 1º Metais -> 2º Ametais -> 3º Carbono -> 4º Hidrogénio -> 5º Oxigénio.',
+      exampleProblem: 'Combustão: C3H8 + O2 -> CO2 + H2O. 1º Carbono (3 CO2), 2º Hidrogénio (4 H2O), 3º Oxigénio (10 O -> 5 O2).'
+    },
+    {
+      id: 'ml_4',
+      title: 'Prioridade de Passagem nos Cruzamentos (INATRO)',
+      subject: 'Código de Estrada',
+      duration: '90s',
+      tag: 'Condução Moçambique',
+      summary: 'Regra de ouro da prioridade à direita e exceções de veículos prioritários segundo o Regulamento do Trânsito Moçambicano.',
+      keyTakeaway: 'Na ausência de sinalização, a prioridade pertence sempre ao condutor que se apresenta pela direita, exceto veículos de urgência ou quem entra numa rotunda.',
+      exampleProblem: 'Num cruzamento sem semáforos nem sinais, o veículo A segue em frente e B vem da sua direita: B avança primeiro.'
+    }
+  ];
+
+  res.json(microLessons);
 });
 
 

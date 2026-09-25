@@ -254,6 +254,17 @@ function updateAuthUI() {
       adminBtn.style.display = userProfile.isAdmin ? "inline-flex" : "none";
     }
 
+    const leaguePill = document.getElementById("header-league-pill");
+    if (leaguePill) {
+      leaguePill.style.display = "inline-flex";
+      const tierIcons = { bronze: '🥉', prata: '🥈', ouro: '🥇', safira: '💎', diamante: '👑' };
+      const tierNames = { bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro', safira: 'Safira', diamante: 'Diamante' };
+      const curTier = (userProfile.leagueTier || 'bronze').toLowerCase();
+      const icon = tierIcons[curTier] || '🥉';
+      const label = tierNames[curTier] || 'Bronze';
+      leaguePill.textContent = `${icon} Liga ${label} • ${(userProfile.xpPoints || 0).toLocaleString()} XP`;
+    }
+
     if (userProfile.isPremium) {
       headerBadge.style.display = "block";
       headerUpgradeBtn.style.display = "none";
@@ -462,8 +473,15 @@ function setupEventListeners() {
         runFinancialSimulation();
       } else if (target === "games") {
         openGamesLobby();
+        loadDuolingoLeagues();
       } else if (target === "admin") {
         loadAdminTab();
+      } else if (target === "rota") {
+        loadCampaignMap();
+      } else if (target === "skills") {
+        loadSkillsTree(activeSkillSubject || "matematica");
+      } else if (target === "micro") {
+        loadMicroLessons();
       }
     });
   });
@@ -592,10 +610,54 @@ function setupEventListeners() {
   safeAddListener("game-card-duel", "click", startDuelGame);
   safeAddListener("game-card-flashcards", "click", startFlashcardsGame);
   
-  // Leaderboard & Provincial League Tabs
+  // Leaderboard & Provincial League & 5 Ligas Duolingo Tabs
+  safeAddListener("btn-leaderboard-leagues", "click", () => loadLeaderboard("leagues"));
   safeAddListener("btn-leaderboard-math", "click", () => loadLeaderboard("math_rush"));
   safeAddListener("btn-leaderboard-quiz", "click", () => loadLeaderboard("moz_quiz"));
   safeAddListener("btn-leaderboard-provinces", "click", () => loadLeaderboard("provinces"));
+
+  document.querySelectorAll(".btn-league-tier").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".btn-league-tier").forEach(b => b.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      const tier = e.currentTarget.getAttribute("data-tier") || "all";
+      loadDuolingoLeagues(tier);
+    });
+  });
+
+  safeAddListener("header-league-pill", "click", () => {
+    activateMenuTab("games");
+    showSection("games");
+    openGamesLobby();
+    loadLeaderboard("leagues");
+  });
+
+  // Versão 9.0: Leitor OMR de Gabarito por Câmara
+  safeAddListener("btn-open-omr-scanner", "click", openOmrScannerModal);
+  safeAddListener("omr-modal-close-btn", "click", closeOmrScannerModal);
+  safeAddListener("btn-omr-start-camera", "click", startOmrCamera);
+  safeAddListener("btn-omr-capture-frame", "click", captureOmrFrame);
+  safeAddListener("omr-file-input", "change", handleOmrFileUpload);
+  safeAddListener("btn-omr-submit-grade", "click", submitOmrGrade);
+  safeAddListener("btn-omr-gen-cert", "click", generateOmrCertificate);
+  safeAddListener("btn-omr-close-and-view", "click", closeOmrScannerModal);
+
+  // Versão 9.0: Rota do Caloiro & Árvore de Competências
+  safeAddListener("btn-campaign-refresh", "click", loadCampaignMap);
+  safeAddListener("btn-launch-surgical-drill", "click", () => launchSurgicalDrill(activeSkillSubject || "matematica"));
+
+  document.querySelectorAll(".skill-tab-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".skill-tab-btn").forEach(b => b.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      activeSkillSubject = e.currentTarget.getAttribute("data-subject") || "matematica";
+      loadSkillsTree(activeSkillSubject);
+    });
+  });
+
+  // Versão 9.0: Fórum Comunitário de Resoluções
+  safeAddListener("solutions-modal-close-btn", "click", closeCommunitySolutionsModal);
+  safeAddListener("btn-submit-community-solution", "click", submitCommunitySolution);
   
   document.querySelectorAll(".btn-game-back").forEach(btn => {
     btn.addEventListener("click", openGamesLobby);
@@ -3798,27 +3860,40 @@ async function submitGameScore(gameName, score) {
   }
 }
 
-// 4. Carregar Leaderboard (Math, Quiz ou Liga Provincial)
+// 4. Carregar Leaderboard (Math, Quiz, Liga Provincial ou 5 Ligas Duolingo)
 async function loadLeaderboard(gameName) {
   activeLeaderboardGame = gameName;
   
+  const btnLeagues = document.getElementById("btn-leaderboard-leagues");
   const btnMath = document.getElementById("btn-leaderboard-math");
   const btnQuiz = document.getElementById("btn-leaderboard-quiz");
   const btnProvinces = document.getElementById("btn-leaderboard-provinces");
+  const leaguesContainer = document.getElementById("leaderboard-leagues-container");
   const standardContainer = document.getElementById("leaderboard-standard-container");
   const provincialContainer = document.getElementById("leaderboard-provincial-container");
 
+  if (btnLeagues) btnLeagues.classList.toggle("active", gameName === "leagues");
   if (btnMath) btnMath.classList.toggle("active", gameName === "math_rush");
   if (btnQuiz) btnQuiz.classList.toggle("active", gameName === "moz_quiz");
   if (btnProvinces) btnProvinces.classList.toggle("active", gameName === "provinces");
 
+  if (gameName === "leagues") {
+    if (leaguesContainer) leaguesContainer.style.display = "block";
+    if (standardContainer) standardContainer.style.display = "none";
+    if (provincialContainer) provincialContainer.style.display = "none";
+    await loadDuolingoLeagues("all");
+    return;
+  }
+
   if (gameName === "provinces") {
+    if (leaguesContainer) leaguesContainer.style.display = "none";
     if (standardContainer) standardContainer.style.display = "none";
     if (provincialContainer) provincialContainer.style.display = "block";
     await loadProvincialLeague();
     return;
   }
 
+  if (leaguesContainer) leaguesContainer.style.display = "none";
   if (standardContainer) standardContainer.style.display = "block";
   if (provincialContainer) provincialContainer.style.display = "none";
 
@@ -6050,5 +6125,780 @@ async function toggleAdminContentWorker() {
   }
 }
 
+// =============================================================================
+// --- VERSÃO 9.0: EDTECH WORLD-CLASS CONTROLLERS ---
+// =============================================================================
 
+// 1. SISTEMA DE LIGAS COM 5 DIVISÕES (DUOLINGO STYLE)
+async function loadDuolingoLeagues(tier = "all") {
+  const container = document.getElementById("league-ranking-list");
+  const countdownText = document.getElementById("duolingo-countdown-text");
+  if (!container) return;
 
+  container.innerHTML = `<div style="text-align: center; padding: 20px; font-size: 0.82rem; color: var(--text-secondary);">A carregar classificação da liga...</div>`;
+
+  try {
+    const res = await fetch(`/api/leagues/leaderboard?tier=${tier}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    if (countdownText && data.timeRemaining) {
+      countdownText.textContent = `Encerra em: ${data.timeRemaining} (Domingo 23:59)`;
+    }
+
+    if (!data.leaderboard || data.leaderboard.length === 0) {
+      container.innerHTML = `<div style="text-align: center; padding: 25px; color: var(--text-secondary); font-size: 0.85rem;">Nenhum aluno nesta divisão ainda. Sê o primeiro a conquistar XP!</div>`;
+      return;
+    }
+
+    container.innerHTML = "";
+    data.leaderboard.forEach(u => {
+      const row = document.createElement("div");
+      row.className = `league-user-row ${u.statusZone === 'promotion' ? 'zone-promotion' : (u.statusZone === 'relegation' ? 'zone-relegation' : '')}`;
+
+      let rankClass = '';
+      let rankIcon = `${u.rank}º`;
+      if (u.rank === 1) { rankClass = 'rank-1'; rankIcon = '🥇'; }
+      else if (u.rank === 2) { rankClass = 'rank-2'; rankIcon = '🥈'; }
+      else if (u.rank === 3) { rankClass = 'rank-3'; rankIcon = '🥉'; }
+
+      const tierBadgeIcons = { bronze: '🥉', prata: '🥈', ouro: '🥇', safira: '💎', diamante: '👑' };
+      const icon = tierBadgeIcons[u.leagueTier] || '🥉';
+
+      row.innerHTML = `
+        <div class="league-rank-num ${rankClass}">${rankIcon}</div>
+        <div class="league-user-info">
+          <div class="league-user-phone">${icon} ${u.phone}</div>
+          <div class="league-user-prov">📍 ${u.province} • TRI ${u.triScore}</div>
+        </div>
+        <div class="league-xp-badge">⚡ ${u.xp.toLocaleString()} XP</div>
+      `;
+      container.appendChild(row);
+    });
+  } catch (e) {
+    container.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--error); font-size: 0.82rem;">Erro ao carregar ranking da liga.</div>`;
+  }
+}
+
+// 2. LEITOR ÓPTICO DE GABARITO POR CÂMARA (GRADEO / ZIPGRADE OMR)
+let omrStream = null;
+let omrDetectedAnswers = {};
+let omrCurrentScanResult = null;
+
+async function openOmrScannerModal() {
+  const modal = document.getElementById("omr-scanner-modal");
+  if (!modal) return;
+  modal.style.display = "flex";
+
+  const select = document.getElementById("omr-exam-select");
+  if (select) {
+    select.innerHTML = '<option value="">A carregar exames disponíveis...</option>';
+    try {
+      let exams = currentLevelExams;
+      if (!exams || exams.length === 0) {
+        const res = await fetch("/api/exams?limit=50");
+        exams = await res.json();
+      }
+      select.innerHTML = '';
+      exams.forEach(e => {
+        const opt = document.createElement("option");
+        opt.value = e.id;
+        opt.textContent = `${e.subject_name || e.subject} - ${e.level_name || e.level} (${e.year || 'Exame'})`;
+        select.appendChild(opt);
+      });
+      if (currentQuiz.exam && currentQuiz.exam.id) {
+        select.value = currentQuiz.exam.id;
+      }
+    } catch (e) {
+      select.innerHTML = '<option value="">Exames de Moçambique</option>';
+    }
+  }
+
+  const canvas = document.getElementById("omr-preview-canvas");
+  if (canvas) {
+    canvas.width = 640;
+    canvas.height = 420;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#1e293b";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "14px sans-serif";
+    ctx.fillStyle = "#94a3b8";
+    ctx.textAlign = "center";
+    ctx.fillText("Ativa a câmara ou carrega uma fotografia da folha de respostas A4.", canvas.width / 2, canvas.height / 2);
+  }
+
+  const resPanel = document.getElementById("omr-results-panel");
+  if (resPanel) resPanel.style.display = "none";
+  const submitBtn = document.getElementById("btn-omr-submit-grade");
+  if (submitBtn) submitBtn.disabled = true;
+  const statusBadge = document.getElementById("omr-read-status");
+  if (statusBadge) statusBadge.textContent = "Aguardando leitura";
+}
+
+function closeOmrScannerModal() {
+  const modal = document.getElementById("omr-scanner-modal");
+  if (modal) modal.style.display = "none";
+  if (omrStream) {
+    omrStream.getTracks().forEach(t => t.stop());
+    omrStream = null;
+  }
+  const video = document.getElementById("omr-video-feed");
+  if (video) video.style.display = "none";
+  const canvas = document.getElementById("omr-preview-canvas");
+  if (canvas) canvas.style.display = "block";
+  const captureBtn = document.getElementById("btn-omr-capture-frame");
+  if (captureBtn) captureBtn.style.display = "none";
+}
+
+async function startOmrCamera() {
+  try {
+    const video = document.getElementById("omr-video-feed");
+    const canvas = document.getElementById("omr-preview-canvas");
+    const captureBtn = document.getElementById("btn-omr-capture-frame");
+
+    if (omrStream) {
+      omrStream.getTracks().forEach(t => t.stop());
+    }
+
+    omrStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+
+    if (video) {
+      video.srcObject = omrStream;
+      video.style.display = "block";
+      if (canvas) canvas.style.display = "none";
+      if (captureBtn) captureBtn.style.display = "inline-flex";
+    }
+    showToast("Câmara ativada! Enquadre a folha de respostas no retângulo.", "info");
+  } catch (err) {
+    showToast("Não foi possível aceder à câmara. Use a opção 'Carregar Foto'.", "error");
+  }
+}
+
+function captureOmrFrame() {
+  const video = document.getElementById("omr-video-feed");
+  const canvas = document.getElementById("omr-preview-canvas");
+  if (!video || !canvas) return;
+
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  video.style.display = "none";
+  canvas.style.display = "block";
+
+  if (omrStream) {
+    omrStream.getTracks().forEach(t => t.stop());
+    omrStream = null;
+  }
+  const captureBtn = document.getElementById("btn-omr-capture-frame");
+  if (captureBtn) captureBtn.style.display = "none";
+
+  processOmrCanvasImage(canvas);
+}
+
+function handleOmrFileUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById("omr-preview-canvas");
+      const video = document.getElementById("omr-video-feed");
+      if (video) video.style.display = "none";
+      if (canvas) {
+        canvas.style.display = "block";
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        processOmrCanvasImage(canvas);
+      }
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function processOmrCanvasImage(canvas) {
+  const qCountInput = document.getElementById("omr-sheet-questions-count");
+  const qCount = qCountInput ? parseInt(qCountInput.value) || 20 : 20;
+  const statusBadge = document.getElementById("omr-read-status");
+  if (statusBadge) statusBadge.textContent = "A processar visão computacional...";
+
+  try {
+    if (typeof OmrEngine === 'undefined') {
+      throw new Error("Motor OMR não carregado no cliente.");
+    }
+
+    const scanResult = OmrEngine.scanAnswerSheet(canvas, { questionCount: qCount, optionsCount: 5 });
+    OmrEngine.drawDetectionOverlay(canvas, scanResult);
+
+    omrCurrentScanResult = scanResult;
+    omrDetectedAnswers = {};
+    for (const [qNum, res] of Object.entries(scanResult.detectedAnswers)) {
+      omrDetectedAnswers[qNum] = res.choice;
+    }
+
+    renderOmrDetectedGrid(scanResult);
+
+    if (statusBadge) {
+      statusBadge.textContent = `${scanResult.summary.answered}/${qCount} questões identificadas (${scanResult.summary.fillRatePercentage}%)`;
+      statusBadge.style.background = "rgba(16, 185, 129, 0.15)";
+      statusBadge.style.color = "#059669";
+    }
+
+    const submitBtn = document.getElementById("btn-omr-submit-grade");
+    if (submitBtn) submitBtn.disabled = false;
+    showToast(`📸 Folha lida com sucesso! ${scanResult.summary.answered} questões preenchidas.`, "success");
+    playSound("correct");
+  } catch (err) {
+    console.error("Erro no processamento OMR:", err);
+    if (statusBadge) {
+      statusBadge.textContent = "Erro na leitura";
+      statusBadge.style.background = "rgba(239, 68, 68, 0.15)";
+      statusBadge.style.color = "#ef4444";
+    }
+    showToast("Erro ao processar folha de gabarito: " + err.message, "error");
+  }
+}
+
+function renderOmrDetectedGrid(scanResult) {
+  const container = document.getElementById("omr-detected-table-container");
+  if (!container || !scanResult) return;
+
+  container.innerHTML = "";
+  const letters = ['A', 'B', 'C', 'D', 'E'];
+
+  for (let q = 1; q <= scanResult.totalQuestions; q++) {
+    const qData = scanResult.detectedAnswers[q] || { choice: null, confidence: 0 };
+    const row = document.createElement("div");
+    row.className = "omr-detected-row";
+
+    const numSpan = document.createElement("span");
+    numSpan.className = "omr-q-num";
+    numSpan.textContent = `Q${q}`;
+    row.appendChild(numSpan);
+
+    const btnGroup = document.createElement("div");
+    btnGroup.className = "omr-opt-btn-group";
+
+    letters.forEach(letter => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = `omr-opt-chip ${qData.choice === letter ? 'active' : ''}`;
+      chip.textContent = letter;
+      chip.addEventListener("click", () => {
+        btnGroup.querySelectorAll(".omr-opt-chip").forEach(c => c.classList.remove("active"));
+        if (omrDetectedAnswers[q] === letter) {
+          omrDetectedAnswers[q] = null;
+        } else {
+          chip.classList.add("active");
+          omrDetectedAnswers[q] = letter;
+        }
+      });
+      btnGroup.appendChild(chip);
+    });
+    row.appendChild(btnGroup);
+
+    const confSpan = document.createElement("span");
+    const conf = Math.round((qData.confidence || 0) * 100);
+    confSpan.className = `omr-confidence-pill ${conf > 75 ? 'high' : (conf > 40 ? 'medium' : 'low')}`;
+    confSpan.textContent = qData.choice ? `${conf}%` : 'Vazia';
+    row.appendChild(confSpan);
+
+    container.appendChild(row);
+  }
+}
+
+async function submitOmrGrade() {
+  const select = document.getElementById("omr-exam-select");
+  const examId = select ? select.value : null;
+  if (!examId) {
+    alert("Por favor, selecione o exame oficial correspondente à folha de respostas.");
+    return;
+  }
+
+  const submitBtn = document.getElementById("btn-omr-submit-grade");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "A calcular nota oficial e TRI...";
+  }
+
+  try {
+    const res = await fetch("/api/omr/submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": jwtToken ? `Bearer ${jwtToken}` : ""
+      },
+      body: JSON.stringify({
+        examId,
+        scannedAnswers: omrDetectedAnswers,
+        imageMetadata: {
+          timestamp: new Date().toISOString(),
+          fillRate: omrCurrentScanResult ? omrCurrentScanResult.summary.fillRatePercentage : null
+        }
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao corrigir exame.");
+
+    const panel = document.getElementById("omr-results-panel");
+    if (panel) {
+      panel.style.display = "block";
+      document.getElementById("omr-res-score").textContent = `${data.correctCount} / ${data.totalQuestions}`;
+      document.getElementById("omr-res-percent").textContent = `${data.percentage}%`;
+      document.getElementById("omr-res-grade20").textContent = `${data.grade20} / 20`;
+      document.getElementById("omr-res-tri").textContent = `${data.triMetrics.triScore} PTS`;
+      document.getElementById("omr-xp-earned-badge").textContent = `+${data.xpEarned} XP Ganho`;
+      panel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    if (data.xpEarned && userProfile) {
+      userProfile.xpPoints = (userProfile.xpPoints || 0) + data.xpEarned;
+      updateAuthUI();
+    }
+
+    showToast(`🎉 Gabarito corrigido! Nota: ${data.grade20}/20 (+${data.xpEarned} XP)`, "success");
+    playSound("victory");
+
+    window.lastOmrResult = data;
+  } catch (err) {
+    alert("Erro ao validar gabarito: " + err.message);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "✓ Validar e Corrigir Gabarito Oficial";
+    }
+  }
+}
+
+function generateOmrCertificate() {
+  if (!window.lastOmrResult) return;
+  const d = window.lastOmrResult;
+  generateOfficialCertificate({
+    examId: d.examId,
+    examTitle: d.examTitle,
+    institution: "UNIVERSIDADE EDUARDO MONDLANE / UP",
+    scoreRaw: `${d.correctCount}/${d.totalQuestions}`,
+    percentage: d.percentage,
+    triScore: d.triMetrics.triScore,
+    grade20: d.grade20
+  });
+  closeOmrScannerModal();
+}
+
+// 3. ÁRVORE DE COMPETÊNCIAS & TREINO CIRÚRGICO (KHAN ACADEMY)
+let activeSkillSubject = "matematica";
+
+async function loadSkillsTree(subject = "matematica") {
+  activeSkillSubject = subject;
+  const container = document.getElementById("skills-nodes-container");
+  const weaknessContainer = document.getElementById("skills-weaknesses-list");
+  const title = document.getElementById("skills-current-subject-title");
+  const avgBadge = document.getElementById("skills-mastery-average-badge");
+
+  const subjectTitles = {
+    matematica: "📐 Competências de Matemática",
+    fisica: "🚀 Competências de Física",
+    quimica: "🧪 Competências de Química",
+    biologia: "🧬 Competências de Biologia",
+    portugues: "📖 Competências de Língua Portuguesa"
+  };
+
+  if (title) title.textContent = subjectTitles[subject] || subjectTitles.matematica;
+  if (container) container.innerHTML = '<div style="padding: 20px; color: var(--text-secondary); text-align: center;">A carregar competências curriculares...</div>';
+
+  try {
+    const res = await fetch(`/api/skills/tree?subject=${subject}`, {
+      headers: jwtToken ? { "Authorization": `Bearer ${jwtToken}` } : {}
+    });
+    const data = await res.json();
+
+    if (avgBadge) {
+      avgBadge.textContent = `Domínio Médio: ${data.userMasteryAverage || 0}%`;
+    }
+
+    if (container) {
+      container.innerHTML = "";
+      data.skills.forEach(skill => {
+        const card = document.createElement("div");
+        card.className = "skill-node-card";
+        card.addEventListener("click", () => launchSurgicalDrill(subject));
+
+        const crown = skill.mastery >= 85 ? '<span style="font-size: 1.1rem; color: #f59e0b;" title="Mestre (Coroa)">👑</span>' : '';
+
+        card.innerHTML = `
+          <div class="skill-node-header">
+            <div class="skill-icon-bubble">${skill.icon}</div>
+            <div class="skill-info" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h4>${skill.name}</h4>
+                ${crown}
+              </div>
+              <p>${skill.desc}</p>
+            </div>
+          </div>
+          <div class="skill-progress-bar">
+            <div class="skill-progress-fill tier-${skill.tierColor}" style="width: ${skill.mastery}%;"></div>
+          </div>
+          <div class="skill-status-row">
+            <span style="font-weight: 700; color: var(--text-secondary);">${skill.tierLabel}</span>
+            <span style="font-weight: 800; color: var(--primary);">${skill.mastery}%</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    if (weaknessContainer) {
+      weaknessContainer.innerHTML = "";
+      const weaknesses = (data.skills || []).filter(s => s.mastery < 60);
+
+      if (weaknesses.length === 0) {
+        weaknessContainer.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: #10b981; font-size: 0.85rem;">
+            🎉 Excelente! Todas as competências estão com aproveitamento proficiente.
+          </div>
+        `;
+      } else {
+        weaknesses.forEach(w => {
+          const item = document.createElement("div");
+          item.style.cssText = "background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;";
+          item.innerHTML = `
+            <div>
+              <div style="font-size: 0.82rem; font-weight: 700; color: #dc2626;">⚠️ ${w.name}</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary);">Apenas ${w.mastery}% de domínio</div>
+            </div>
+            <button class="btn btn-sm btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="launchSurgicalDrill('${subject}')">
+              Treinar
+            </button>
+          `;
+          weaknessContainer.appendChild(item);
+        });
+      }
+    }
+
+  } catch (err) {
+    if (container) container.innerHTML = '<div style="color: var(--error); padding: 20px;">Erro ao carregar competências.</div>';
+  }
+}
+
+async function launchSurgicalDrill(subject = "") {
+  showToast("⚡ A gerar simulado adaptativo de 10 questões com a IA...", "info");
+
+  try {
+    const res = await fetch(`/api/skills/surgical-quiz?subject=${subject || activeSkillSubject}`);
+    const data = await res.json();
+    if (!res.ok || !data.questions || data.questions.length === 0) {
+      alert("Não foi possível gerar questões para o treino cirúrgico.");
+      return;
+    }
+
+    currentQuiz = {
+      exam: {
+        id: `surgical_${Date.now()}`,
+        title: data.title || "Treino Cirúrgico IA (Foco em Lacunas)",
+        subject_name: subject || "Multidisciplinar",
+        level_name: "Preparatório Nacional",
+        duration_minutes: 20,
+        questions: data.questions
+      },
+      mode: "exam",
+      currentIndex: 0,
+      answers: new Array(data.questions.length).fill(null),
+      timerInterval: null,
+      timeRemaining: 20 * 60,
+      elapsedStudySeconds: 0
+    };
+
+    showSection("quiz");
+    initQuizArena();
+    showToast("🎯 Treino Cirúrgico iniciado! Boa sorte!", "success");
+    playSound("start");
+  } catch (e) {
+    alert("Erro ao iniciar treino cirúrgico: " + e.message);
+  }
+}
+
+// 4. A ROTA DO CALOIRO (CAMPANHA NARRATIVA CODEMAO STYLE)
+async function loadCampaignMap() {
+  const container = document.getElementById("campaign-provinces-list");
+  const xpBadge = document.getElementById("campaign-user-xp-badge");
+  if (!container) return;
+
+  container.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--text-secondary);">A traçar a expedição pelas 11 províncias...</div>';
+
+  try {
+    const res = await fetch("/api/campaign/map", {
+      headers: jwtToken ? { "Authorization": `Bearer ${jwtToken}` } : {}
+    });
+    const data = await res.json();
+
+    if (xpBadge) {
+      xpBadge.textContent = `${(data.userXp || 0).toLocaleString()} XP`;
+    }
+
+    container.innerHTML = "";
+    data.provinces.forEach(p => {
+      const card = document.createElement("div");
+      card.className = `campaign-province-card ${p.isCompleted ? 'completed' : ''} ${!p.isUnlocked ? 'locked' : ''}`;
+
+      const statusTag = p.isCompleted
+        ? '<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700;">✓ Conquistada</span>'
+        : (p.isUnlocked ? '<span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--primary); font-weight: 700;">Desbloqueada</span>' : '<span class="badge" style="background: rgba(100, 116, 139, 0.2); color: var(--text-secondary);">🔒 Bloqueada</span>');
+
+      let missionsHtml = '';
+      p.missions.forEach(m => {
+        const isDone = m.done;
+        const icon = isDone ? '✅' : (m.isBoss ? '⚔️' : '🎯');
+        missionsHtml += `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 0.78rem;">
+            <span>${icon} ${m.title}</span>
+            <span style="font-weight: 700; color: ${isDone ? '#10b981' : 'var(--text-secondary)'};">+${m.xpReward} XP</span>
+          </div>
+        `;
+      });
+
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="province-badge-step">PROVÍNCIA ${p.step} DE 11</div>
+          ${statusTag}
+        </div>
+        <h3 class="province-title">${p.name}</h3>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 10px;">Capital: ${p.capital}</div>
+
+        <div style="margin: 8px 0;">
+          ${missionsHtml}
+        </div>
+
+        <div class="province-boss-box">
+          <div class="province-boss-title">⚔️ Chefe: ${p.bossName}</div>
+          <div class="province-boss-desc">${p.bossDesc}</div>
+        </div>
+
+        <button class="btn btn-sm ${p.isUnlocked ? 'btn-primary' : 'btn-outline'}" style="margin-top: 15px; width: 100%; font-weight: 700;" ${!p.isUnlocked ? 'disabled' : ''} onclick="launchProvinceBossFight('${p.id}', '${p.name}', '${p.bossName}')">
+          ${p.isCompleted ? '🔄 Rejogar Província' : '⚔️ Enfrentar Desafio Provincial'}
+        </button>
+      `;
+
+      container.appendChild(card);
+    });
+
+  } catch (err) {
+    container.innerHTML = '<div style="color: var(--error); padding: 20px;">Erro ao carregar mapa da campanha.</div>';
+  }
+}
+
+async function launchProvinceBossFight(provinceId, provinceName, bossName) {
+  showToast(`⚔️ A preparar a Batalha do Chefe de ${provinceName}: ${bossName}!`, "info");
+
+  try {
+    const res = await fetch(`/api/skills/surgical-quiz?subject=matematica`);
+    const data = await res.json();
+    if (!res.ok || !data.questions) throw new Error();
+
+    const bossQuestions = data.questions.slice(0, 5);
+
+    currentQuiz = {
+      exam: {
+        id: `boss_${provinceId}`,
+        title: `⚔️ Batalha de Província: ${bossName} (${provinceName})`,
+        subject_name: provinceName,
+        level_name: "Rota do Caloiro Moçambique",
+        duration_minutes: 8,
+        questions: bossQuestions,
+        isBossMission: true,
+        provinceId: provinceId,
+        missionId: `boss_${provinceId}`
+      },
+      mode: "exam",
+      currentIndex: 0,
+      answers: new Array(bossQuestions.length).fill(null),
+      timerInterval: null,
+      timeRemaining: 8 * 60,
+      elapsedStudySeconds: 0
+    };
+
+    showSection("quiz");
+    initQuizArena();
+    playSound("start");
+  } catch (e) {
+    alert("Erro ao iniciar missão: " + e.message);
+  }
+}
+
+// 5. MICRO-AULAS EM 90s & FÓRUM COMUNITÁRIO (UDEMY / COURSERA)
+async function loadMicroLessons() {
+  const grid = document.getElementById("micro-lessons-grid");
+  if (!grid) return;
+
+  grid.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--text-secondary);">A carregar micro-aulas e macetes em 90 segundos...</div>';
+
+  try {
+    const res = await fetch("/api/micro-lessons");
+    const lessons = await res.json();
+
+    grid.innerHTML = "";
+    lessons.forEach(l => {
+      const card = document.createElement("div");
+      card.className = "micro-lesson-card";
+
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="micro-tag-pill">${l.tag}</div>
+          <span style="font-size: 0.75rem; font-weight: 800; color: #f59e0b;">⏱️ ${l.duration}</span>
+        </div>
+        <h3 style="font-size: 1.1rem; margin: 4px 0 8px 0; color: var(--text-primary);">${l.title}</h3>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0 0 10px 0;">${l.summary}</p>
+        
+        <div class="micro-takeaway-box">
+          <strong style="color: #059669; display: block; margin-bottom: 2px;">⚡ Ponto Chave:</strong>
+          ${l.keyTakeaway}
+        </div>
+
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-size: 0.8rem; margin-top: auto;">
+          <span style="font-weight: 700; color: var(--primary);">Exemplo Real:</span> ${l.exampleProblem}
+        </div>
+      `;
+
+      grid.appendChild(card);
+    });
+  } catch (err) {
+    grid.innerHTML = '<div style="color: var(--error); padding: 20px;">Erro ao carregar micro-aulas.</div>';
+  }
+}
+
+let currentSolutionQuestionId = null;
+
+async function openCommunitySolutionsModal(questionId, qNum, qText, examId) {
+  currentSolutionQuestionId = questionId;
+  const modal = document.getElementById("community-solutions-modal");
+  if (!modal) return;
+
+  const qNumEl = document.getElementById("solutions-modal-qnum");
+  const qTextEl = document.getElementById("solutions-modal-qtext");
+  if (qNumEl) qNumEl.textContent = `QUESTÃO ${qNum || 1}`;
+  if (qTextEl) qTextEl.textContent = qText || "Enunciado da questão";
+  modal.style.display = "flex";
+
+  const list = document.getElementById("solutions-list-container");
+  if (list) {
+    list.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">A carregar resoluções...</div>';
+  }
+
+  try {
+    const res = await fetch(`/api/questions/${questionId}/solutions`);
+    const solutions = await res.json();
+
+    if (!solutions || solutions.length === 0) {
+      if (list) list.innerHTML = '<div style="text-align: center; padding: 25px; color: var(--text-secondary); font-size: 0.85rem;">Nenhum estudante partilhou resolução ainda. Sê o primeiro a publicar e ganha +25 XP!</div>';
+      return;
+    }
+
+    if (list) {
+      list.innerHTML = "";
+      solutions.forEach(s => {
+        const item = document.createElement("div");
+        item.className = "community-sol-item";
+
+        const verifiedBadge = s.is_verified_teacher
+          ? '<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700;">✓ Professor Verificado</span>'
+          : '';
+
+        item.innerHTML = `
+          <div class="community-sol-header">
+            <div>
+              <strong>${s.author_name}</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary);"> • 📍 ${s.author_province || 'Maputo'}</span>
+              ${verifiedBadge}
+            </div>
+            <button type="button" class="btn-upvote" onclick="upvoteCommunitySolution(${s.id}, this)">
+              👍 <span class="vote-count">${s.upvotes || 0}</span>
+            </button>
+          </div>
+          <p style="margin: 6px 0; font-size: 0.84rem; line-height: 1.4;">${s.solution_text}</p>
+          ${s.shortcut_tip ? `<div style="font-size: 0.75rem; background: rgba(37, 99, 235, 0.08); padding: 4px 8px; border-radius: 4px; color: var(--primary);"><strong>Macete:</strong> ${s.shortcut_tip}</div>` : ''}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+  } catch (err) {
+    if (list) list.innerHTML = '<div style="color: var(--error); padding: 20px;">Erro ao carregar resoluções comunitárias.</div>';
+  }
+}
+
+function closeCommunitySolutionsModal() {
+  const modal = document.getElementById("community-solutions-modal");
+  if (modal) modal.style.display = "none";
+}
+
+async function submitCommunitySolution() {
+  if (!currentSolutionQuestionId) return;
+
+  const textInput = document.getElementById("community-solution-input");
+  const tipInput = document.getElementById("community-shortcut-input");
+  const text = textInput ? textInput.value.trim() : "";
+  const tip = tipInput ? tipInput.value.trim() : "";
+
+  if (text.length < 10) {
+    alert("Por favor escreve uma explicação com pelo menos 10 caracteres.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/questions/${currentSolutionQuestionId}/solutions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": jwtToken ? `Bearer ${jwtToken}` : ""
+      },
+      body: JSON.stringify({
+        solutionText: text,
+        shortcutTip: tip,
+        authorName: userProfile ? `+258 ${userProfile.phone.substring(0,4)}•••` : "Estudante Moçambicano",
+        authorProvince: userProfile ? userProfile.province : "Maputo Cidade"
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    if (textInput) textInput.value = "";
+    if (tipInput) tipInput.value = "";
+
+    showToast("🎉 Resolução publicada! Ganhaste +25 XP pela tua contribuição!", "success");
+    playSound("victory");
+
+    openCommunitySolutionsModal(currentSolutionQuestionId, 1, "Enunciado da questão");
+  } catch (err) {
+    alert("Erro ao publicar resolução: " + err.message);
+  }
+}
+
+async function upvoteCommunitySolution(solutionId, btn) {
+  try {
+    const res = await fetch(`/api/solutions/${solutionId}/upvote`, { method: "POST" });
+    if (res.ok) {
+      const countSpan = btn.querySelector(".vote-count");
+      if (countSpan) {
+        countSpan.textContent = parseInt(countSpan.textContent || 0) + 1;
+      }
+      btn.style.borderColor = "#10b981";
+      btn.style.color = "#10b981";
+      showToast("Voto computado! 👍", "info");
+    }
+  } catch (e) {}
+}

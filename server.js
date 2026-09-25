@@ -1,13 +1,19 @@
 const express = require('express');
+const http = require('http');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const db = require('./database');
+const { calculateTRIMetrics, generateCertificateCode, updateGlickoRating } = require('./tri_engine');
+const { setupMultiplayerServer } = require('./multiplayer_server');
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+setupMultiplayerServer(server);
+
 const PORT = process.env.PORT || 3000;
 
 if (!process.env.JWT_SECRET) {
@@ -25,7 +31,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Content-Security-Policy', "default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https: blob:;");
+  res.setHeader('Content-Security-Policy', "default-src 'self' ws: wss: https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https: blob:;");
   next();
 });
 
@@ -42,8 +48,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
-// Rota amigável para acesso direto ao CMS / Painel Admin
-app.get(['/admin', '/cms'], (req, res) => {
+// Rota amigável para acesso direto ao CMS / Painel Admin e Verificação de Certificados
+app.get(['/admin', '/cms', '/verify'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -618,20 +624,56 @@ app.get('/api/leagues/leaderboard', (req, res) => {
 });
 
 
-// --- ROTAS DE PROGRESSO DO ALUNO ---
+// --- ROTAS DE PROGRESSO DO ALUNO COM TEORIA DE RESPOSTA AO ITEM (TRI) ---
 
 app.post('/api/user/progress', requireAuth, (req, res) => {
-  const { examId, score, total, date } = req.body;
+  const { examId, score, total, date, responses } = req.body;
   if (!examId || score === undefined || total === undefined) {
     return res.status(400).json({ error: 'Dados de progresso incompletos.' });
   }
 
+  // Se o frontend enviar responses detalhadas com dificuldade de cada item, usa-as; caso contrário, constrói amostra calibrada
+  let responsesList = responses;
+  if (!Array.isArray(responsesList) || responsesList.length === 0) {
+    responsesList = [];
+    const correctTarget = Math.min(score, total);
+    for (let i = 0; i < total; i++) {
+      // Dificuldade varia gradualmente de -1.5 a +1.5 ao longo da prova
+      const diff = -1.5 + (i / Math.max(1, total - 1)) * 3.0;
+      responsesList.push({
+        isCorrect: i < correctTarget,
+        difficulty: diff,
+        discrimination: 1.2
+      });
+    }
+  }
+
+  // Executar motor matemático TRI (3PL + regularização bayesiana)
+  const triMetrics = calculateTRIMetrics(responsesList);
+
   const query = `INSERT INTO progress (user_id, exam_id, score, total, date) VALUES (?, ?, ?, ?, ?)`;
   db.run(query, [req.user.id, examId, score, total, date || new Date().toLocaleDateString("pt-MZ")], function(err) {
     if (err) {
-      return res.status(500).json({ error: 'Erro ao salvar progresso.' });
+      return res.status(500).json({ error: 'Erro ao salvar progresso: ' + err.message });
     }
-    res.status(201).json({ message: 'Progresso guardado com sucesso.' });
+
+    // Atualizar a proficiência TRI do utilizador na tabela de utilizadores
+    db.run(
+      'UPDATE users SET tri_proficiency = ? WHERE id = ?',
+      [triMetrics.triScore, req.user.id],
+      () => {}
+    );
+
+    res.status(201).json({
+      message: 'Progresso guardado com sucesso.',
+      triMetrics: {
+        triScore: triMetrics.triScore,
+        grade20: triMetrics.grade20,
+        coherence: triMetrics.coherence,
+        percentile: triMetrics.percentile,
+        classification: triMetrics.classification
+      }
+    });
   });
 });
 
@@ -648,6 +690,164 @@ app.get('/api/user/progress', requireAuth, (req, res) => {
       return res.status(500).json({ error: 'Erro ao carregar progresso.' });
     }
     res.json(rows);
+  });
+});
+
+// --- ROTAS DE CERTIFICADOS OFICIAIS VERIFICÁVEIS POR QR CODE ---
+
+app.post('/api/certificates/generate', requireAuth, (req, res) => {
+  const { examId, examTitle, institution, scoreRaw, percentage, triScore, grade20 } = req.body;
+
+  if (!examTitle || percentage === undefined) {
+    return res.status(400).json({ error: 'Dados insuficientes para gerar o certificado.' });
+  }
+
+  db.get('SELECT id, name, phone, province FROM users WHERE id = ?', [req.user.id], (err, user) => {
+    if (err || !user) {
+      return res.status(404).json({ error: 'Utilizador não encontrado.' });
+    }
+
+    const studentName = user.name || ("Candidato " + user.phone.slice(-4));
+    const code = generateCertificateCode();
+    const prov = user.province || 'Maputo Cidade';
+    const numGrade = Number(grade20) || Math.round((Number(percentage) / 5) * 10) / 10;
+    const numTri = Number(triScore) || 500;
+
+    const insertSql = `
+      INSERT INTO certificates 
+      (code, user_id, student_name, student_phone, province, exam_id, exam_title, institution, score_raw, percentage, tri_score, grade_20)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.run(insertSql, [
+      code,
+      req.user.id,
+      studentName,
+      user.phone,
+      prov,
+      examId || 'exame-nacional',
+      examTitle,
+      institution || 'Exame Nacional de Moçambique',
+      scoreRaw || `${percentage}%`,
+      percentage,
+      numTri,
+      numGrade
+    ], function(insErr) {
+      if (insErr) {
+        return res.status(500).json({ error: 'Erro ao emitir certificado: ' + insErr.message });
+      }
+
+      res.status(201).json({
+        success: true,
+        certificate: {
+          code,
+          studentName,
+          province: prov,
+          examTitle,
+          institution: institution || 'República de Moçambique',
+          percentage,
+          grade20: numGrade,
+          triScore: numTri,
+          issueDate: new Date().toLocaleDateString('pt-MZ')
+        },
+        verifyUrl: `/verify?code=${code}`
+      });
+    });
+  });
+});
+
+app.get('/api/certificates/verify/:code', (req, res) => {
+  const code = (req.params.code || '').trim().toUpperCase();
+  db.get('SELECT * FROM certificates WHERE UPPER(code) = ?', [code], (err, cert) => {
+    if (err || !cert) {
+      return res.status(404).json({ valid: false, error: 'Certificado não encontrado ou código inválido.' });
+    }
+
+    const maskedPhone = cert.student_phone ? (cert.student_phone.substring(0, 4) + '****' + cert.student_phone.slice(-2)) : '';
+
+    res.json({
+      valid: true,
+      code: cert.code,
+      studentName: cert.student_name,
+      phoneMasked: maskedPhone,
+      province: cert.province,
+      examTitle: cert.exam_title,
+      institution: cert.institution,
+      scoreRaw: cert.score_raw,
+      percentage: cert.percentage,
+      triScore: cert.tri_score,
+      grade20: cert.grade_20,
+      createdAt: cert.created_at,
+      status: 'AUTÊNTICO E VERIFICADO'
+    });
+  });
+});
+
+app.get('/api/user/certificates', requireAuth, (req, res) => {
+  db.all('SELECT * FROM certificates WHERE user_id = ? ORDER BY created_at DESC', [req.user.id], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Erro ao carregar certificados do utilizador.' });
+    res.json(rows || []);
+  });
+});
+
+// --- REPORTAR FALHAS OU ERROS EM QUESTÕES (CONTROLO DE QUALIDADE) ---
+
+app.post('/api/questions/report', (req, res) => {
+  const { questionId, examId, issueType, description } = req.body;
+  if (!issueType) {
+    return res.status(400).json({ error: 'Tipo de problema é obrigatório.' });
+  }
+
+  let userId = null;
+  let userPhone = null;
+
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+      userId = decoded.id;
+      userPhone = decoded.phone;
+    } catch (e) {}
+  }
+
+  const query = `
+    INSERT INTO question_reports (question_id, exam_id, user_id, user_phone, issue_type, description)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+
+  db.run(query, [
+    questionId || null,
+    examId || null,
+    userId,
+    userPhone || 'Anónimo',
+    issueType,
+    description || 'Sem descrição adicional'
+  ], function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Erro ao registar reporte de falha: ' + err.message });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Obrigado! O teu reporte de falha foi recebido e será revisto pela nossa equipa pedagógica.',
+      reportId: this.lastID
+    });
+  });
+});
+
+app.get('/api/admin/reports', requireAdmin, (req, res) => {
+  const query = `SELECT * FROM question_reports ORDER BY created_at DESC LIMIT 50`;
+  db.all(query, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Erro ao consultar reportes.' });
+    res.json(rows || []);
+  });
+});
+
+app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
+  const { status } = req.body;
+  db.run('UPDATE question_reports SET status = ? WHERE id = ?', [status || 'resolvido', req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao atualizar estado do reporte.' });
+    res.json({ message: 'Estado do reporte atualizado.', changes: this.changes });
   });
 });
 
@@ -1239,7 +1439,7 @@ module.exports = app;
 
 // Iniciar Servidor apenas localmente
 if (require.main === module) {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Servidor de Produção Seguro a correr na porta http://localhost:${PORT}`);
   });
 }

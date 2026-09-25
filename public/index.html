@@ -552,45 +552,86 @@
             </div>
           </div>
 
-          <!-- Game 3: Duel 1 vs 1 Arena -->
+          <!-- Game 3: Duel 1 vs 1 Arena (Tempo Real WebSockets) -->
           <div id="game-duel-arena" style="display: none; animation: fadeIn 0.3s;">
-            <button class="btn btn-sm btn-outline btn-game-back" style="margin-bottom: 15px;">&larr; Sair do Duelo</button>
-            
-            <div class="duel-scoreboard">
-              <div class="duel-player-badge">
-                <div class="duel-player-avatar duel-p1-avatar" id="duel-p1-name-tag">P1</div>
-                <strong id="duel-p1-label" style="font-size: 0.85rem;">Você (Jogador 1)</strong>
-                <span class="duel-score-num" style="color: #3b82f6;" id="duel-p1-score">0</span>
-              </div>
-              
-              <div style="text-align: center;">
-                <div class="duel-vs-circle">VS</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;" id="duel-round-text">Rodada 1/5</div>
-              </div>
-              
-              <div class="duel-player-badge">
-                <div class="duel-player-avatar duel-p2-avatar" id="duel-p2-name-tag">IA</div>
-                <strong id="duel-p2-label" style="font-size: 0.85rem;">Adversário Virtual</strong>
-                <span class="duel-score-num" style="color: #f97316;" id="duel-p2-score">0</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+              <button class="btn btn-sm btn-outline btn-game-back">&larr; Sair do Duelo</button>
+              <div id="duel-live-status-pill" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: #059669; display: flex; align-items: center; gap: 5px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                <span id="duel-connection-text">WebSockets: Pronto</span>
               </div>
             </div>
 
-            <!-- Timer Bar -->
-            <div class="duel-timer-bar-container">
-              <div class="duel-timer-bar" id="duel-timer-bar"></div>
+            <!-- Ecrã de Escolha de Modo de Duelo -->
+            <div id="duel-mode-selection" style="text-align: center; padding: 25px 15px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-bottom: 20px;">
+              <div style="font-size: 3rem; margin-bottom: 10px;">⚔️</div>
+              <h3 style="font-size: 1.4rem; color: var(--primary); margin-bottom: 8px;">Arena Nacional de Duelos 1v1</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 480px; margin: 0 auto 20px auto;">
+                Resolve 5 questões rápidas em tempo real contra candidatos das 11 províncias de Moçambique. Ganha pontos na Liga e eleva o teu Rating Glicko-2!
+              </p>
+
+              <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" id="btn-duel-start-live" style="flex: 1; min-width: 200px; padding: 12px 18px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #7c3aed);">
+                  ⚡ Buscar Oponente Ao Vivo
+                </button>
+                <button type="button" class="btn btn-outline" id="btn-duel-start-bot" style="flex: 1; min-width: 180px; padding: 12px 18px; font-weight: 700;">
+                  🤖 Treino Rápido vs IA
+                </button>
+              </div>
             </div>
 
-            <!-- Question Statement -->
-            <div style="margin-bottom: 20px;">
-              <span class="exam-tag" id="duel-category-tag" style="margin-bottom: 8px; display: inline-block;">Duelo de Conhecimento</span>
-              <h3 id="duel-question-text" style="font-size: 1.2rem; color: var(--text-primary); line-height: 1.4;">Carregando pergunta do duelo...</h3>
+            <!-- Overlay de Matchmaking com Radar Pulsante -->
+            <div id="duel-matchmaking-overlay" style="display: none; text-align: center; padding: 40px 20px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-bottom: 20px;">
+              <div class="duel-radar-pulse">
+                <div class="radar-circle"></div>
+                <div class="radar-circle circle-2"></div>
+                <div class="radar-dot">⚔️</div>
+              </div>
+              <h4 style="margin-top: 20px; font-size: 1.2rem; color: var(--primary);" id="duel-matchmaking-title">A procurar adversário nacional...</h4>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 5px;" id="duel-matchmaking-sub">A ligar às salas das 11 províncias de Moçambique</p>
+              <button type="button" class="btn btn-sm btn-outline" id="btn-duel-cancel-match" style="margin-top: 20px;">Cancelar Busca</button>
             </div>
 
-            <!-- Options Grid -->
-            <div class="options-list" id="duel-options-container"></div>
+            <!-- Ecrã de Jogo Ativo do Duelo -->
+            <div id="duel-battle-active-screen" style="display: none;">
+              <div class="duel-scoreboard">
+                <div class="duel-player-badge">
+                  <div class="duel-player-avatar duel-p1-avatar" id="duel-p1-name-tag">P1</div>
+                  <strong id="duel-p1-label" style="font-size: 0.85rem;">Você</strong>
+                  <span id="duel-p1-rating-badge" style="font-size: 0.72rem; color: var(--text-secondary);">Rating: 1500</span>
+                  <span class="duel-score-num" style="color: #3b82f6;" id="duel-p1-score">0</span>
+                </div>
+                
+                <div style="text-align: center;">
+                  <div class="duel-vs-circle">VS</div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;" id="duel-round-text">Rodada 1/5</div>
+                </div>
+                
+                <div class="duel-player-badge">
+                  <div class="duel-player-avatar duel-p2-avatar" id="duel-p2-name-tag">IA</div>
+                  <strong id="duel-p2-label" style="font-size: 0.85rem;">Adversário</strong>
+                  <span id="duel-p2-rating-badge" style="font-size: 0.72rem; color: var(--text-secondary);">Rating: 1500</span>
+                  <span class="duel-score-num" style="color: #f97316;" id="duel-p2-score">0</span>
+                </div>
+              </div>
 
-            <!-- Round Banner / Feedback -->
-            <div id="duel-round-banner" style="display: none; margin-top: 15px; padding: 10px; border-radius: var(--radius-sm); text-align: center; font-weight: bold; font-size: 0.9rem;"></div>
+              <!-- Timer Bar -->
+              <div class="duel-timer-bar-container">
+                <div class="duel-timer-bar" id="duel-timer-bar"></div>
+              </div>
+
+              <!-- Question Statement -->
+              <div style="margin-bottom: 20px;">
+                <span class="exam-tag" id="duel-category-tag" style="margin-bottom: 8px; display: inline-block;">Duelo de Conhecimento</span>
+                <h3 id="duel-question-text" style="font-size: 1.2rem; color: var(--text-primary); line-height: 1.4;">Carregando pergunta do duelo...</h3>
+              </div>
+
+              <!-- Options Grid -->
+              <div class="options-list" id="duel-options-container"></div>
+
+              <!-- Round Banner / Feedback -->
+              <div id="duel-round-banner" style="display: none; margin-top: 15px; padding: 10px; border-radius: var(--radius-sm); text-align: center; font-weight: bold; font-size: 0.9rem;"></div>
+            </div>
           </div>
 
           <!-- Game 4: 3D Flashcards Arena -->
@@ -807,22 +848,31 @@
       <div class="quiz-header">
         <div class="quiz-title-info">
           <h2 id="quiz-exam-title">Carregando Exame...</h2>
-          <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap;">
             <span class="exam-tag" id="quiz-question-counter">Pergunta 1</span>
+            <button type="button" class="btn btn-sm btn-outline" id="quiz-matrix-toggle-btn" title="Abrir Grade de Navegação das Questões" style="padding: 3px 8px; font-size: 0.75rem; font-weight: 700; color: var(--primary); border-color: var(--primary);">
+              📋 Grade (<span id="quiz-matrix-count-tag">1/40</span>)
+            </button>
+            <button type="button" class="btn btn-sm btn-outline" id="quiz-bookmark-btn" title="Marcar esta pergunta com pin para rever mais tarde" style="padding: 3px 8px; font-size: 0.75rem; color: #f59e0b; border-color: rgba(245, 158, 11, 0.4);">
+              📌 Marcar Revisão
+            </button>
+            <button type="button" class="btn btn-sm btn-outline" id="quiz-report-btn" title="Reportar erro ou falha nesta questão" style="padding: 3px 8px; font-size: 0.75rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">
+              🚩 Reportar Falha
+            </button>
             <button class="btn btn-sm btn-outline" id="quiz-tts-btn" title="Ouvir Pergunta em Voz Alta" style="padding: 3px 8px; font-size: 0.75rem;">
-              🔊 Ouvir Pergunta
+              🔊 Ouvir
             </button>
             <button class="btn btn-sm btn-outline" id="quiz-focus-btn" title="Modo Foco em Ecrã Inteiro" style="padding: 3px 8px; font-size: 0.75rem;">
-              🎯 Modo Foco: OFF
+              🎯 Foco
             </button>
             <button class="btn btn-sm btn-outline" id="quiz-download-paper-btn" title="Descarregar Caderno de Exame Completo em PDF" style="padding: 3px 8px; font-size: 0.75rem;">
-              📥 Baixar Caderno PDF
+              📥 Caderno A4
             </button>
             <button class="btn btn-sm btn-outline" id="quiz-scratchpad-btn" title="Quadro de Rascunho Digital para Cálculos" style="padding: 3px 8px; font-size: 0.75rem; color: #10b981; border-color: #10b981;">
               ✏️ Rascunho
             </button>
             <button class="btn btn-sm btn-outline" id="quiz-hint-btn" title="Pedir Dica Pedagógica" style="padding: 3px 8px; font-size: 0.75rem; color: var(--accent); border-color: var(--accent);">
-              💡 Pedir Dica
+              💡 Dica
             </button>
           </div>
         </div>
@@ -834,8 +884,27 @@
         </div>
       </div>
 
+      <!-- Grade / Matriz de Navegação Não-Linear de Questões -->
+      <div id="quiz-matrix-panel" class="quiz-matrix-panel" style="display: none;">
+        <div class="quiz-matrix-topbar">
+          <div class="matrix-legend">
+            <span class="legend-item"><span class="legend-dot dot-current"></span> Atual</span>
+            <span class="legend-item"><span class="legend-dot dot-answered"></span> Respondida</span>
+            <span class="legend-item"><span class="legend-dot dot-skipped"></span> Saltada / Marcada</span>
+            <span class="legend-item"><span class="legend-dot dot-unanswered"></span> Pendente</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline" id="quiz-matrix-close-btn" style="padding: 2px 8px; font-size: 0.75rem;">Fechar Grade ✕</button>
+        </div>
+        <div class="quiz-matrix-grid" id="quiz-matrix-grid">
+          <!-- Botoes [1] [2] ... [N] gerados dinamicamente via JS -->
+        </div>
+      </div>
+
       <div class="quiz-body">
-        <div class="question-number" id="quiz-question-number">QUESTÃO 1</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+          <div class="question-number" id="quiz-question-number">QUESTÃO 1</div>
+          <span id="quiz-bookmark-indicator" style="display: none; font-size: 0.8rem; font-weight: 700; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 12px;">📌 Marcada p/ Revisão</span>
+        </div>
         <div class="question-text" id="quiz-question-text">Questão de exemplo para o simulador de exame de admissão.</div>
         
         <!-- Figura / Diagrama Oficial da Questão (Física, Biologia, Desenho, Geometria, etc.) -->
@@ -870,9 +939,12 @@
 
       <div class="quiz-footer">
         <button class="btn btn-outline" id="quiz-quit-btn">Sair do Exame</button>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <button type="button" class="btn btn-outline" id="quiz-prev-btn" style="display: none;" title="Voltar à questão anterior">◀ Anterior</button>
+          <button type="button" class="btn btn-outline" id="quiz-skip-btn" title="Saltar esta questão para responder mais tarde">⏭️ Saltar (Depois)</button>
           <button class="btn btn-primary" id="quiz-verify-btn" disabled>Verificar Resposta</button>
-          <button class="btn btn-accent" id="quiz-next-btn" style="display: none;">Seguinte</button>
+          <button class="btn btn-accent" id="quiz-next-btn" style="display: none;">Seguinte ▶</button>
+          <button type="button" class="btn btn-sm btn-outline" id="quiz-finish-early-btn" title="Concluir e submeter a prova agora" style="color: #059669; border-color: rgba(5, 150, 105, 0.4); font-weight: 700;">Finalizar 🏁</button>
         </div>
       </div>
     </section>
@@ -889,9 +961,43 @@
           <p id="results-percentage-text">0% Corretas</p>
         </div>
 
-        <p id="results-feedback-message" style="font-weight: 600; margin-bottom: 30px;">Feedback.</p>
+        <!-- Card de Inteligência Pedagógica TRI (Teoria de Resposta ao Item - 3PL) -->
+        <div class="results-tri-card" id="results-tri-card" style="margin: 20px 0; background: linear-gradient(135deg, rgba(30, 58, 138, 0.06), rgba(79, 70, 229, 0.08)); border: 1px solid rgba(79, 70, 229, 0.25); border-radius: var(--radius-md); padding: 18px; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+              🧠 Teoria de Resposta ao Item (TRI Nacional)
+            </span>
+            <span id="results-tri-classification" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px;">
+              Competitivo
+            </span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
+            <div style="background: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+              <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);" id="results-tri-score">720</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Score TRI (200 - 1000)</div>
+            </div>
+            <div style="background: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+              <div style="font-size: 1.3rem; font-weight: 800; color: #10b981;" id="results-tri-grade20">14.4 / 20</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Nota Moçambique</div>
+            </div>
+            <div style="background: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+              <div style="font-size: 1.3rem; font-weight: 800; color: var(--accent);" id="results-tri-coherence">94%</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Coerência (Sem Chute)</div>
+            </div>
+            <div style="background: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+              <div style="font-size: 1.3rem; font-weight: 800; color: #8b5cf6;" id="results-tri-percentile">Top 12%</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Percentil Nacional</div>
+            </div>
+          </div>
+        </div>
+
+        <p id="results-feedback-message" style="font-weight: 600; margin-bottom: 25px;">Feedback.</p>
         
         <div class="results-actions" style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn btn-primary" id="results-certificate-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #1e3a8a, #2563eb); font-weight: 700; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+            📜 Emitir Certificado Oficial com QR Code
+          </button>
           <button class="btn btn-outline" id="results-print-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
             📄 Imprimir / Guardar Boletim de Notas (PDF)
           </button>
@@ -1560,6 +1666,187 @@
 
   <!-- Container Oficial de Impressão de Cadernos em Formato A4 -->
   <div id="printable-exam-paper-container" style="display: none;"></div>
+
+  <!-- Modal 1: Reportar Falha na Questão -->
+  <div id="report-issue-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; color: #ef4444; display: flex; align-items: center; gap: 8px;">
+          🚩 Reportar Falha na Questão
+        </h3>
+        <button type="button" class="modal-close-btn" id="report-modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="background: var(--bg-primary); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 15px;">
+          <span style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Questão sob Análise:</span>
+          <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary);" id="report-question-context">Questão 1 • Exame de Matemática</div>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+          Qual é o tipo de problema que identificaste nesta pergunta?
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+          <label class="report-option-label">
+            <input type="radio" name="report-issue-type" value="typo" checked>
+            <span>✏️ Erro ortográfico ou texto cortado/truncado</span>
+          </label>
+          <label class="report-option-label">
+            <input type="radio" name="report-issue-type" value="wrong_answer">
+            <span>❓ Gabarito incorreto / Resposta certa duvidosa</span>
+          </label>
+          <label class="report-option-label">
+            <input type="radio" name="report-issue-type" value="broken_image">
+            <span>🖼️ Imagem, diagrama ou fórmula científica ilegível</span>
+          </label>
+          <label class="report-option-label">
+            <input type="radio" name="report-issue-type" value="curriculum">
+            <span>📚 Conteúdo fora do programa nacional moçambicano</span>
+          </label>
+          <label class="report-option-label">
+            <input type="radio" name="report-issue-type" value="other">
+            <span>💬 Outro motivo</span>
+          </label>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="report-issue-desc" style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 5px;">
+            Observações ou sugestão de correção (opcional):
+          </label>
+          <textarea id="report-issue-desc" class="chat-input" placeholder="Ex: Na opção B faltou o expoente, ou o gabarito oficial da UEM indicava a opção C..." style="width: 100%; min-height: 70px; padding: 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box; resize: vertical;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-outline" id="report-modal-cancel-btn">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="report-modal-submit-btn" style="background: #ef4444; border-color: #ef4444;">
+            Enviar Reporte 🚀
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Certificado Oficial com QR Code e Validação Pública -->
+  <div id="certificate-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog certificate-dialog" style="max-width: 720px; width: 95%;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; color: #1e3a8a; display: flex; align-items: center; gap: 8px;">
+          📜 Certificado Oficial de Desempenho
+        </h3>
+        <button type="button" class="modal-close-btn" id="cert-modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        
+        <!-- Documento do Certificado Nobre -->
+        <div id="official-certificate-frame" class="official-certificate-frame">
+          <div class="cert-border-outer">
+            <div class="cert-border-inner">
+              
+              <!-- Cabeçalho Institucional -->
+              <div class="cert-header">
+                <div class="cert-country">REPÚBLICA DE MOÇAMBIQUE</div>
+                <div class="cert-org">VILHETE SOLUTIONS • PLATAFORMA NACIONAL EXAMEPRONTO</div>
+                <div class="cert-title">CERTIFICADO DE PROFICIÊNCIA ACADÉMICA</div>
+                <div class="cert-rule"></div>
+              </div>
+
+              <!-- Corpo do Certificado -->
+              <div class="cert-body">
+                <p class="cert-statement">
+                  Certifica-se, para os devidos efeitos de autoavaliação e preparação académica, que o(a) estudante
+                </p>
+                <div class="cert-student-name" id="cert-display-name">NOME DO CANDIDATO</div>
+                <p class="cert-subtext" id="cert-display-meta">
+                  Província: Maputo Cidade • Contacto: +258 84****21
+                </p>
+                <p class="cert-statement" style="margin-top: 15px;">
+                  Concluiu com aproveitamento satisfatório o simulador oficial preparatório para o exame de admissão de:
+                </p>
+                <div class="cert-exam-title" id="cert-display-exam">MATEMÁTICA I (UEM 2024)</div>
+                <div class="cert-institution-tag" id="cert-display-institution">UNIVERSIDADE EDUARDO MONDLANE</div>
+              </div>
+
+              <!-- Grelha de Classificação & TRI -->
+              <div class="cert-metrics-row">
+                <div class="cert-metric-box">
+                  <div class="metric-val" id="cert-display-grade20">15.5 / 20</div>
+                  <div class="metric-lbl">Nota Moçambique</div>
+                </div>
+                <div class="cert-metric-box">
+                  <div class="metric-val" id="cert-display-percentage">78%</div>
+                  <div class="metric-lbl">Acertos Clássicos</div>
+                </div>
+                <div class="cert-metric-box highlight">
+                  <div class="metric-val" id="cert-display-tri">745 PTS</div>
+                  <div class="metric-lbl">Score TRI (3PL)</div>
+                </div>
+              </div>
+
+              <!-- Rodapé com QR Code e Selo de Autenticidade -->
+              <div class="cert-footer">
+                <div class="cert-qr-box">
+                  <div id="cert-qr-code-svg" class="cert-qr-svg-wrap"></div>
+                  <span class="cert-qr-scan-label">Aponte a câmara para validar autenticidade</span>
+                </div>
+
+                <div class="cert-auth-details">
+                  <div class="cert-seal">
+                    <span class="seal-icon">★</span>
+                    <span class="seal-text">DOCUMENTO AUTÊNTICO E VERIFICADO</span>
+                  </div>
+                  <div class="cert-code-tag">CÓDIGO: <strong id="cert-display-code">EXP-MZ-2026-A8F4C2D1</strong></div>
+                  <div class="cert-date" id="cert-display-date">Emitido em: 25/09/2026</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Ações do Modal -->
+        <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-primary" id="cert-print-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            🖨️ Imprimir / Guardar em PDF
+          </button>
+          <button type="button" class="btn btn-whatsapp" id="cert-whatsapp-btn" style="flex: 1;">
+            📲 Partilhar Conquista
+          </button>
+          <button type="button" class="btn btn-outline" id="cert-copy-link-btn" style="padding: 10px 16px;">
+            🔗 Copiar Link de Validação
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Alerta de Questões Pendentes/Saltadas antes de Finalizar -->
+  <div id="quiz-review-confirm-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; color: #f59e0b; display: flex; align-items: center; gap: 8px;">
+          ⚠️ Questões Não Respondidas
+        </h3>
+        <button type="button" class="modal-close-btn" id="review-modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 10px;">📋</div>
+        <h4 style="margin-bottom: 8px; font-size: 1.1rem; color: var(--text-primary);">Ainda tens questões por responder!</h4>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;" id="review-modal-summary">
+          Tens 4 perguntas saltadas ou em branco. O que desejas fazer?
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="button" class="btn btn-primary" id="btn-review-continue-quiz" style="width: 100%;">
+            🔍 Rever Perguntas Pendentes
+          </button>
+          <button type="button" class="btn btn-outline" id="btn-review-submit-anyway" style="width: 100%; color: var(--error); border-color: rgba(239, 68, 68, 0.4);">
+            ✓ Submeter Exame Mesmo Assim
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts com Cache Busting -->
   <script src="app.js?v=4.0"></script>

@@ -114,12 +114,53 @@ const db = {
   pool: pool
 };
 
-// Migração idempotente para colunas de Província e Ligas Regionais
+// Migração idempotente para colunas de Província, Ligas Regionais, TRI, Glicko-2, Certificados e Reportes
 pool.query(`
   ALTER TABLE users ADD COLUMN IF NOT EXISTS province VARCHAR(100) DEFAULT 'Maputo Cidade';
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS tri_proficiency NUMERIC DEFAULT 500.0;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS glicko_rating NUMERIC DEFAULT 1500.0;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS glicko_rd NUMERIC DEFAULT 350.0;
+
   ALTER TABLE game_scores ADD COLUMN IF NOT EXISTS province VARCHAR(100) DEFAULT 'Maputo Cidade';
+
+  ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS tri_score NUMERIC;
+  ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS tri_scale_20 NUMERIC;
+  ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS tri_coherence NUMERIC;
+
+  ALTER TABLE questions ADD COLUMN IF NOT EXISTS difficulty_b NUMERIC DEFAULT 0.0;
+  ALTER TABLE questions ADD COLUMN IF NOT EXISTS discrimination_a NUMERIC DEFAULT 1.0;
+
+  CREATE TABLE IF NOT EXISTS certificates (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(64) UNIQUE NOT NULL,
+    user_id INTEGER,
+    student_name VARCHAR(255) NOT NULL,
+    student_phone VARCHAR(50),
+    province VARCHAR(100) DEFAULT 'Maputo Cidade',
+    exam_id VARCHAR(100),
+    exam_title VARCHAR(255) NOT NULL,
+    institution VARCHAR(100),
+    score_raw VARCHAR(50),
+    percentage NUMERIC,
+    tri_score NUMERIC,
+    grade_20 NUMERIC,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS question_reports (
+    id SERIAL PRIMARY KEY,
+    question_id INTEGER,
+    exam_id VARCHAR(100),
+    user_id INTEGER,
+    user_phone VARCHAR(50),
+    issue_type VARCHAR(100) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'pendente',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 `, (err) => {
-  if (err) console.warn('⚠️ [Database] Aviso na migração de províncias:', err.message);
+  if (err) console.warn('⚠️ [Database] Aviso na migração de tabelas e colunas:', err.message);
+  else console.log('✅ [Database] Migrações de TRI, Glicko-2, Certificados e Reportes verificadas com sucesso.');
 });
 
 console.log('Base de dados: Camada de compatibilidade Supabase/PostgreSQL inicializada.');

@@ -48,12 +48,25 @@
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="skills">Competências 🌳</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="micro">Micro-Aulas ⚡</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="games">Jogos & Ligas 🎮</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="enas">ENAS Nacional 🏆</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="predictor">Caloiro Predictor 🎯</button>
+        <button class="btn btn-sm btn-outline nav-menu-item" data-target="school">Portal Escolas 🏫</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="explicador">Explicador IA 🤖</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="investor">Negócios 💼</button>
         <button class="btn btn-sm btn-outline nav-menu-item" data-target="admin" id="nav-admin-btn" style="display: none;">Admin ⚙️</button>
       </nav>
       
       <div class="nav-actions">
+        <!-- WhatsApp Tutor Bot Oficial -->
+        <button class="btn btn-sm" id="btn-open-whatsapp-modal" title="Tutor WhatsApp Oficial (+258) - Estudo com Megas de WhatsApp" style="background: linear-gradient(135deg, #15803d, #22c55e); color: white; font-weight: 700; border: none; padding: 6px 11px; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(34,197,94,0.35); display: flex; align-items: center; gap: 5px;">
+          💬 WhatsApp AI
+        </button>
+
+        <!-- Botão Partilha Mesh P2P Offline -->
+        <button class="btn btn-sm btn-outline" id="btn-open-mesh-modal" title="Partilha de Exames P2P Sem Internet (Rede Mesh Offline)" style="padding: 6px 10px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+          📡 Rede Mesh P2P
+        </button>
+
         <!-- Botão de Acesso Rápido ao Scanner Óptico OMR (Gradeo / ZipGrade) -->
         <button class="btn btn-sm" id="btn-open-omr-scanner" title="Corrigir Folha de Respostas por Foto ou Câmara" style="background: linear-gradient(135deg, #059669, #10b981); color: white; font-weight: 700; border: none; padding: 6px 12px; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(16,185,129,0.35); display: flex; align-items: center; gap: 5px;">
           📸 Scanner Gabarito
@@ -197,6 +210,24 @@
       <div class="dashboard-grid">
         <!-- Main Column: Select Level & Exams -->
         <div class="main-column">
+          <!-- Seletor de País / Expansão PALOP -->
+          <div class="palop-country-selector-wrap" style="margin-bottom: 18px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              🌍 Selecionar País / Currículo PALOP:
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="palop-country-tabs">
+              <button type="button" class="btn btn-sm palop-tab active" data-country="mz" style="border-radius: 20px; font-weight: 700; font-size: 0.85rem; padding: 6px 14px; background: var(--primary); color: white; border: none;">
+                🇲🇿 Moçambique (UEM, UP, 12ª, INATRO)
+              </button>
+              <button type="button" class="btn btn-sm palop-tab btn-outline" data-country="ao" style="border-radius: 20px; font-weight: 600; font-size: 0.85rem; padding: 6px 14px;">
+                🇦🇴 Angola (UAN - Agostinho Neto)
+              </button>
+              <button type="button" class="btn btn-sm palop-tab btn-outline" data-country="cv" style="border-radius: 20px; font-weight: 600; font-size: 0.85rem; padding: 6px 14px;">
+                🇨🇻 Cabo Verde (Uni-CV)
+              </button>
+            </div>
+          </div>
+
           <!-- Select Level -->
           <h3 class="uni-section-title"><span></span>1. Escolha a Categoria</h3>
           <div class="uni-grid" id="education-level-grid">
@@ -871,6 +902,351 @@
 
       <div id="micro-lessons-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
         <!-- Preenchido via API /api/micro-lessons -->
+      </div>
+    </section>
+
+    <!-- SEÇÃO: ENAS (EXAME NACIONAL ABERTO E SIMULADO EM TEMPO REAL) -->
+    <section id="section-enas" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Simulado Nacional Aberto (ENAS) 🏆</h2>
+          <p>O maior exame preparatório sincronizado em tempo real de Moçambique com bolsas M-Pesa e ranking provincial ao vivo.</p>
+        </div>
+      </div>
+
+      <!-- Banner de Destaque ENAS & Countdown -->
+      <div class="enas-hero-card" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%); color: white; border-radius: var(--radius-lg); padding: 30px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(37,99,235,0.25); position: relative; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+          <div style="max-width: 600px;">
+            <span class="badge" style="background: rgba(245, 158, 11, 0.25); color: #fcd34d; font-weight: 800; border: 1px solid rgba(245, 158, 11, 0.4); margin-bottom: 12px; display: inline-block;">
+              ⚡ EDIÇÃO MENSAL AO VIVO
+            </span>
+            <h3 style="font-size: 1.8rem; margin: 0 0 10px 0; font-weight: 800; color: #ffffff;" id="enas-title">ENAS Moçambique - Edição Oficial</h3>
+            <p style="font-size: 0.95rem; opacity: 0.9; margin: 0 0 18px 0; line-height: 1.5;" id="enas-description">
+              50 Questões interdisciplinares calibradas por Teoria de Resposta ao Item (TRI). Válido para todas as 11 províncias com anti-fraude integrado.
+            </p>
+            
+            <!-- Prémios M-Pesa -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+              <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 10px 16px;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: #fcd34d; font-weight: 700;">🥇 1º Lugar Nacional</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #ffffff;">5.000 MT <span style="font-size: 0.75rem; font-weight: 500;">(M-Pesa)</span></div>
+              </div>
+              <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 10px 16px;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: #e2e8f0; font-weight: 700;">🥈 2º Lugar Nacional</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #ffffff;">3.000 MT <span style="font-size: 0.75rem; font-weight: 500;">(M-Pesa)</span></div>
+              </div>
+              <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 10px 16px;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: #fdba74; font-weight: 700;">🥉 3º Lugar Nacional</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #ffffff;">1.000 MT <span style="font-size: 0.75rem; font-weight: 500;">(M-Pesa)</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Countdown Box & Botão Iniciar -->
+          <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 20px; text-align: center; min-width: 250px;">
+            <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; font-weight: 700; margin-bottom: 8px;">Contagem Decrescente</div>
+            <div id="enas-countdown" style="font-size: 1.8rem; font-weight: 900; color: #38bdf8; font-family: monospace; margin-bottom: 12px;">--:--:--:--</div>
+            <div style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 15px;" id="enas-date-label">Domingo às 09:00 (Maputo)</div>
+            <button type="button" class="btn" id="btn-enas-action" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 800; padding: 12px; border: none; border-radius: 10px; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 15px rgba(245,158,11,0.4);">
+              🚀 Inscrever-me Gratuitamente
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid com Regras, Formulário de Inscrição e Leaderboard ao Vivo -->
+      <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px;" class="enas-content-grid">
+        <!-- Coluna Esquerda: Inscrição & Anti-Fraude -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Card de Inscrição / Meu Status -->
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--card-shadow);">
+            <h4 style="margin: 0 0 12px 0; font-size: 1.1rem; color: var(--primary);">📝 Minha Inscrição ENAS</h4>
+            <div id="enas-registration-status">
+              <form id="enas-register-form" style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                  <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px;">Nome Completo do Candidato:</label>
+                  <input type="text" id="enas-input-name" required placeholder="Ex: Edson Macuácua" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem;">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px;">Telemóvel (M-Pesa / WhatsApp):</label>
+                  <input type="tel" id="enas-input-phone" required placeholder="84XXXXXXX ou 85XXXXXXX" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem;">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px;">Província:</label>
+                  <select id="enas-input-province" required style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem;">
+                    <option value="Maputo Cidade">Maputo Cidade</option>
+                    <option value="Maputo Província">Maputo Província</option>
+                    <option value="Gaza">Gaza</option>
+                    <option value="Inhambane">Inhambane</option>
+                    <option value="Sofala">Sofala</option>
+                    <option value="Manica">Manica</option>
+                    <option value="Tete">Tete</option>
+                    <option value="Zambézia">Zambézia</option>
+                    <option value="Nampula">Nampula</option>
+                    <option value="Cabo Delgado">Cabo Delgado</option>
+                    <option value="Niassa">Niassa</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px;">Curso Universitário Alvo:</label>
+                  <input type="text" id="enas-input-target-course" placeholder="Ex: Medicina UEM ou Informática UP" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 6px; font-weight: 700; padding: 10px;">Confirmar Inscrição Gratuita</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Card de Protocolo Anti-Fraude -->
+          <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-lg); padding: 18px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 1.2rem;">🛡️</span>
+              <h5 style="margin: 0; font-size: 0.95rem; color: #059669; font-weight: 700;">Protocolo Anti-Fraude ENAS</h5>
+            </div>
+            <ul style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; padding-left: 20px; line-height: 1.6;">
+              <li>Temporizador sincronizado via servidor de tempo atómico.</li>
+              <li>Detetor de troca de aba / janela (aviso no 1º e desqualificação ao 3º).</li>
+              <li>Ordem de questões e alternativas pseudo-aleatorizadas por semente criptográfica.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Leaderboard Nacional & Provincial ao Vivo -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--card-shadow);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">📊 Classificação Geral & Provincial</h4>
+              <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: var(--text-secondary);">Ranking apurado por algoritmo TRI e velocidade de submissão.</p>
+            </div>
+            <!-- Filtro de Província -->
+            <select id="enas-leaderboard-province-select" style="padding: 7px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem; font-weight: 600;">
+              <option value="">🇲🇿 Todas as Províncias</option>
+              <option value="Maputo Cidade">Maputo Cidade</option>
+              <option value="Maputo Província">Maputo Província</option>
+              <option value="Gaza">Gaza</option>
+              <option value="Inhambane">Inhambane</option>
+              <option value="Sofala">Sofala</option>
+              <option value="Manica">Manica</option>
+              <option value="Tete">Tete</option>
+              <option value="Zambézia">Zambézia</option>
+              <option value="Nampula">Nampula</option>
+              <option value="Cabo Delgado">Cabo Delgado</option>
+              <option value="Niassa">Niassa</option>
+            </select>
+          </div>
+
+          <!-- Tabela de Classificação -->
+          <div style="overflow-x: auto;">
+            <table class="enas-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                  <th style="padding: 10px 8px;">Pos</th>
+                  <th style="padding: 10px 8px;">Estudante</th>
+                  <th style="padding: 10px 8px;">Província</th>
+                  <th style="padding: 10px 8px;">Score TRI</th>
+                  <th style="padding: 10px 8px;">Nota (0-20)</th>
+                  <th style="padding: 10px 8px;">Tempo</th>
+                </tr>
+              </thead>
+              <tbody id="enas-leaderboard-tbody">
+                <!-- Preenchido via API /api/enas/leaderboard -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: CALOIRO PREDICTOR IA (PROBABILIDADE DE ADMISSÃO UEM / UP) -->
+    <section id="section-predictor" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Caloiro Predictor IA 🎯</h2>
+          <p>Descobre as tuas probabilidades reais de admissão nos cursos mais concorridos da UEM, UP, UniZambeze, UniLúrio e UCM com base no teu score TRI.</p>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 25px;" class="predictor-grid-layout">
+        <!-- Coluna Esquerda: Seletor de Curso & Cálculo -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--card-shadow); height: fit-content;">
+          <h4 style="margin: 0 0 14px 0; font-size: 1.1rem; color: var(--primary);">⚙️ Parâmetros da Candidatura</h4>
+          
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+              <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 5px;">Universidade Desejada:</label>
+              <select id="pred-select-university" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem; font-weight: 600;">
+                <option value="UEM">Universidade Eduardo Mondlane (UEM)</option>
+                <option value="UP">Universidade Pedagógica (UP - Maputo/Delegações)</option>
+                <option value="UniZambeze">Universidade Zambeze (UniZambeze)</option>
+                <option value="UniLúrio">Universidade Lúrio (UniLúrio - Nampula/C. Delgado)</option>
+                <option value="UCM">Universidade Católica de Moçambique (UCM)</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 5px;">Curso Alvo:</label>
+              <select id="pred-select-course" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem; font-weight: 600;">
+                <!-- Carregado dinamicamente -->
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 5px;">Tua Província de Candidatura:</label>
+              <select id="pred-select-province" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem;">
+                <option value="Maputo Cidade">Maputo Cidade</option>
+                <option value="Maputo Província">Maputo Província</option>
+                <option value="Gaza">Gaza</option>
+                <option value="Inhambane">Inhambane</option>
+                <option value="Sofala">Sofala</option>
+                <option value="Manica">Manica</option>
+                <option value="Tete">Tete</option>
+                <option value="Zambézia">Zambézia</option>
+                <option value="Nampula">Nampula</option>
+                <option value="Cabo Delgado">Cabo Delgado</option>
+                <option value="Niassa">Niassa</option>
+              </select>
+            </div>
+
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px;">
+                <span style="font-weight: 600;">Score TRI Atual na Plataforma:</span>
+                <span id="pred-display-tri" style="font-weight: 800; color: #8b5cf6;">650 pts</span>
+              </div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary);">Calculado com base nas resoluções e simulados já feitos por ti.</div>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="btn-run-caloiro-predictor" style="font-weight: 800; padding: 12px; font-size: 0.95rem; background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+              🔮 Simular Probabilidade de Admissão
+            </button>
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Termómetro Visual de Admissão & Prescrição Pedagógica -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--card-shadow);" id="predictor-results-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">📊 Diagnóstico Preditivo de Admissão</h4>
+            <span class="badge" id="pred-badge-status" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; padding: 5px 12px; border-radius: 20px;">
+              Carregando Análise...
+            </span>
+          </div>
+
+          <!-- Gauge / Barra de Probabilidade -->
+          <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px; text-align: center;">
+            <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 8px;">
+              Probabilidade Estimada de Admissão
+            </div>
+            <div id="pred-prob-percent" style="font-size: 3rem; font-weight: 900; color: var(--primary); line-height: 1;">--%</div>
+            <div style="width: 100%; height: 14px; background: rgba(0,0,0,0.1); border-radius: 10px; margin: 15px 0 10px 0; overflow: hidden; position: relative;">
+              <div id="pred-prob-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%); transition: width 0.8s ease;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
+              <span>0% (Risco Alto)</span>
+              <span>50% (Competitivo)</span>
+              <span>100% (Vaga Garantida)</span>
+            </div>
+          </div>
+
+          <!-- Comparativo Teu Score vs Nota de Corte -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">Nota de Corte Histórica</div>
+              <div id="pred-cutoff-score" style="font-size: 1.4rem; font-weight: 800; color: #dc2626;">-- pts</div>
+            </div>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">Diferença para a Vaga</div>
+              <div id="pred-gap-score" style="font-size: 1.4rem; font-weight: 800; color: #059669;">-- pts</div>
+            </div>
+          </div>
+
+          <!-- Prescrição de Estudo de 30 Dias (Khan / Coursera Style) -->
+          <div>
+            <h5 style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--primary);">📋 Plano de Ação Prescritivo de 30 Dias:</h5>
+            <div id="pred-action-plan" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Preenchido via IA / API -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: PORTAL B2B ESCOLAS & CENTROS PREPARATÓRIOS (SAAS) -->
+    <section id="section-school" class="section">
+      <div class="dashboard-header">
+        <div class="user-welcome">
+          <h2>Portal B2B Escolas & Centros Preparatórios 🏫</h2>
+          <p>Gestão de turmas, impressão em massa de cadernos A4, correção em lote OMR por câmara e emissão de pautas oficiais em Moçambique.</p>
+        </div>
+      </div>
+
+      <!-- Métricas da Instituição -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Instituição Conectada</div>
+          <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary); margin-top: 4px;" id="school-name-display">Centro Preparatório Polana</div>
+        </div>
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Alunos Matriculados</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: #10b981; margin-top: 4px;" id="school-students-count">128 Alunos</div>
+        </div>
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Média Geral da Escola</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: #f59e0b; margin-top: 4px;" id="school-average-grade">14.6 / 20</div>
+        </div>
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Gabaritos Escaneados</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: #8b5cf6; margin-top: 4px;" id="school-scans-count">450 Provas</div>
+        </div>
+      </div>
+
+      <!-- Barra de Ações Rápidas do Professor / Diretor -->
+      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);">Filtrar por Turma:</span>
+          <select id="school-class-select" style="padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.88rem; font-weight: 600;">
+            <option value="1">12ª Classe - Turma A (Manhã)</option>
+            <option value="2">Preparatório UEM Medicina - Turma B</option>
+            <option value="3">Preparatório UP Ciências Sociais - Turma C</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline" id="btn-school-print-exam" style="font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+            🖨️ Caderno A4 & Gabaritos OMR
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-school-batch-scan" style="background: linear-gradient(135deg, #059669, #10b981); border: none; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            📷 Correção em Lote (Câmara)
+          </button>
+          <button type="button" class="btn btn-outline" id="btn-school-export-csv" style="font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+            📊 Exportar Pauta CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabela da Pauta Oficial de Alunos -->
+      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--card-shadow);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">Pauta de Avaliação Contínua & Simulados</h4>
+          <span class="badge" style="background: rgba(37,99,235,0.1); color: var(--primary); font-weight: 700;">Atualizado Hoje</span>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="school-pauta-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                <th style="padding: 10px 8px;">Código</th>
+                <th style="padding: 10px 8px;">Nome do Estudante</th>
+                <th style="padding: 10px 8px;">Exame Avaliado</th>
+                <th style="padding: 10px 8px;">Acertos</th>
+                <th style="padding: 10px 8px;">Score TRI</th>
+                <th style="padding: 10px 8px;">Nota (0-20)</th>
+                <th style="padding: 10px 8px;">Situação</th>
+                <th style="padding: 10px 8px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="school-pauta-tbody">
+              <!-- Preenchido via API /api/school/dashboard -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -2179,8 +2555,154 @@
     </div>
   </div>
 
+  <!-- Modal 6: WhatsApp AI Tutor Simulator & Gateway Oficial (+258) -->
+  <div id="whatsapp-bot-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog" style="max-width: 480px; width: 95%; padding: 0; overflow: hidden; border-radius: 18px; box-shadow: 0 20px 40px rgba(0,0,0,0.35);">
+      <!-- WhatsApp Header -->
+      <div style="background: #075e54; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 42px; height: 42px; border-radius: 50%; background: #25d366; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+            EP
+          </div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 5px;">
+              ExamePronto AI Tutor 🇲🇿 <span style="color: #4ade80; font-size: 0.8rem;">✓</span>
+            </div>
+            <div style="font-size: 0.72rem; color: #bbf7d0;">Online • Respostas em 1 segundo</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <a href="https://wa.me/258840000000?text=Ola%20ExamePronto" target="_blank" class="btn btn-sm" style="background: #25d366; color: white; font-weight: 700; font-size: 0.72rem; padding: 5px 10px; border-radius: 12px; text-decoration: none;">
+            Abrir App Real
+          </a>
+          <button type="button" class="modal-close-btn" id="whatsapp-modal-close-btn" style="color: white; font-size: 1.4rem;">&times;</button>
+        </div>
+      </div>
+
+      <!-- Banner Informativo Megas de WhatsApp -->
+      <div style="background: #e8f5e9; border-bottom: 1px solid #c8e6c9; padding: 8px 14px; font-size: 0.75rem; color: #1b5e20; display: flex; align-items: center; justify-content: space-between;">
+        <span>💡 <strong>Economia Máxima:</strong> Estuda usando apenas os teus <em>Megas de WhatsApp</em> da Vodacom / Movitel / Tmcel!</span>
+      </div>
+
+      <!-- Área de Conversa WhatsApp -->
+      <div id="whatsapp-chat-body" style="background: #efeae2; min-height: 340px; max-height: 380px; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="align-self: center; background: #e1f3fb; color: #54656f; font-size: 0.7rem; padding: 4px 10px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">
+          Hoje • Canal Oficial Criptografado
+        </div>
+
+        <!-- Mensagem de Boas-Vindas do Robô -->
+        <div style="align-self: flex-start; max-width: 82%; background: #ffffff; color: #111b21; padding: 9px 12px; border-radius: 0 10px 10px 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.82rem; line-height: 1.4;">
+          🇲🇿 <strong>Kanimambo! Sou o ExamePronto WhatsApp Tutor.</strong><br><br>
+          Aqui podes treinar exames da <strong>UEM, UP e 12ª Classe</strong> sem gastar saldo principal de internet.<br><br>
+          Envia uma opção:<br>
+          👉 Digita <strong>1</strong> para Pergunta do Dia<br>
+          👉 Digita <strong>2</strong> para Dica / Macete Rápido<br>
+          👉 Digita <strong>3</strong> para Simulado de 5 Questões<br>
+          👉 Digita <strong>AJUDA</strong> para ver todos os comandos
+          <div style="text-align: right; font-size: 0.65rem; color: #667781; margin-top: 4px;">Agora ✓✓</div>
+        </div>
+      </div>
+
+      <!-- Quick Action Pills -->
+      <div style="background: #f0f2f5; padding: 6px 10px; display: flex; gap: 6px; overflow-x: auto; border-top: 1px solid #e2e8f0;">
+        <button type="button" class="wa-quick-btn" data-cmd="1" style="white-space: nowrap; font-size: 0.75rem; padding: 4px 10px; border-radius: 14px; background: white; border: 1px solid #cbd5e1; cursor: pointer;">1️⃣ Pergunta do Dia</button>
+        <button type="button" class="wa-quick-btn" data-cmd="2" style="white-space: nowrap; font-size: 0.75rem; padding: 4px 10px; border-radius: 14px; background: white; border: 1px solid #cbd5e1; cursor: pointer;">💡 Dica Rápida</button>
+        <button type="button" class="wa-quick-btn" data-cmd="3" style="white-space: nowrap; font-size: 0.75rem; padding: 4px 10px; border-radius: 14px; background: white; border: 1px solid #cbd5e1; cursor: pointer;">📝 Mini Simulado</button>
+        <button type="button" class="wa-quick-btn" data-cmd="AJUDA" style="white-space: nowrap; font-size: 0.75rem; padding: 4px 10px; border-radius: 14px; background: white; border: 1px solid #cbd5e1; cursor: pointer;">❓ Ajuda</button>
+      </div>
+
+      <!-- Input de Envio estilo WhatsApp -->
+      <form id="whatsapp-sim-form" style="background: #f0f2f5; padding: 8px 12px; display: flex; gap: 8px; align-items: center;">
+        <input type="text" id="whatsapp-sim-input" placeholder="Digita uma mensagem ou comando..." style="flex: 1; padding: 10px 14px; border-radius: 20px; border: none; font-size: 0.88rem; outline: none; background: white;">
+        <button type="submit" style="width: 40px; height: 40px; border-radius: 50%; background: #00a884; border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+          ➤
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 7: Sincronização P2P Mesh Offline (Sem Internet) -->
+  <div id="p2p-mesh-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog" style="max-width: 600px; width: 95%;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+          📡 Rede Mesh P2P Offline (Partilha Sem Internet)
+        </h3>
+        <button type="button" class="modal-close-btn" id="mesh-modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px;">
+        <div style="background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.2); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px;">
+          <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary); margin-bottom: 4px;">
+            🇲🇿 Feito para as Províncias e Zonas Rurais (Niassa, Cabo Delgado, Tete...)
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.45;">
+            Não tens megas de internet? Podes descarregar e transferir centenas de exames diretamente do telemóvel de um colega ou professor via Wi-Fi local ou ficheiro seguro offline!
+          </p>
+        </div>
+
+        <!-- Abas: Exportar / Importar -->
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <button type="button" class="btn btn-sm btn-primary mesh-tab-btn active" id="mesh-tab-export-btn" style="flex: 1;">
+            📤 Enviar / Exportar Exames
+          </button>
+          <button type="button" class="btn btn-sm btn-outline mesh-tab-btn" id="mesh-tab-import-btn" style="flex: 1;">
+            📥 Receber / Importar Exames
+          </button>
+        </div>
+
+        <!-- Painel de Exportação -->
+        <div id="mesh-panel-export">
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px;">
+            Gera um pacote leve com os exames guardados na tua plataforma para partilhar com outros estudantes:
+          </p>
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button type="button" class="btn btn-accent" id="btn-mesh-export-bundle" style="flex: 1; font-weight: 700;">
+              📦 Descarregar Pacote Offline (.epmesh)
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-mesh-copy-token" style="flex: 1;">
+              📋 Copiar Código Token
+            </button>
+          </div>
+          <div id="mesh-export-status" style="font-size: 0.8rem; color: #10b981; font-weight: 600; display: none;"></div>
+        </div>
+
+        <!-- Painel de Importação -->
+        <div id="mesh-panel-import" style="display: none;">
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px;">
+            Carrega o pacote (.epmesh) ou cola o código token partilhado pelo teu colega:
+          </p>
+          <div style="margin-bottom: 14px;">
+            <label class="btn btn-outline" style="width: 100%; text-align: center; cursor: pointer; padding: 12px;">
+              📁 Selecionar Ficheiro .epmesh Recebido
+              <input type="file" id="mesh-file-input" accept=".epmesh,.json" style="display: none;">
+            </label>
+          </div>
+          <div style="margin-bottom: 14px;">
+            <textarea id="mesh-token-input" placeholder="Ou cola aqui o código token do pacote..." style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.8rem; background: var(--bg-primary);"></textarea>
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-mesh-import-token" style="width: 100%; font-weight: 700;">
+            📥 Descompactar e Guardar no Telemóvel
+          </button>
+          <div id="mesh-import-status" style="font-size: 0.85rem; font-weight: 700; margin-top: 10px;"></div>
+        </div>
+
+        <!-- Lista de Exames Guardados Offline -->
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">
+            📦 Estado do Teu Armazenamento Offline:
+          </div>
+          <div id="mesh-offline-count-badge" style="font-size: 0.8rem; color: var(--text-secondary);">
+            223 exames prontos para navegação sem internet.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts com Cache Busting -->
   <script src="omr_engine.js?v=9.0"></script>
+  <script src="mesh_sync.js?v=9.0"></script>
   <script src="app.js?v=9.0"></script>
 </body>
 </html>

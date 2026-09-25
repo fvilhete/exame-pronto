@@ -3923,3 +3923,138 @@ body.dark-theme .scratchpad-modal.translucent-mode .scratchpad-canvas-container 
   color: #10b981;
 }
 
+/* ==========================================================================
+   7. WHATSAPP AI TUTOR BOT & SIMULADOR (+258)
+   ========================================================================== */
+.wa-bubble-user {
+  align-self: flex-end;
+  max-width: 82%;
+  background: #d9fdd3;
+  color: #111b21;
+  padding: 8px 12px;
+  border-radius: 10px 0 10px 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.wa-bubble-bot {
+  align-self: flex-start;
+  max-width: 82%;
+  background: #ffffff;
+  color: #111b21;
+  padding: 8px 12px;
+  border-radius: 0 10px 10px 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.wa-quick-btn {
+  transition: all 0.15s ease;
+}
+.wa-quick-btn:hover {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+}
+
+/* ==========================================================================
+   8. ENAS - SIMULADO NACIONAL ABERTO & RANKING PROVINCIAL
+   ========================================================================== */
+.enas-hero-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.enas-table th,
+.enas-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.enas-table tr:hover td {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.enas-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+.enas-rank-badge.rank-1 { background: #fef3c7; color: #b45309; }
+.enas-rank-badge.rank-2 { background: #f1f5f9; color: #475569; }
+.enas-rank-badge.rank-3 { background: #ffedd5; color: #c2410c; }
+
+@media (max-width: 768px) {
+  .enas-content-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ==========================================================================
+   9. CALOIRO PREDICTOR IA & TERMÓMETRO VISUAL
+   ========================================================================== */
+@media (max-width: 768px) {
+  .predictor-grid-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.pred-plan-item {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.84rem;
+}
+
+.pred-plan-item input[type="checkbox"] {
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   10. PORTAL B2B ESCOLAS & CENTROS PREPARATÓRIOS
+   ========================================================================== */
+.school-pauta-table th,
+.school-pauta-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.school-pauta-table tr:hover td {
+  background: rgba(16, 185, 129, 0.04);
+}
+
+/* ==========================================================================
+   11. EXPANSÃO PALOP & MESH P2P TABS
+   ========================================================================== */
+.palop-tab {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.palop-tab:hover {
+  transform: translateY(-1px);
+}
+.palop-tab.active {
+  background: var(--primary) !important;
+  color: white !important;
+  border-color: var(--primary) !important;
+}
+
+.mesh-tab-btn {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+

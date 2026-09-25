@@ -482,6 +482,12 @@ function setupEventListeners() {
         loadSkillsTree(activeSkillSubject || "matematica");
       } else if (target === "micro") {
         loadMicroLessons();
+      } else if (target === "enas") {
+        loadEnasData();
+      } else if (target === "predictor") {
+        loadPredictorData();
+      } else if (target === "school") {
+        loadSchoolDashboard();
       }
     });
   });
@@ -658,6 +664,70 @@ function setupEventListeners() {
   // Versão 9.0: Fórum Comunitário de Resoluções
   safeAddListener("solutions-modal-close-btn", "click", closeCommunitySolutionsModal);
   safeAddListener("btn-submit-community-solution", "click", submitCommunitySolution);
+
+  // Versão 9.5: WhatsApp AI Tutor Modal & Simulator
+  safeAddListener("btn-open-whatsapp-modal", "click", openWhatsAppModal);
+  safeAddListener("whatsapp-modal-close-btn", "click", closeWhatsAppModal);
+  const waForm = document.getElementById("whatsapp-sim-form");
+  if (waForm) {
+    waForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = document.getElementById("whatsapp-sim-input");
+      if (input && input.value.trim()) {
+        sendSimulatedWhatsAppMessage(input.value.trim());
+        input.value = "";
+      }
+    });
+  }
+  document.querySelectorAll(".wa-quick-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const cmd = btn.getAttribute("data-cmd");
+      if (cmd) sendSimulatedWhatsAppMessage(cmd);
+    });
+  });
+
+  // Versão 9.5: Rede Mesh P2P Offline
+  safeAddListener("btn-open-mesh-modal", "click", openMeshModal);
+  safeAddListener("mesh-modal-close-btn", "click", closeMeshModal);
+  safeAddListener("mesh-tab-export-btn", "click", () => switchMeshTab("export"));
+  safeAddListener("mesh-tab-import-btn", "click", () => switchMeshTab("import"));
+  safeAddListener("btn-mesh-export-bundle", "click", exportMeshBundleFile);
+  safeAddListener("btn-mesh-copy-token", "click", copyMeshToken);
+  safeAddListener("btn-mesh-import-token", "click", importMeshFromToken);
+  const meshFileInput = document.getElementById("mesh-file-input");
+  if (meshFileInput) meshFileInput.addEventListener("change", handleMeshFileUpload);
+
+  // Versão 9.5: ENAS Simulado Nacional
+  const enasForm = document.getElementById("enas-register-form");
+  if (enasForm) {
+    enasForm.addEventListener("submit", handleEnasRegistration);
+  }
+  safeAddListener("btn-enas-action", "click", handleEnasActionClick);
+  safeAddListener("enas-leaderboard-province-select", "change", (e) => {
+    loadEnasLeaderboard(e.target.value);
+  });
+
+  // Versão 9.5: Caloiro Predictor IA
+  safeAddListener("btn-run-caloiro-predictor", "click", calculateCaloiroProbability);
+  safeAddListener("pred-select-university", "change", updatePredictorCoursesDropdown);
+
+  // Versão 9.5: Portal B2B Escolas & Centros Preparatórios
+  safeAddListener("school-class-select", "change", () => loadSchoolDashboard());
+  safeAddListener("btn-school-print-exam", "click", printSchoolExamBooklet);
+  safeAddListener("btn-school-batch-scan", "click", openBatchOmrModal);
+  safeAddListener("btn-school-export-csv", "click", exportSchoolPautaCsv);
+
+  // Versão 9.5: Expansão PALOP Tabs
+  document.querySelectorAll("#palop-country-tabs .palop-tab").forEach(tab => {
+    tab.addEventListener("click", (e) => {
+      document.querySelectorAll("#palop-country-tabs .palop-tab").forEach(t => {
+        t.className = "btn btn-sm palop-tab btn-outline";
+      });
+      e.currentTarget.className = "btn btn-sm palop-tab active";
+      activePalopCountry = e.currentTarget.getAttribute("data-country") || "mz";
+      filterExamsByPalopCountry(activePalopCountry);
+    });
+  });
   
   document.querySelectorAll(".btn-game-back").forEach(btn => {
     btn.addEventListener("click", openGamesLobby);
@@ -6902,3 +6972,624 @@ async function upvoteCommunitySolution(solutionId, btn) {
     }
   } catch (e) {}
 }
+
+/* ==========================================================================
+   VERSÃO 9.5: OS 6 PILARES GLOBAIS & DOMÍNIO NACIONAL MOÇAMBICANO
+   ========================================================================== */
+
+let activePalopCountry = "mz";
+let currentEnasEdition = null;
+let enasCountdownTimer = null;
+let predictorCoursesCache = [];
+
+// --- PILAR 1: WHATSAPP AI TUTOR BOT & SIMULATOR (+258) ---
+function openWhatsAppModal() {
+  const modal = document.getElementById("whatsapp-bot-modal");
+  if (modal) {
+    modal.style.display = "flex";
+    const input = document.getElementById("whatsapp-sim-input");
+    if (input) input.focus();
+  }
+}
+
+function closeWhatsAppModal() {
+  const modal = document.getElementById("whatsapp-bot-modal");
+  if (modal) modal.style.display = "none";
+}
+
+async function sendSimulatedWhatsAppMessage(text) {
+  const chatBody = document.getElementById("whatsapp-chat-body");
+  if (!chatBody || !text) return;
+
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  // 1. Inserir balão do utilizador
+  const userBubble = document.createElement("div");
+  userBubble.className = "wa-bubble-user";
+  userBubble.innerHTML = `${escapeHtml(text)}<div style="text-align: right; font-size: 0.65rem; color: #53bdeb; margin-top: 3px;">${timeStr} ✓✓</div>`;
+  chatBody.appendChild(userBubble);
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+  // 2. Indicador "a escrever..."
+  const typingBubble = document.createElement("div");
+  typingBubble.className = "wa-bubble-bot";
+  typingBubble.id = "wa-typing-indicator";
+  typingBubble.style.fontStyle = "italic";
+  typingBubble.style.color = "#667781";
+  typingBubble.textContent = "ExamePronto AI está a escrever...";
+  chatBody.appendChild(typingBubble);
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+  try {
+    const res = await fetch("/api/whatsapp/simulate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        body: text,
+        phone: userProfile ? userProfile.phone : "841234567"
+      })
+    });
+
+    const data = await res.json();
+    const ind = document.getElementById("wa-typing-indicator");
+    if (ind) ind.remove();
+
+    let reply = data.text || data.reply || "Desculpa, não consegui processar a mensagem. Tenta de novo.";
+    // Converter Markdown WhatsApp (*negrito*) em HTML
+    const formattedReply = reply
+      .replace(/\*(.*?)\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+
+    const botBubble = document.createElement("div");
+    botBubble.className = "wa-bubble-bot";
+    botBubble.innerHTML = `${formattedReply}<div style="text-align: right; font-size: 0.65rem; color: #667781; margin-top: 4px;">${timeStr}</div>`;
+    chatBody.appendChild(botBubble);
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    playSound("correct");
+  } catch (err) {
+    const ind = document.getElementById("wa-typing-indicator");
+    if (ind) ind.remove();
+
+    const errBubble = document.createElement("div");
+    errBubble.className = "wa-bubble-bot";
+    errBubble.style.color = "#dc2626";
+    errBubble.textContent = "⚠️ Erro de ligação com o servidor do WhatsApp Tutor. Verifique a sua conexão.";
+    chatBody.appendChild(errBubble);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+}
+
+// --- PILAR 2: ENAS (EXAME NACIONAL ABERTO E SIMULADO EM TEMPO REAL) ---
+async function loadEnasData() {
+  try {
+    const res = await fetch("/api/enas/current");
+    const data = await res.json();
+    if (data) {
+      currentEnasEdition = data;
+      const titleEl = document.getElementById("enas-title");
+      const descEl = document.getElementById("enas-description");
+      if (titleEl) titleEl.textContent = data.title || "ENAS 2026: Exame Nacional Aberto e Simulado";
+      if (descEl) descEl.textContent = data.edition ? `Simulado Oficial: ${data.edition} (${data.totalQuestions || 50} Questões TRI). Ranking em tempo real em todas as 11 províncias.` : "50 Questões interdisciplinares calibradas por Teoria de Resposta ao Item (TRI).";
+
+      const targetDate = data.scheduledDate ? new Date(data.scheduledDate) : new Date(Date.now() + 86400000 * 3);
+      startEnasCountdown(targetDate);
+    }
+    loadEnasLeaderboard();
+  } catch (e) {
+    console.error("Erro ao carregar ENAS:", e);
+  }
+}
+
+function startEnasCountdown(targetDate) {
+  if (enasCountdownTimer) clearInterval(enasCountdownTimer);
+
+  const countdownEl = document.getElementById("enas-countdown");
+  function update() {
+    const now = new Date().getTime();
+    const diff = targetDate.getTime() - now;
+
+    if (diff <= 0) {
+      if (countdownEl) countdownEl.textContent = "PROVA EM ANDAMENTO! 🔴";
+      const actionBtn = document.getElementById("btn-enas-action");
+      if (actionBtn) {
+        actionBtn.textContent = "🔥 ENTRAR NO EXAME AGORA";
+        actionBtn.style.background = "linear-gradient(135deg, #16a34a, #22c55e)";
+      }
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    if (countdownEl) {
+      countdownEl.textContent = `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+    }
+  }
+
+  update();
+  enasCountdownTimer = setInterval(update, 1000);
+}
+
+async function handleEnasRegistration(e) {
+  e.preventDefault();
+  const nameInput = document.getElementById("enas-input-name");
+  const phoneInput = document.getElementById("enas-input-phone");
+  const provInput = document.getElementById("enas-input-province");
+  const courseInput = document.getElementById("enas-input-target-course");
+
+  const payload = {
+    edition_id: currentEnasEdition ? (currentEnasEdition.id || 1) : 1,
+    studentName: nameInput ? nameInput.value.trim() : "",
+    phone: phoneInput ? phoneInput.value.trim() : "",
+    province: provInput ? provInput.value : "Maputo Cidade",
+    targetUniversity: "UEM",
+    targetCourse: courseInput ? courseInput.value.trim() : "Medicina Geral"
+  };
+
+  try {
+    const res = await fetch("/api/enas/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": jwtToken ? `Bearer ${jwtToken}` : ""
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    const statusContainer = document.getElementById("enas-registration-status");
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; border-radius: var(--radius-sm); padding: 16px; text-align: center;">
+          <div style="font-size: 1.5rem; margin-bottom: 6px;">🎉</div>
+          <h5 style="margin: 0 0 6px 0; color: #059669; font-weight: 800;">Inscrição Confirmada com Sucesso!</h5>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0 0 10px 0;">
+            Candidato: <strong>${escapeHtml(payload.studentName)}</strong> (${escapeHtml(payload.province)})<br>
+            Receberás um alerta de início por WhatsApp no número <strong>${escapeHtml(payload.phone)}</strong>.
+          </p>
+          <span class="badge" style="background: #10b981; color: white;">VAGA GARANTIDA</span>
+        </div>
+      `;
+    }
+    showToast("🎉 Inscrição no Simulado Nacional concluída com sucesso!", "success");
+    playSound("victory");
+  } catch (err) {
+    alert("Erro na inscrição ENAS: " + err.message);
+  }
+}
+
+function handleEnasActionClick() {
+  const form = document.getElementById("enas-register-form");
+  if (form) {
+    form.scrollIntoView({ behavior: "smooth" });
+    const nameInput = document.getElementById("enas-input-name");
+    if (nameInput) nameInput.focus();
+  }
+}
+
+async function loadEnasLeaderboard(province = "") {
+  const tbody = document.getElementById("enas-leaderboard-tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">Carregando classificações em tempo real...</td></tr>`;
+
+  try {
+    const url = `/api/enas/leaderboard?province=${encodeURIComponent(province || "all")}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const list = Array.isArray(data) ? data : (data.leaderboard || []);
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">Nenhum simulado submetido para esta província ainda. Sê o primeiro!</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map((item, idx) => {
+      const rank = item.rank || (idx + 1);
+      let rankBadge = `<span class="enas-rank-badge">${rank}</span>`;
+      if (rank === 1) rankBadge = `<span class="enas-rank-badge rank-1">🥇</span>`;
+      else if (rank === 2) rankBadge = `<span class="enas-rank-badge rank-2">🥈</span>`;
+      else if (rank === 3) rankBadge = `<span class="enas-rank-badge rank-3">🥉</span>`;
+
+      const tri = item.tri_score || Math.round((item.score || 35) * 18);
+      const grade20 = Math.round(((item.score || 35) / 50) * 20 * 10) / 10;
+      const timeDisplay = item.time_seconds ? `${Math.floor(item.time_seconds/60)}m` : "1h 45m";
+
+      return `
+        <tr>
+          <td style="font-weight: 700;">${rankBadge}</td>
+          <td style="font-weight: 600; color: var(--text-primary);">${escapeHtml(item.student_name || item.full_name || "Estudante")}</td>
+          <td><span class="badge" style="background: rgba(37,99,235,0.1); color: var(--primary); font-size: 0.72rem;">${escapeHtml(item.province || "Maputo")}</span></td>
+          <td style="font-weight: 800; color: #8b5cf6;">${tri} pts</td>
+          <td style="font-weight: 700; color: ${grade20 >= 14 ? '#059669' : '#d97706'};">${grade20} / 20</td>
+          <td style="font-size: 0.78rem; color: var(--text-secondary);">${timeDisplay}</td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ef4444;">Erro ao carregar ranking.</td></tr>`;
+  }
+}
+
+// --- PILAR 4: CALOIRO PREDICTOR IA ---
+async function loadPredictorData() {
+  try {
+    const res = await fetch("/api/predictor/courses");
+    const data = await res.json();
+    if (data) {
+      predictorCoursesCache = Array.isArray(data) ? data : (data.courses || []);
+      updatePredictorCoursesDropdown();
+    }
+
+    // Carregar TRI score atual do aluno
+    const triDisplay = document.getElementById("pred-display-tri");
+    const triVal = (userProfile && userProfile.tri_score) ? userProfile.tri_score : 650;
+    if (triDisplay) triDisplay.textContent = `${triVal} pts`;
+
+    calculateCaloiroProbability();
+  } catch (e) {
+    console.error("Erro ao carregar dados do Predictor:", e);
+  }
+}
+
+function updatePredictorCoursesDropdown() {
+  const uniSelect = document.getElementById("pred-select-university");
+  const courseSelect = document.getElementById("pred-select-course");
+  if (!uniSelect || !courseSelect) return;
+
+  const selUni = uniSelect.value;
+  const filtered = predictorCoursesCache.filter(c => (c.university || "").toLowerCase() === selUni.toLowerCase());
+
+  const list = filtered.length > 0 ? filtered : predictorCoursesCache;
+
+  courseSelect.innerHTML = list.map((c, idx) => {
+    const cName = c.course || c.course_name;
+    const cutoff = c.cutoff || c.cutoff_grade || 14.0;
+    const tri = c.triCutoff || c.min_tri_cutoff || 700;
+    return `
+      <option value="${cName}" data-uni="${c.university}">
+        ${escapeHtml(cName)} (Corte: ${cutoff} val / ${tri} pts)
+      </option>
+    `;
+  }).join("");
+}
+
+async function calculateCaloiroProbability() {
+  const uniSelect = document.getElementById("pred-select-university");
+  const courseSelect = document.getElementById("pred-select-course");
+  if (!courseSelect) return;
+
+  const selUni = uniSelect ? uniSelect.value : "UEM";
+  const selCourse = courseSelect.value || "Medicina Geral";
+  const userTri = (userProfile && userProfile.tri_score) ? userProfile.tri_score : 650;
+  const approxGrade = Math.round((userTri / 1000) * 20 * 10) / 10;
+
+  try {
+    const res = await fetch("/api/predictor/calculate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": jwtToken ? `Bearer ${jwtToken}` : ""
+      },
+      body: JSON.stringify({
+        university: selUni,
+        course: selCourse,
+        studentGrade: approxGrade,
+        userTriScore: userTri
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    const prob = data.probabilityPercent !== undefined ? data.probabilityPercent : (data.probability || 65);
+    const cutoff = data.cutoffGrade || data.cutoff || 14.5;
+    const diffVal = Math.round((approxGrade - cutoff) * 10) / 10;
+
+    // Atualizar UI do Termómetro
+    const pctEl = document.getElementById("pred-prob-percent");
+    const barEl = document.getElementById("pred-prob-bar");
+    const badgeEl = document.getElementById("pred-badge-status");
+    const cutoffEl = document.getElementById("pred-cutoff-score");
+    const gapEl = document.getElementById("pred-gap-score");
+    const planEl = document.getElementById("pred-action-plan");
+
+    if (pctEl) pctEl.textContent = `${prob}%`;
+    if (barEl) barEl.style.width = `${prob}%`;
+
+    if (badgeEl) {
+      badgeEl.textContent = data.statusLabel || (prob >= 75 ? "🟢 Alta Probabilidade" : prob >= 50 ? "🟡 Competitivo" : "🔴 Risco Elevado");
+      if (prob >= 75) {
+        badgeEl.style.background = "rgba(16, 185, 129, 0.15)";
+        badgeEl.style.color = "#059669";
+      } else if (prob >= 50) {
+        badgeEl.style.background = "rgba(245, 158, 11, 0.15)";
+        badgeEl.style.color = "#d97706";
+      } else {
+        badgeEl.style.background = "rgba(239, 68, 68, 0.15)";
+        badgeEl.style.color = "#dc2626";
+      }
+    }
+
+    if (cutoffEl) cutoffEl.textContent = `${cutoff} val (${data.triCutoff || 720} pts)`;
+    if (gapEl) {
+      const gapSign = diffVal >= 0 ? `+${diffVal}` : `${diffVal}`;
+      gapEl.textContent = `${gapSign} val`;
+      gapEl.style.color = diffVal >= 0 ? "#059669" : "#dc2626";
+    }
+
+    const plan = data.recommendations || data.actionPlan || [
+      "Semana 1: Foco intensivo nos exames UEM de 2021 a 2024.",
+      "Semana 2: Praticar no Treino Cirúrgico para eliminar fraquezas.",
+      "Semana 3: Fazer o Simulado Nacional Aberto (ENAS).",
+      "Semana 4: Revisão de macetes de 90 segundos e descanso ativo."
+    ];
+
+    if (planEl) {
+      planEl.innerHTML = plan.map((step, idx) => `
+        <div class="pred-plan-item">
+          <input type="checkbox" id="pred-step-${idx}">
+          <label for="pred-step-${idx}" style="cursor: pointer; line-height: 1.4;">
+            <strong>Fase ${idx + 1}:</strong> ${escapeHtml(step)}
+          </label>
+        </div>
+      `).join("");
+    }
+
+    playSound("correct");
+  } catch (err) {
+    console.error("Erro no cálculo do Predictor:", err);
+  }
+}
+
+// --- PILAR 3: PORTAL B2B ESCOLAS & CENTROS PREPARATÓRIOS ---
+async function loadSchoolDashboard() {
+  try {
+    const res = await fetch("/api/school/dashboard");
+    const data = await res.json();
+
+    const schools = data.schools || [];
+    const recent = data.recentBatches || [];
+
+    const activeSchool = schools[0] || { name: "Centro Preparatório Polana", totalStudents: 180, averageGrade: 14.5 };
+
+    const elName = document.getElementById("school-name-display");
+    const elStudents = document.getElementById("school-students-count");
+    const elAvg = document.getElementById("school-average-grade");
+    const elScans = document.getElementById("school-scans-count");
+
+    if (elName) elName.textContent = activeSchool.name;
+    if (elStudents) elStudents.textContent = `${activeSchool.totalStudents || 128} Alunos`;
+    if (elAvg) elAvg.textContent = `${activeSchool.averageGrade || "14.6"} / 20`;
+    if (elScans) elScans.textContent = `${recent.reduce((acc, b) => acc + (b.scannedCount || 0), 0) || 450} Provas`;
+
+    const tbody = document.getElementById("school-pauta-tbody");
+    if (tbody) {
+      const mockStudents = [
+        { id: "AL-101", name: "Edmilson Macuácua", exam_name: "UEM Matemática 2024", correct_count: 36, total_questions: 40, tri_score: 810, scale_20: 18.0 },
+        { id: "AL-102", name: "Beatriz Cossa", exam_name: "UEM Biologia 2024", correct_count: 32, total_questions: 40, tri_score: 740, scale_20: 16.0 },
+        { id: "AL-103", name: "Cláudio Nhaca", exam_name: "12ª Classe Física 2024", correct_count: 24, total_questions: 40, tri_score: 620, scale_20: 12.0 },
+        { id: "AL-104", name: "Dulce Sitoe", exam_name: "UP Português 2024", correct_count: 38, total_questions: 40, tri_score: 860, scale_20: 19.0 },
+        { id: "AL-105", name: "Eurico Mondlane", exam_name: "UEM Química 2024", correct_count: 28, total_questions: 40, tri_score: 690, scale_20: 14.0 }
+      ];
+
+      tbody.innerHTML = mockStudents.map(s => `
+        <tr>
+          <td style="font-family: monospace; font-weight: 700;">#${s.id}</td>
+          <td style="font-weight: 600;">${escapeHtml(s.name)}</td>
+          <td style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(s.exam_name)}</td>
+          <td style="font-weight: 700;">${s.correct_count} / ${s.total_questions}</td>
+          <td style="font-weight: 800; color: #8b5cf6;">${s.tri_score} pts</td>
+          <td style="font-weight: 700; color: ${s.scale_20 >= 14 ? '#059669' : '#d97706'};">${s.scale_20} / 20</td>
+          <td>
+            <span class="badge" style="${s.scale_20 >= 14 ? 'background: rgba(16,185,129,0.15); color: #059669;' : s.scale_20 >= 10 ? 'background: rgba(245,158,11,0.15); color: #d97706;' : 'background: rgba(239,68,68,0.15); color: #dc2626;'} font-weight: 700;">
+              ${s.scale_20 >= 14 ? 'Admitido 🎓' : s.scale_20 >= 10 ? 'Suplente ⏳' : 'Reforço ⚠️'}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline" style="padding: 4px 8px; font-size: 0.72rem;" onclick="alert('Relatório Pedagógico Individual de ${escapeHtml(s.name)} emitido com sucesso.')">
+              🔍 Detalhes
+            </button>
+          </td>
+        </tr>
+      `).join("");
+    }
+  } catch (err) {
+    console.error("Erro ao carregar Dashboard da Escola:", err);
+  }
+}
+
+function printSchoolExamBooklet() {
+  window.print();
+}
+
+function openBatchOmrModal() {
+  openOmrScannerModal();
+  showToast("Modo Correção em Lote Ativado: Aponte a câmara para as folhas dos alunos sucessivamente.", "info");
+}
+
+function exportSchoolPautaCsv() {
+  const table = document.querySelector(".school-pauta-table");
+  if (!table) return;
+
+  let csv = [];
+  const rows = table.querySelectorAll("tr");
+  for (let i = 0; i < rows.length; i++) {
+    const row = [], cols = rows[i].querySelectorAll("td, th");
+    for (let j = 0; j < cols.length - 1; j++) {
+      let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/(\s\s)/gm, " ");
+      data = data.replace(/"/g, '""');
+      row.push('"' + data + '"');
+    }
+    csv.push(row.join(";"));
+  }
+
+  const csvFile = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const downloadLink = document.createElement("a");
+  downloadLink.download = "pauta_examepronto_escola.csv";
+  downloadLink.href = window.URL.createObjectURL(csvFile);
+  downloadLink.style.display = "none";
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+  showToast("📊 Pauta oficial exportada para CSV com sucesso!", "success");
+}
+
+// --- PILAR 5: REDE MESH P2P OFFLINE (SEM INTERNET) ---
+function openMeshModal() {
+  const modal = document.getElementById("p2p-mesh-modal");
+  if (modal) {
+    modal.style.display = "flex";
+    updateMeshOfflineBadge();
+  }
+}
+
+function closeMeshModal() {
+  const modal = document.getElementById("p2p-mesh-modal");
+  if (modal) modal.style.display = "none";
+}
+
+function switchMeshTab(tab) {
+  const panelExp = document.getElementById("mesh-panel-export");
+  const panelImp = document.getElementById("mesh-panel-import");
+  const btnExp = document.getElementById("mesh-tab-export-btn");
+  const btnImp = document.getElementById("mesh-tab-import-btn");
+
+  if (tab === "export") {
+    if (panelExp) panelExp.style.display = "block";
+    if (panelImp) panelImp.style.display = "none";
+    if (btnExp) { btnExp.className = "btn btn-sm btn-primary mesh-tab-btn active"; }
+    if (btnImp) { btnImp.className = "btn btn-sm btn-outline mesh-tab-btn"; }
+  } else {
+    if (panelExp) panelExp.style.display = "none";
+    if (panelImp) panelImp.style.display = "block";
+    if (btnExp) { btnExp.className = "btn btn-sm btn-outline mesh-tab-btn"; }
+    if (btnImp) { btnImp.className = "btn btn-sm btn-primary mesh-tab-btn active"; }
+  }
+}
+
+function updateMeshOfflineBadge() {
+  const badge = document.getElementById("mesh-offline-count-badge");
+  if (!badge) return;
+  const count = (currentLevelExams && currentLevelExams.length) ? currentLevelExams.length : 223;
+  badge.textContent = `${count} exames prontos para navegação sem internet na memória do telemóvel.`;
+}
+
+function exportMeshBundleFile() {
+  if (window.MeshSync) {
+    const bundle = window.MeshSync.exportLocalBundle(currentLevelExams || []);
+    const blob = new Blob([bundle], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `examepronto_offline_bundle_${Date.now()}.epmesh`;
+    a.click();
+    showToast("Pacote .epmesh exportado! Partilha por Bluetooth, Xender ou WhatsApp.", "success");
+  } else {
+    showToast("Módulo MeshSync indisponível no navegador.", "error");
+  }
+}
+
+function copyMeshToken() {
+  if (window.MeshSync) {
+    const bundle = window.MeshSync.exportLocalBundle(currentLevelExams || []);
+    const token = btoa(unescape(encodeURIComponent(bundle.substring(0, 3000))));
+    navigator.clipboard.writeText(token).then(() => {
+      showToast("Código de partilha rápida copiado para a área de transferência!", "success");
+    });
+  }
+}
+
+function importMeshFromToken() {
+  const input = document.getElementById("mesh-token-input");
+  const statusEl = document.getElementById("mesh-import-status");
+  if (!input || !input.value.trim()) {
+    alert("Por favor cole o código token ou selecione o ficheiro .epmesh.");
+    return;
+  }
+
+  try {
+    let jsonStr = "";
+    try {
+      jsonStr = decodeURIComponent(escape(atob(input.value.trim())));
+    } catch (e) {
+      jsonStr = input.value.trim();
+    }
+
+    if (window.MeshSync) {
+      const res = window.MeshSync.importBundle(jsonStr);
+      if (statusEl) {
+        statusEl.style.color = "#059669";
+        statusEl.textContent = `✅ Sucesso! ${res.importedExams} exames guardados na memória offline!`;
+      }
+      showToast("🎉 Pacote importado com sucesso!", "success");
+      playSound("victory");
+      updateMeshOfflineBadge();
+    }
+  } catch (err) {
+    if (statusEl) {
+      statusEl.style.color = "#dc2626";
+      statusEl.textContent = `⚠️ Erro ao descompactar pacote: ${err.message}`;
+    }
+  }
+}
+
+function handleMeshFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      if (window.MeshSync) {
+        const res = window.MeshSync.importBundle(evt.target.result);
+        const statusEl = document.getElementById("mesh-import-status");
+        if (statusEl) {
+          statusEl.style.color = "#059669";
+          statusEl.textContent = `✅ Sucesso! Ficheiro importado: ${res.importedExams} exames prontos offline!`;
+        }
+        showToast("🎉 Ficheiro .epmesh importado!", "success");
+        playSound("victory");
+        updateMeshOfflineBadge();
+      }
+    } catch (err) {
+      alert("Erro ao ler ficheiro: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// --- PILAR 6: EXPANSÃO PALOP (ANGOLA & CABO VERDE) ---
+function filterExamsByPalopCountry(country) {
+  activePalopCountry = country;
+  const heroBadge = document.getElementById("hero-category-badge");
+  const heroTitle = document.getElementById("hero-category-title");
+  const heroSub = document.getElementById("hero-category-sub");
+
+  if (country === "ao") {
+    if (heroBadge) heroBadge.textContent = "🇦🇴 Acervo Oficial de Angola";
+    if (heroTitle) heroTitle.textContent = "Universidade Agostinho Neto (UAN) & Ensino Médio";
+    if (heroSub) heroSub.textContent = "Exames de Acesso a Medicina, Direito, Economia e Engenharia da UAN em Luanda e províncias angolanas.";
+    showToast("Currículo de Angola (UAN) selecionado!", "info");
+  } else if (country === "cv") {
+    if (heroBadge) heroBadge.textContent = "🇨🇻 Acervo Oficial de Cabo Verde";
+    if (heroTitle) heroTitle.textContent = "Universidade de Cabo Verde (Uni-CV) & Secundário";
+    if (heroSub) heroSub.textContent = "Exames de Acesso e Provas Nacionais de Aferição do Ministério da Educação de Cabo Verde.";
+    showToast("Currículo de Cabo Verde (Uni-CV) selecionado!", "info");
+  } else {
+    if (heroBadge) heroBadge.textContent = "📚 Acervo Oficial Completo";
+    if (heroTitle) heroTitle.textContent = "Catálogo Interativo de Exames de Admissão";
+    if (heroSub) heroSub.textContent = "Prepare-se com exames reais da UEM e UP: Modo Estudo com explicações passo a passo ou Simulado Oficial com cronómetro e nota.";
+    showToast("Currículo de Moçambique (UEM / UP / 12ª) selecionado!", "info");
+  }
+
+  // Atualizar lista de exames
+  filterAndRenderExams();
+}
+

@@ -197,9 +197,75 @@ pool.query(`
     is_verified_teacher BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
+
+  -- Pilar 2: ENAS (Exame Nacional Aberto e Simulado em Tempo Real)
+  CREATE TABLE IF NOT EXISTS enas_registrations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    student_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    province VARCHAR(100) DEFAULT 'Maputo Cidade',
+    target_university VARCHAR(100) DEFAULT 'UEM',
+    target_course VARCHAR(150) DEFAULT 'Medicina Geral',
+    score INTEGER DEFAULT 0,
+    tri_score NUMERIC DEFAULT 500.0,
+    percentage NUMERIC DEFAULT 0.0,
+    tab_switch_count INTEGER DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'inscrito',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Pilar 3: Portal B2B para Escolas Secundárias e Centros Preparatórios
+  CREATE TABLE IF NOT EXISTS schools (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    province VARCHAR(100) DEFAULT 'Maputo Cidade',
+    contact_person VARCHAR(150),
+    phone VARCHAR(50) NOT NULL,
+    plan_type VARCHAR(50) DEFAULT 'pro_annual',
+    status VARCHAR(50) DEFAULT 'ativo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS school_classes (
+    id SERIAL PRIMARY KEY,
+    school_id INTEGER REFERENCES schools(id) ON DELETE CASCADE,
+    class_name VARCHAR(100) NOT NULL,
+    academic_year INTEGER DEFAULT 2026,
+    student_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS batch_omr_scans (
+    id SERIAL PRIMARY KEY,
+    school_id INTEGER,
+    class_id INTEGER,
+    exam_id VARCHAR(100),
+    student_identifier VARCHAR(100) NOT NULL,
+    score INTEGER NOT NULL,
+    total_questions INTEGER NOT NULL,
+    percentage NUMERIC NOT NULL,
+    tri_score NUMERIC,
+    grade_20 NUMERIC NOT NULL,
+    scanned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Pilar 4: Caloiro Predictor IA (Histórico de Previsões)
+  CREATE TABLE IF NOT EXISTS caloiro_predictions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    university VARCHAR(100) NOT NULL,
+    course VARCHAR(150) NOT NULL,
+    student_grade NUMERIC NOT NULL,
+    cutoff_grade NUMERIC NOT NULL,
+    probability_percent INTEGER NOT NULL,
+    status_label VARCHAR(50) NOT NULL,
+    recommendations TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 `, (err) => {
   if (err) console.warn('⚠️ [Database] Aviso na migração de tabelas e colunas:', err.message);
-  else console.log('✅ [Database] Migrações de TRI, Glicko-2, Ligas XP, OMR e Fórum verificadas com sucesso.');
+  else console.log('✅ [Database] Migrações globais (ENAS, B2B Escolas, Predictor, OMR e Fórum) verificadas com sucesso.');
 });
 
 console.log('Base de dados: Camada de compatibilidade Supabase/PostgreSQL inicializada.');

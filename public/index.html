@@ -33,87 +33,185 @@
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- Header Redesenhado World-Class (Design System v10.0) -->
   <header>
-    <div class="container nav-container">
+    <!-- LINHA 1: Barra Principal com Logo, Menus Agrupados e Ações Rápidas -->
+    <div class="container nav-main-bar">
+      <!-- Marca / Logo -->
       <a href="#" class="logo" id="nav-logo-btn">
         <div class="logo-icon">EP</div>
-        <span>ExamePronto</span>
+        <div class="logo-text-group">
+          <span class="logo-name">ExamePronto</span>
+          <span class="logo-tagline">Moçambique • v10.0</span>
+        </div>
       </a>
       
-      <!-- Menu de Navegação Superior (Sempre Acessível) -->
-      <nav class="nav-menu" id="main-nav-menu" style="display: flex; gap: 6px; flex-wrap: wrap;">
-        <button class="btn btn-sm btn-outline nav-menu-item active" data-target="dashboard">Simulador</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="rota">Rota do Caloiro 🗺️</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="skills">Competências 🌳</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="micro">Micro-Aulas ⚡</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="games">Jogos & Ligas 🎮</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="enas">ENAS Nacional 🏆</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="predictor">Caloiro Predictor 🎯</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="school">Portal Escolas 🏫</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="explicador">Explicador IA 🤖</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="investor">Negócios 💼</button>
-        <button class="btn btn-sm btn-outline nav-menu-item" data-target="admin" id="nav-admin-btn" style="display: none;">Admin ⚙️</button>
+      <!-- Menu de Navegação Primária Elegante -->
+      <nav class="nav-primary-menu" id="main-nav-menu">
+        <button class="nav-tab-btn nav-menu-item active" data-target="dashboard">
+          <span>📝</span> Simulador
+        </button>
+
+        <button class="nav-tab-btn nav-menu-item enas-highlight-tab" data-target="enas">
+          <span>🏆</span> ENAS Nacional <span class="nav-pulse-badge">AO VIVO</span>
+        </button>
+
+        <button class="nav-tab-btn nav-menu-item" data-target="games">
+          <span>🎮</span> Jogos & Ligas
+        </button>
+
+        <!-- Dropdown: Estudo & IA -->
+        <div class="nav-dropdown-wrapper">
+          <button class="nav-tab-btn nav-dropdown-trigger" type="button">
+            <span>🎓</span> Estudar & IA <span class="dropdown-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown-menu">
+            <a href="#" class="dropdown-item nav-menu-item" data-target="rota">
+              <span class="dropdown-item-icon">🗺️</span>
+              <div>
+                <strong>Rota do Caloiro</strong>
+                <small>Campanha pelas 11 províncias</small>
+              </div>
+            </a>
+            <a href="#" class="dropdown-item nav-menu-item" data-target="skills">
+              <span class="dropdown-item-icon">🌳</span>
+              <div>
+                <strong>Competências & Treino</strong>
+                <small>Árvore de treino cirúrgico</small>
+              </div>
+            </a>
+            <a href="#" class="dropdown-item nav-menu-item" data-target="micro">
+              <span class="dropdown-item-icon">⚡</span>
+              <div>
+                <strong>Micro-Aulas 90s</strong>
+                <small>Macetes rápidos e fórmulas</small>
+              </div>
+            </a>
+            <a href="#" class="dropdown-item nav-menu-item" data-target="explicador">
+              <span class="dropdown-item-icon">🤖</span>
+              <div>
+                <strong>Explicador Virtual IA</strong>
+                <small>Tira-dúvidas e explicações</small>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Dropdown: Ferramentas & B2B -->
+        <div class="nav-dropdown-wrapper">
+          <button class="nav-tab-btn nav-dropdown-trigger" type="button">
+            <span>⚡</span> Ferramentas & B2B <span class="dropdown-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown-menu">
+            <a href="#" class="dropdown-item nav-menu-item" data-target="predictor">
+              <span class="dropdown-item-icon">🎯</span>
+              <div>
+                <strong>Caloiro Predictor IA</strong>
+                <small>Previsão de admissão UEM/UP</small>
+              </div>
+            </a>
+            <a href="#" class="dropdown-item nav-menu-item" data-target="school">
+              <span class="dropdown-item-icon">🏫</span>
+              <div>
+                <strong>Portal Escolas B2B</strong>
+                <small>Gestão de turmas e pautas</small>
+              </div>
+            </a>
+            <a href="#" class="dropdown-item nav-menu-item" data-target="investor">
+              <span class="dropdown-item-icon">💼</span>
+              <div>
+                <strong>Dossier de Negócios</strong>
+                <small>Métricas e simulador</small>
+              </div>
+            </a>
+            <a href="#" class="dropdown-item nav-menu-item" data-target="admin" id="nav-admin-btn" style="display: none;">
+              <span class="dropdown-item-icon">⚙️</span>
+              <div>
+                <strong>Painel Admin CMS</strong>
+                <small>Gestão da plataforma</small>
+              </div>
+            </a>
+          </div>
+        </div>
       </nav>
       
-      <div class="nav-actions">
+      <!-- Ações Rápidas e Utilidades (Direita) -->
+      <div class="nav-actions-modern">
         <!-- WhatsApp Tutor Bot Oficial -->
-        <button class="btn btn-sm" id="btn-open-whatsapp-modal" title="Tutor WhatsApp Oficial (+258) - Estudo com Megas de WhatsApp" style="background: linear-gradient(135deg, #15803d, #22c55e); color: white; font-weight: 700; border: none; padding: 6px 11px; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(34,197,94,0.35); display: flex; align-items: center; gap: 5px;">
-          💬 WhatsApp AI
+        <button class="btn-wa-pill" id="btn-open-whatsapp-modal" title="Tutor WhatsApp Oficial (+258) - Estudo com Megas de WhatsApp">
+          <span class="wa-dot"></span> 💬 WhatsApp AI
         </button>
 
-        <!-- Botão Partilha Mesh P2P Offline -->
-        <button class="btn btn-sm btn-outline" id="btn-open-mesh-modal" title="Partilha de Exames P2P Sem Internet (Rede Mesh Offline)" style="padding: 6px 10px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
-          📡 Rede Mesh P2P
+        <!-- Scanner Rápido de Gabaritos (Gradeo / ZipGrade) -->
+        <button class="nav-circle-btn scanner-btn" id="btn-open-omr-scanner" title="Corrigir Gabarito por Foto ou Câmara">
+          📸
         </button>
 
-        <!-- Botão de Acesso Rápido ao Scanner Óptico OMR (Gradeo / ZipGrade) -->
-        <button class="btn btn-sm" id="btn-open-omr-scanner" title="Corrigir Folha de Respostas por Foto ou Câmara" style="background: linear-gradient(135deg, #059669, #10b981); color: white; font-weight: 700; border: none; padding: 6px 12px; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(16,185,129,0.35); display: flex; align-items: center; gap: 5px;">
-          📸 Scanner Gabarito
+        <!-- Rede Mesh P2P Offline -->
+        <button class="nav-circle-btn mesh-btn" id="btn-open-mesh-modal" title="Partilha de Exames P2P Sem Internet">
+          📡
         </button>
 
         <!-- Divisão da Liga do Aluno (Duolingo Style) -->
-        <div id="header-league-pill" class="badge" title="Tua Liga e Pontos XP" style="display: none; cursor: pointer; background: rgba(245, 158, 11, 0.15); color: #d97706; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.35); padding: 5px 10px; font-size: 0.8rem; border-radius: 14px;">
+        <div id="header-league-pill" class="league-pill-modern" style="display: none;" title="Tua Liga e Pontos XP">
           🥉 Bronze • 0 XP
         </div>
 
         <!-- Status de Subscrição -->
         <div id="header-premium-badge" style="display: none;">
-          <span class="premium-status-indicator" style="margin: 0; padding: 6px 12px; font-size: 0.8rem;">
-            <span class="badge">PREMIUM</span> Ativo
+          <span class="premium-status-indicator" style="margin: 0; padding: 4px 8px; font-size: 0.72rem;">
+            <span class="badge">PREMIUM</span>
           </span>
         </div>
         
         <!-- Indicador de Conectividade PWA (Offline / Online) -->
         <div id="network-status-badge" class="network-badge online" title="Estado da Ligação">
-          <span class="network-dot"></span> <span id="network-status-text">Online</span>
+          <span class="network-dot"></span> <span id="network-status-text" style="display: none;">Online</span>
         </div>
 
         <!-- Controlo de Efeitos Sonoros -->
-        <button class="btn btn-sm btn-outline" id="btn-sound-toggle" title="Ativar/Desativar Efeitos Sonoros" style="padding: 6px 10px; font-size: 0.8rem;">🔊 Som: ON</button>
+        <button class="nav-circle-btn" id="btn-sound-toggle" title="Ativar/Desativar Efeitos Sonoros">
+          🔊
+        </button>
         
         <button class="btn btn-sm btn-accent" id="header-upgrade-btn" style="display: none;">
-          Adquirir Premium
+          Premium
         </button>
         
         <!-- Botão de Sessão -->
-        <button class="btn btn-sm btn-outline" id="header-auth-btn">
-          Entrar / Registar
+        <button class="btn btn-sm btn-primary nav-auth-btn" id="header-auth-btn">
+          Entrar
         </button>
-        <span id="header-user-phone" style="display: none; font-size: 0.85rem; font-weight: 600;"></span>
-        <button class="btn btn-sm btn-outline" id="header-logout-btn" style="display: none; padding: 5px 10px; font-size: 0.8rem;">
+        <span id="header-user-phone" style="display: none; font-size: 0.8rem; font-weight: 700; color: var(--primary);"></span>
+        <button class="btn btn-sm btn-outline" id="header-logout-btn" style="display: none; padding: 4px 8px; font-size: 0.75rem;">
           Sair
         </button>
         
         <!-- Switch de Tema -->
-        <button class="theme-toggle" id="theme-toggle-btn" aria-label="Alternar Tema Escuro/Claro">
-          <svg id="theme-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <button class="nav-circle-btn" id="theme-toggle-btn" aria-label="Alternar Tema Escuro/Claro">
+          <svg id="theme-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
           </svg>
-          <svg id="theme-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="display: none;">
+          <svg id="theme-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="display: none;">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>
         </button>
+      </div>
+    </div>
+
+    <!-- LINHA 2: Sub-Nav Horizontal Pill Strip (Fácil de navegar no Desktop e com swipe no Mobile!) -->
+    <div class="subnav-pill-strip-wrap">
+      <div class="container subnav-pill-strip" id="subnav-scroll-container">
+        <button class="subnav-pill nav-menu-item active" data-target="dashboard">📝 Simulador</button>
+        <button class="subnav-pill nav-menu-item enas-pill" data-target="enas">🏆 ENAS Nacional</button>
+        <button class="subnav-pill nav-menu-item" data-target="rota">🗺️ Rota do Caloiro</button>
+        <button class="subnav-pill nav-menu-item" data-target="skills">🌳 Competências</button>
+        <button class="subnav-pill nav-menu-item" data-target="micro">⚡ Micro-Aulas</button>
+        <button class="subnav-pill nav-menu-item" data-target="games">🎮 Jogos & Ligas</button>
+        <button class="subnav-pill nav-menu-item" data-target="predictor">🎯 Caloiro Predictor</button>
+        <button class="subnav-pill nav-menu-item" data-target="school">🏫 Portal Escolas</button>
+        <button class="subnav-pill nav-menu-item" data-target="explicador">🤖 Explicador IA</button>
+        <button class="subnav-pill nav-menu-item" data-target="investor">💼 Negócios</button>
       </div>
     </div>
   </header>

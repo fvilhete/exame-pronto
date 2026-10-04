@@ -95,9 +95,17 @@ h1, h2, h3, h4, h5, h6 {
 
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1260px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1360px;
+    padding: 0 24px;
+  }
 }
 
 /* Header & Navegação World-Class (Design System v10.0) */
@@ -111,6 +119,9 @@ header {
   border-bottom: 1px solid var(--glass-border);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   transition: var(--transition);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .nav-main-bar {
@@ -118,7 +129,10 @@ header {
   justify-content: space-between;
   align-items: center;
   height: 64px;
-  gap: 15px;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .logo {
@@ -461,9 +475,73 @@ body.dark-theme .subnav-pill-strip-wrap {
   border-color: transparent !important;
 }
 
-/* Responsividade Mobile para Header */
-@media (max-width: 900px) {
+/* Responsividade Avançada de Header & Menu de Topo (Sem Overflow nem Cortes) */
+@media (max-width: 1260px) {
   .nav-primary-menu {
+    display: none !important;
+  }
+  .logo-tagline {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1261px) and (max-width: 1366px) {
+  .nav-primary-menu {
+    gap: 3px;
+  }
+  .nav-tab-btn {
+    padding: 6px 9px;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+  .nav-actions-modern {
+    gap: 6px;
+  }
+  .btn-wa-pill {
+    padding: 6px 10px;
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-main-bar {
+    height: 56px;
+    gap: 6px;
+  }
+  .logo-name {
+    font-size: 1.15rem;
+  }
+  .logo-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.82rem;
+  }
+  .nav-actions-modern {
+    gap: 4px;
+  }
+  .btn-wa-pill {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+  }
+  .btn-wa-pill .btn-wa-text {
+    display: none;
+  }
+  .nav-circle-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+  .nav-auth-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-circle-btn.mesh-btn {
+    display: none;
+  }
+  #btn-sound-toggle {
     display: none;
   }
   .logo-tagline {
@@ -4409,6 +4487,188 @@ body.dark-theme .scratchpad-modal.translucent-mode .scratchpad-canvas-container 
 .mesh-tab-btn {
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+/* ==========================================================================
+   12. FLOATING WHATSAPP BUTTON (ESTÉTICO & ULTRA-RESPONSIVO)
+   ========================================================================== */
+.floating-whatsapp-fab {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  z-index: 990;
+  background: linear-gradient(135deg, #10b981, #25d366);
+  color: white !important;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.38);
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floating-whatsapp-fab:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 25px rgba(37, 211, 102, 0.55);
+  color: white !important;
+}
+
+@media (max-width: 900px) {
+  .floating-whatsapp-fab {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  .floating-whatsapp-fab span {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   13. ENAS TERMÓMETRO DE QUORUM DE LUCRO & LINKS VIRAL REFERRAL
+   ========================================================================== */
+.enas-quorum-tracker {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-top: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.enas-quorum-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.enas-quorum-bar-track {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.enas-quorum-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #10b981, #22c55e);
+  border-radius: 6px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.5);
+}
+
+.enas-quorum-subtext {
+  font-size: 0.78rem;
+  color: #e2e8f0;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+.enas-profit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.enas-admin-notice-box {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fef08a;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.enas-referral-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s ease;
+}
+
+.enas-referral-card:hover {
+  border-color: var(--primary);
+}
+
+.enas-ref-input-group {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.enas-ref-input-group input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: monospace;
+}
+
+/* Painel de Gestão do ENAS no Admin */
+.enas-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.enas-kpi-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.enas-kpi-card .kpi-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.enas-kpi-card .kpi-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.enas-kpi-card.profit-kpi {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+.enas-kpi-card.profit-kpi .kpi-val {
+  color: #10b981;
 }
 
 

@@ -179,6 +179,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initAudioSystem();
   initStudyStreak();
   initNetworkStatus();
+  initReferralTracking();
   
   if (jwtToken) {
     await checkAuthStatus();
@@ -851,6 +852,8 @@ function setupEventListeners() {
       } else if (tabId === "admin-generator") {
         fetchAdminGeneratorLogs();
         fetchAdminGeneratorStatus();
+      } else if (tabId === "admin-enas") {
+        loadAdminEnasData();
       }
     });
   });
@@ -858,6 +861,22 @@ function setupEventListeners() {
   safeAddListener("admin-trigger-gen-btn", "click", triggerAdminContentGeneration);
   safeAddListener("admin-toggle-worker-btn", "click", toggleAdminContentWorker);
   safeAddListener("admin-refresh-gen-logs-btn", "click", fetchAdminGeneratorLogs);
+
+  // ENAS, Quorum de Lucro, Partilha Viral e Admin
+  safeAddListener("btn-enas-action", "click", handleEnasActionClick);
+  safeAddListener("enas-register-form", "submit", handleEnasRegistration);
+  safeAddListener("btn-copy-enas-link", "click", copyEnasReferralLink);
+  safeAddListener("btn-share-enas-whatsapp", "click", shareEnasOnWhatsApp);
+  safeAddListener("btn-view-enas-poster-modal", "click", openEnasPosterModal);
+  safeAddListener("btn-close-enas-poster", "click", closeEnasPosterModal);
+  safeAddListener("btn-share-poster-wa", "click", shareEnasPosterWhatsApp);
+  safeAddListener("btn-copy-viral-copy", "click", copyEnasViralCopy);
+  safeAddListener("btn-admin-refresh-enas", "click", loadAdminEnasData);
+  safeAddListener("btn-admin-view-dossier", "click", viewLaunchDossier);
+  const adminEnasForm = document.getElementById("admin-enas-config-form");
+  if (adminEnasForm) adminEnasForm.addEventListener("submit", saveAdminEnasConfig);
+  safeAddListener("btn-admin-postpone-enas", "click", postponeAdminEnas);
+  safeAddListener("enas-leaderboard-province-select", "change", (e) => loadEnasLeaderboard(e.target.value));
 
   // Admin Content Sub-tabs (Exames / Lições)
   const manageExamsBtn = document.getElementById("admin-manage-exams-tab-btn");
@@ -7062,7 +7081,29 @@ async function sendSimulatedWhatsAppMessage(text) {
   }
 }
 
-// --- PILAR 2: ENAS (EXAME NACIONAL ABERTO E SIMULADO EM TEMPO REAL) ---
+/// --- PILAR 2: ENAS (EXAME NACIONAL ABERTO E SIMULADO EM TEMPO REAL) ---
+function initReferralTracking() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    let ref = urlParams.get('ref');
+    const hash = window.location.hash;
+    if (!ref && hash.includes('ref=')) {
+      const match = hash.match(/ref=([^&]+)/);
+      if (match) ref = decodeURIComponent(match[1]);
+    }
+    if (ref) {
+      localStorage.setItem("examepronto_ref", ref);
+      fetch("/api/enas/referral-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ referrerPhone: ref, referralCode: ref })
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn("Aviso no tracking de referral:", e);
+  }
+}
+
 async function loadEnasData() {
   try {
     const res = await fetch("/api/enas/current");
@@ -7074,8 +7115,83 @@ async function loadEnasData() {
       if (titleEl) titleEl.textContent = data.title || "ENAS 2026: Exame Nacional Aberto e Simulado";
       if (descEl) descEl.textContent = data.edition ? `Simulado Oficial: ${data.edition} (${data.totalQuestions || 50} Questões TRI). Ranking em tempo real em todas as 11 províncias.` : "50 Questões interdisciplinares calibradas por Teoria de Resposta ao Item (TRI).";
 
-      const targetDate = data.scheduledDate ? new Date(data.scheduledDate) : new Date(Date.now() + 86400000 * 3);
-      startEnasCountdown(targetDate);
+      // 1. Termómetro de Quorum de Lucro & Viabilidade
+      const quorumStat = document.getElementById("enas-quorum-stat");
+      const quorumPct = document.getElementById("enas-quorum-pct");
+      const quorumBar = document.getElementById("enas-quorum-bar");
+      const profitBadge = document.getElementById("enas-profit-status-badge");
+      const subtext = document.getElementById("enas-quorum-subtext");
+
+      const currentPaid = data.currentPaidSubscribers || 118;
+      const minQuorum = data.minQuorum || 150;
+      const pct = data.quorumPercentage || Math.min(100, Math.round((currentPaid / minQuorum) * 100));
+
+      if (quorumStat) quorumStat.textContent = `${currentPaid} / ${minQuorum} Assinantes Mensais`;
+      if (quorumPct) quorumPct.textContent = `${pct}%`;
+      if (quorumBar) quorumBar.style.width = `${pct}%`;
+
+      if (profitBadge) {
+        if (data.quorumMet) {
+          profitBadge.textContent = "✅ Quorum Atingido! Prova Confirmada";
+          profitBadge.style.background = "rgba(16, 185, 129, 0.25)";
+          profitBadge.style.color = "#34d399";
+        } else {
+          profitBadge.textContent = "🎯 Quorum de Viabilidade em Captação";
+          profitBadge.style.background = "rgba(245, 158, 11, 0.2)";
+          profitBadge.style.color = "#fcd34d";
+        }
+      }
+
+      if (subtext) {
+        if (data.quorumMet) {
+          subtext.innerHTML = `✅ <strong>Quorum mínimo de rentabilidade alcançado!</strong> A premiação de <strong>9.000 MT via M-Pesa</strong> está oficialmente garantida. Prepara-te para a prova!`;
+        } else {
+          const missing = Math.max(0, minQuorum - currentPaid);
+          subtext.innerHTML = `🔥 Faltam apenas <strong>${missing} assinaturas no plano mensal</strong> para validar oficialmente a premiação de <strong>9.000 MT via M-Pesa</strong>! Convida os teus colegas de turma para atingir a meta mais depressa!`;
+        }
+      }
+
+      // 2. Comunicado Oficial do Administrador
+      const noticeWrap = document.getElementById("enas-admin-notice-wrap");
+      const noticeText = document.getElementById("enas-admin-notice-text");
+      if (noticeWrap && noticeText) {
+        if (data.noticeMessage && data.noticeMessage.trim().length > 0) {
+          noticeWrap.style.display = "block";
+          noticeText.textContent = data.noticeMessage;
+        } else {
+          noticeWrap.style.display = "none";
+        }
+      }
+
+      // 3. Atualizar Botão de Ação do ENAS
+      const actionBtn = document.getElementById("btn-enas-action");
+      if (actionBtn) {
+        if (!data.isActive) {
+          actionBtn.textContent = "⏸️ Edição Pausada pelo Administrador";
+          actionBtn.disabled = true;
+          actionBtn.style.opacity = "0.6";
+        } else if (data.status === "live") {
+          actionBtn.textContent = "🔥 ENTRAR NO EXAME AGORA";
+          actionBtn.style.background = "linear-gradient(135deg, #16a34a, #22c55e)";
+          actionBtn.disabled = false;
+          actionBtn.style.opacity = "1";
+        } else if (data.status === "postponed") {
+          actionBtn.textContent = "⏳ Inscrições Prorrogadas - Garante Tua Vaga";
+          actionBtn.disabled = false;
+          actionBtn.style.opacity = "1";
+        } else {
+          actionBtn.textContent = "🚀 Inscrever-me Gratuitamente";
+          actionBtn.disabled = false;
+          actionBtn.style.opacity = "1";
+        }
+      }
+
+      // 4. Configurar Link Único de Partilha Viral do Estudante
+      updateEnasReferralShareLink();
+
+      // 5. Iniciar Contagem Decrescente
+      const targetDate = data.scheduledDate ? new Date(data.scheduledDate) : new Date(Date.now() + 86400000 * 14);
+      startEnasCountdown(targetDate, data.status, data.isActive);
     }
     loadEnasLeaderboard();
   } catch (e) {
@@ -7083,11 +7199,112 @@ async function loadEnasData() {
   }
 }
 
-function startEnasCountdown(targetDate) {
+function updateEnasReferralShareLink() {
+  const linkInput = document.getElementById("enas-referral-link-input");
+  if (!linkInput) return;
+
+  const phone = (userProfile && userProfile.phone) 
+    ? userProfile.phone 
+    : (localStorage.getItem("examepronto_my_phone") || "");
+
+  const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : "colega";
+  const shareUrl = `${window.location.origin}/#enas?ref=${encodeURIComponent(cleanPhone)}`;
+  linkInput.value = shareUrl;
+
+  if (phone) {
+    loadMyReferralStats(phone);
+  }
+}
+
+async function loadMyReferralStats(phone) {
+  try {
+    const res = await fetch(`/api/enas/referral-stats/${encodeURIComponent(phone)}`);
+    if (res.ok) {
+      const stats = await res.json();
+      const countEl = document.getElementById("enas-ref-count");
+      const xpEl = document.getElementById("enas-ref-xp");
+      if (countEl) countEl.textContent = stats.invitedCount || 0;
+      if (xpEl) xpEl.textContent = `+${stats.bonusXp || 0} XP`;
+    }
+  } catch (e) {
+    console.warn("Erro ao buscar estatísticas de referral:", e);
+  }
+}
+
+function copyEnasReferralLink() {
+  const linkInput = document.getElementById("enas-referral-link-input");
+  if (!linkInput) return;
+
+  linkInput.select();
+  linkInput.setSelectionRange(0, 99999);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(linkInput.value).then(() => {
+      showToast("📋 Link de convite copiado! Partilha com os teus colegas de turma.", "success");
+      playSound("pop");
+    }).catch(() => {
+      document.execCommand("copy");
+      showToast("📋 Link copiado!", "success");
+    });
+  } else {
+    document.execCommand("copy");
+    showToast("📋 Link copiado!", "success");
+  }
+}
+
+function shareEnasOnWhatsApp() {
+  const linkInput = document.getElementById("enas-referral-link-input");
+  const shareUrl = linkInput ? linkInput.value : `${window.location.origin}/#enas`;
+
+  const text = `🇲🇿🔥 *ATENÇÃO COLEGAS: A NOSSA VAGA VALE 5.000 MT NO M-PESA!* 🎓📲\n\nEstou a preparar-me para os Exames de Admissão da *UEM, UP e 12ª Classe* no *ExamePronto* e vou concorrer aos *9.000 MT de prémios em dinheiro* no 1º Simulado Nacional Aberto (ENAS 2026)!\n\n🏆 *PRÉMIOS NO M-PESA:*\n🥇 1º Lugar Nacional: *5.000 MT*\n🥈 2º Lugar Nacional: *3.000 MT*\n🥉 3º Lugar Nacional: *1.000 MT*\n\nInscreve-te também pelo meu link para treinarmos juntos e ver quem fica no topo da nossa província:\n👉 ${shareUrl}\n\n_Funciona em qualquer smartphone! Bora competir!_ 🚀`;
+
+  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  window.open(waUrl, "_blank");
+}
+
+function openEnasPosterModal() {
+  const modal = document.getElementById("enas-poster-modal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeEnasPosterModal() {
+  const modal = document.getElementById("enas-poster-modal");
+  if (modal) modal.style.display = "none";
+}
+
+function shareEnasPosterWhatsApp() {
+  shareEnasOnWhatsApp();
+}
+
+function copyEnasViralCopy() {
+  const linkInput = document.getElementById("enas-referral-link-input");
+  const shareUrl = linkInput ? linkInput.value : `${window.location.origin}/#enas`;
+
+  const fullCopy = `🇲🇿🔥 *ATENÇÃO ESTUDANTES DE MOÇAMBIQUE: A TUA VAGA VALE 5.000 MT NO M-PESA!* 🎓📲\n\nEstás a preparar-te para os Exames de Admissão da *UEM, UP ou 12ª Classe*? Chegou a tua hora de provar que a tua província tem os melhores cérebros do país!\n\n🏆 *1º SIMULADO NACIONAL ABERTO (ENAS 2026)*\nO maior teste preparatório online em tempo real de Moçambique!\n\n💰 *PRÉMIOS EM DINHEIRO VIVO (M-PESA):*\n🥇 *1º Lugar Nacional:* 5.000 MT via M-Pesa + Troféu Virtual\n🥈 *2º Lugar Nacional:* 3.000 MT via M-Pesa\n🥉 *3º Lugar Nacional:* 1.000 MT via M-Pesa\n🇲🇿 *Melhor de Cada Província:* Acesso Premium Anual + Certificado Nobre com QR Code\n\n📅 *DATA:* Conforme Agendamento Oficial no Portal\n⏰ *HORA:* Pontualmente às 09:00 (Fuso de Maputo)\n📝 *FORMATO:* 50 Perguntas Interdisciplinares no teu telemóvel\n\n💡 *Como Participar Gratuitamente:*\n1. Clica no link: 👉 ${shareUrl}\n2. Preenche Nome, Província e Telemóvel\n3. Convida teus colegas de turma para ganhares +50 XP!\n\n⚠️ *Vagas Limitadas!* Partilha com a tua turma! 🇲🇿🚀`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(fullCopy).then(() => {
+      showToast("📋 Texto viral oficial copiado! Cola nos grupos de WhatsApp da tua turma.", "success");
+      playSound("pop");
+    });
+  } else {
+    showToast("📋 Texto pronto para partilha!", "info");
+  }
+}
+
+function startEnasCountdown(targetDate, status, isActive) {
   if (enasCountdownTimer) clearInterval(enasCountdownTimer);
 
   const countdownEl = document.getElementById("enas-countdown");
   function update() {
+    if (!isActive) {
+      if (countdownEl) countdownEl.textContent = "PAUSADO ⏸️";
+      return;
+    }
+    if (status === "live") {
+      if (countdownEl) countdownEl.textContent = "AO VIVO 🔴";
+      return;
+    }
+
     const now = new Date().getTime();
     const diff = targetDate.getTime() - now;
 
@@ -7103,7 +7320,7 @@ function startEnasCountdown(targetDate) {
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const minutes = Math.floor((diff % (1000 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
     if (countdownEl) {
@@ -7122,13 +7339,17 @@ async function handleEnasRegistration(e) {
   const provInput = document.getElementById("enas-input-province");
   const courseInput = document.getElementById("enas-input-target-course");
 
+  const phoneVal = phoneInput ? phoneInput.value.trim() : "";
+  const refSponsor = localStorage.getItem("examepronto_ref") || "";
+
   const payload = {
     edition_id: currentEnasEdition ? (currentEnasEdition.id || 1) : 1,
     studentName: nameInput ? nameInput.value.trim() : "",
-    phone: phoneInput ? phoneInput.value.trim() : "",
+    phone: phoneVal,
     province: provInput ? provInput.value : "Maputo Cidade",
     targetUniversity: "UEM",
-    targetCourse: courseInput ? courseInput.value.trim() : "Medicina Geral"
+    targetCourse: courseInput ? courseInput.value.trim() : "Medicina Geral",
+    referredBy: refSponsor
   };
 
   try {
@@ -7142,6 +7363,11 @@ async function handleEnasRegistration(e) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
+
+    if (phoneVal) {
+      localStorage.setItem("examepronto_my_phone", phoneVal);
+      updateEnasReferralShareLink();
+    }
 
     const statusContainer = document.getElementById("enas-registration-status");
     if (statusContainer) {
@@ -7159,6 +7385,7 @@ async function handleEnasRegistration(e) {
     }
     showToast("🎉 Inscrição no Simulado Nacional concluída com sucesso!", "success");
     playSound("victory");
+    loadEnasData();
   } catch (err) {
     alert("Erro na inscrição ENAS: " + err.message);
   }
@@ -7216,6 +7443,192 @@ async function loadEnasLeaderboard(province = "") {
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ef4444;">Erro ao carregar ranking.</td></tr>`;
   }
+}
+
+// --- ROTAS DE GESTÃO DO ENAS NO PAINEL ADMIN CMS ---
+async function loadAdminEnasData() {
+  if (!jwtToken) return;
+
+  try {
+    const res = await fetch("/api/admin/enas/overview", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (!res.ok) throw new Error("Não autorizado");
+    const data = await res.json();
+
+    // 1. Atualizar KPIs
+    const statusEl = document.getElementById("admin-enas-kpi-status");
+    const activeEl = document.getElementById("admin-enas-kpi-active");
+    const quorumEl = document.getElementById("admin-enas-kpi-quorum");
+    const quorumPctEl = document.getElementById("admin-enas-kpi-quorum-pct");
+    const revEl = document.getElementById("admin-enas-kpi-revenue");
+    const profitEl = document.getElementById("admin-enas-kpi-profit");
+    const totalRegEl = document.getElementById("admin-enas-kpi-total-reg");
+
+    const cfg = data.config || {};
+    const fin = data.financials || {};
+
+    if (statusEl) statusEl.textContent = cfg.status === "scheduled" ? "Agendado" : (cfg.status === "live" ? "Ao Vivo" : (cfg.status === "postponed" ? "Prorrogado" : cfg.status));
+    if (activeEl) {
+      activeEl.textContent = cfg.is_active ? "● Ativo" : "○ Pausado";
+      activeEl.style.color = cfg.is_active ? "#10b981" : "#ef4444";
+    }
+    if (quorumEl) quorumEl.textContent = `${data.currentPaidSubscribers} / ${data.minQuorum}`;
+    if (quorumPctEl) quorumPctEl.textContent = `${data.quorumPercentage}% da meta (${data.quorumMet ? "Lucratividade Atingida" : "Em Captação"})`;
+    if (revEl) revEl.textContent = `${(fin.projectedRevenue || 0).toLocaleString()} MT`;
+    if (profitEl) {
+      profitEl.textContent = `${(fin.projectedProfit || 0) >= 0 ? "+" : ""}${(fin.projectedProfit || 0).toLocaleString()} MT`;
+      profitEl.style.color = (fin.projectedProfit || 0) >= 0 ? "#10b981" : "#ef4444";
+    }
+    if (totalRegEl) totalRegEl.textContent = (data.totalRegistered || 0).toLocaleString();
+
+    // 2. Preencher formulário de configuração
+    const inputActive = document.getElementById("admin-enas-input-active");
+    const inputStatus = document.getElementById("admin-enas-input-status");
+    const inputDate = document.getElementById("admin-enas-input-date");
+    const inputQuorum = document.getElementById("admin-enas-input-quorum");
+    const inputP1 = document.getElementById("admin-enas-input-p1");
+    const inputP2 = document.getElementById("admin-enas-input-p2");
+    const inputP3 = document.getElementById("admin-enas-input-p3");
+    const inputPrice = document.getElementById("admin-enas-input-price");
+    const inputNotice = document.getElementById("admin-enas-input-notice");
+
+    if (inputActive) inputActive.value = String(Boolean(cfg.is_active));
+    if (inputStatus) inputStatus.value = cfg.status || "scheduled";
+    if (inputDate && cfg.scheduled_date) {
+      const dt = new Date(cfg.scheduled_date);
+      if (!isNaN(dt.getTime())) {
+        inputDate.value = dt.toISOString().slice(0, 16);
+      }
+    }
+    if (inputQuorum) inputQuorum.value = cfg.min_quorum || 150;
+    if (inputP1) inputP1.value = cfg.prize_first || 5000;
+    if (inputP2) inputP2.value = cfg.prize_second || 3000;
+    if (inputP3) inputP3.value = cfg.prize_third || 1000;
+    if (inputPrice) inputPrice.value = cfg.monthly_plan_price || 119;
+    if (inputNotice) inputNotice.value = cfg.notice_message || "";
+
+    // 3. Carregar Lista de Inscritos
+    loadAdminEnasRegistrations();
+  } catch (err) {
+    console.error("Erro ao carregar ENAS no admin:", err);
+  }
+}
+
+async function saveAdminEnasConfig(e) {
+  if (e) e.preventDefault();
+  if (!jwtToken) return;
+
+  const inputActive = document.getElementById("admin-enas-input-active");
+  const inputStatus = document.getElementById("admin-enas-input-status");
+  const inputDate = document.getElementById("admin-enas-input-date");
+  const inputQuorum = document.getElementById("admin-enas-input-quorum");
+  const inputP1 = document.getElementById("admin-enas-input-p1");
+  const inputP2 = document.getElementById("admin-enas-input-p2");
+  const inputP3 = document.getElementById("admin-enas-input-p3");
+  const inputPrice = document.getElementById("admin-enas-input-price");
+  const inputNotice = document.getElementById("admin-enas-input-notice");
+
+  const payload = {
+    is_active: inputActive ? (inputActive.value === "true") : true,
+    status: inputStatus ? inputStatus.value : "scheduled",
+    scheduled_date: inputDate && inputDate.value ? new Date(inputDate.value).toISOString() : new Date().toISOString(),
+    min_quorum: inputQuorum ? parseInt(inputQuorum.value) || 150 : 150,
+    prize_first: inputP1 ? parseFloat(inputP1.value) || 5000 : 5000,
+    prize_second: inputP2 ? parseFloat(inputP2.value) || 3000 : 3000,
+    prize_third: inputP3 ? parseFloat(inputP3.value) || 1000 : 1000,
+    monthly_plan_price: inputPrice ? parseFloat(inputPrice.value) || 119 : 119,
+    notice_message: inputNotice ? inputNotice.value.trim() : ""
+  };
+
+  try {
+    const res = await fetch("/api/admin/enas/config", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error);
+
+    showToast("💾 Configurações do ENAS atualizadas com sucesso!", "success");
+    playSound("pop");
+    loadAdminEnasData();
+    loadEnasData();
+  } catch (err) {
+    alert("Erro ao salvar configurações do ENAS: " + err.message);
+  }
+}
+
+async function postponeAdminEnas() {
+  if (!jwtToken) return;
+  if (!confirm("Confirmas prorrogar a realização do ENAS por mais 7 dias para cumprir o quorum e manter as inscrições ativas?")) return;
+
+  try {
+    const res = await fetch("/api/admin/enas/postpone", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ days: 7 })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error);
+
+    showToast("⏳ Prova prorrogada por mais 7 dias com sucesso!", "success");
+    playSound("pop");
+    loadAdminEnasData();
+    loadEnasData();
+  } catch (err) {
+    alert("Erro ao prorrogar ENAS: " + err.message);
+  }
+}
+
+async function loadAdminEnasRegistrations() {
+  const tbody = document.getElementById("admin-enas-registrations-tbody");
+  const countEl = document.getElementById("admin-enas-table-count");
+  if (!tbody) return;
+
+  try {
+    const res = await fetch("/api/admin/enas/registrations", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (!res.ok) throw new Error("Erro");
+    const list = await res.json();
+
+    if (countEl) countEl.textContent = `${list.length} inscrições recentes`;
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--text-secondary);">Nenhum candidato inscrito ainda.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(item => `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 10px; font-weight: 700;">#${item.id}</td>
+        <td style="padding: 10px; font-weight: 600;">${escapeHtml(item.student_name || "Estudante")}</td>
+        <td style="padding: 10px; font-family: monospace;">${escapeHtml(item.phone || "-")}</td>
+        <td style="padding: 10px;"><span class="badge" style="background: rgba(37,99,235,0.1); color: var(--primary); font-size: 0.72rem;">${escapeHtml(item.province || "Maputo")}</span></td>
+        <td style="padding: 10px; font-size: 0.8rem;">${escapeHtml(item.target_university || "UEM")} - ${escapeHtml(item.target_course || "Geral")}</td>
+        <td style="padding: 10px; font-family: monospace; font-size: 0.75rem; color: var(--accent);">${escapeHtml(item.referral_code || "-")}</td>
+        <td style="padding: 10px; font-family: monospace; font-size: 0.75rem;">${escapeHtml(item.referred_by || "Orgânico")}</td>
+        <td style="padding: 10px;">
+          <span class="badge" style="background: ${item.is_paid_subscriber ? '#10b981' : 'rgba(0,0,0,0.1)'}; color: ${item.is_paid_subscriber ? '#fff' : 'var(--text-secondary)'}; font-size: 0.7rem;">
+            ${item.is_paid_subscriber ? "MENSAL PRO" : "FREEMIUM"}
+          </span>
+        </td>
+      </tr>
+    `).join("");
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: #ef4444;">Erro ao carregar lista de inscritos.</td></tr>`;
+  }
+}
+
+function viewLaunchDossier() {
+  window.open("/docs/plano_lancamento_enas_e_financiamento.md", "_blank");
 }
 
 // --- PILAR 4: CALOIRO PREDICTOR IA ---

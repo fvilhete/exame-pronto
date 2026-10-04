@@ -139,7 +139,7 @@
       <div class="nav-actions-modern">
         <!-- WhatsApp Tutor Bot Oficial -->
         <button class="btn-wa-pill" id="btn-open-whatsapp-modal" title="Tutor WhatsApp Oficial (+258) - Estudo com Megas de WhatsApp">
-          <span class="wa-dot"></span> 💬 WhatsApp AI
+          <span class="wa-dot"></span> <span class="btn-wa-text">💬 WhatsApp AI</span>
         </button>
 
         <!-- Scanner Rápido de Gabaritos (Gradeo / ZipGrade) -->
@@ -1039,6 +1039,25 @@
                 <div style="font-size: 1.25rem; font-weight: 800; color: #ffffff;">1.000 MT <span style="font-size: 0.75rem; font-weight: 500;">(M-Pesa)</span></div>
               </div>
             </div>
+
+            <!-- Termómetro de Quorum de Lucro & Viabilidade Financeira -->
+            <div class="enas-quorum-tracker">
+              <div class="enas-quorum-header">
+                <span>🎯 Quorum de Viabilidade: <strong id="enas-quorum-stat">118 / 150 Assinantes Mensais</strong> (<span id="enas-quorum-pct">78%</span>)</span>
+                <span class="enas-profit-badge" id="enas-profit-status-badge">💰 Lucro Garantido Ativado</span>
+              </div>
+              <div class="enas-quorum-bar-track">
+                <div class="enas-quorum-bar-fill" id="enas-quorum-bar" style="width: 78%;"></div>
+              </div>
+              <div class="enas-quorum-subtext" id="enas-quorum-subtext">
+                🔥 Faltam apenas <strong>32 inscrições de alunos no plano mensal</strong> para validar oficialmente a premiação de <strong>9.000 MT via M-Pesa</strong>! Convida os teus colegas de turma para atingir a meta mais depressa!
+              </div>
+              <div id="enas-admin-notice-wrap" style="display: none; margin-top: 10px;">
+                <div class="enas-admin-notice-box">
+                  <span>📢</span> <span id="enas-admin-notice-text"></span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Countdown Box & Botão Iniciar -->
@@ -1092,6 +1111,41 @@
                 </div>
                 <button type="submit" class="btn btn-primary" style="margin-top: 6px; font-weight: 700; padding: 10px;">Confirmar Inscrição Gratuita</button>
               </form>
+            </div>
+          </div>
+
+          <!-- Card de Partilha Viral & Código de Indicação (Afiliados / Referrals) -->
+          <div class="enas-referral-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <h4 style="margin: 0; font-size: 1.05rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                <span>🚀</span> Convida Colegas (+50 XP)
+              </h4>
+              <span class="badge" style="background: var(--accent); color: #fff; font-weight: 800;">BÓNUS VIRAL</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.45;">
+              Acelera o quorum para a realização do simulado! Cada colega que se inscrever com o teu link dá-te <strong>+50 XP</strong> no ranking e aproxima a premiação de <strong>9.000 MT via M-Pesa</strong>!
+            </p>
+            
+            <div style="margin-bottom: 10px;">
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">O Teu Link Único de Partilha:</label>
+              <div class="enas-ref-input-group">
+                <input type="text" id="enas-referral-link-input" readonly value="https://examepronto.mz/#enas">
+                <button type="button" class="btn btn-sm btn-outline" id="btn-copy-enas-link" title="Copiar Link de Partilha">📋 Copiar</button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm" id="btn-share-enas-whatsapp" style="flex: 1; background: #25d366; color: white; font-weight: 700;">
+                📲 Partilhar no WhatsApp da Turma
+              </button>
+              <button type="button" class="btn btn-sm btn-outline" id="btn-view-enas-poster-modal" style="font-size: 0.8rem;">
+                🎨 Cartaz Oficial
+              </button>
+            </div>
+
+            <div id="enas-my-referral-stats" style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color); font-size: 0.78rem; color: var(--text-secondary); display: flex; justify-content: space-between;">
+              <span>👥 Colegas Inscritos: <strong id="enas-ref-count" style="color: var(--primary);">0</strong></span>
+              <span>⚡ Bónus XP: <strong id="enas-ref-xp" style="color: var(--accent);">0 XP</strong></span>
             </div>
           </div>
 
@@ -1763,6 +1817,7 @@
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-vouchers" style="text-align: left; width: 100%;">🎟️ Vouchers & Raspadinhas</button>
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-content" style="text-align: left; width: 100%;">Adicionar Conteúdo</button>
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-generator" style="text-align: left; width: 100%;">🤖 Gerador Automático & Logs</button>
+          <button class="btn btn-outline admin-tab-btn" data-tab="admin-enas" style="text-align: left; width: 100%; border-color: rgba(245, 158, 11, 0.4); color: #d97706; font-weight: 700;">🏆 Gestão ENAS & Quorum</button>
         </div>
 
         <!-- Main Admin Area -->
@@ -2120,6 +2175,143 @@
               </div>
             </div>
           </div>
+
+          <!-- Tab 6: Gestão Estratégica do ENAS & Quorum de Lucro -->
+          <div id="tab-admin-enas" class="admin-tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="margin: 0; color: var(--primary);">🏆 Gestão do Simulado Nacional ENAS & Quorum de Lucro</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+                  Controlo total da prova pelo Administrador: quorum mínimo de assinantes, lucratividade assegurada e agendamento flexível.
+                </p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-sm btn-outline" id="btn-admin-refresh-enas">🔄 Atualizar Métricas</button>
+                <button class="btn btn-sm btn-accent" id="btn-admin-view-dossier">📄 Plano de Financiamento</button>
+              </div>
+            </div>
+
+            <!-- KPIs de Viabilidade Financeira & Lucratividade -->
+            <div class="enas-kpi-grid">
+              <div class="enas-kpi-card">
+                <div class="kpi-label">Status da Edição</div>
+                <div class="kpi-val" id="admin-enas-kpi-status" style="font-size: 1.15rem; color: var(--primary);">Agendado</div>
+                <small id="admin-enas-kpi-active" style="font-weight: 700; color: #10b981;">● Ativo</small>
+              </div>
+              <div class="enas-kpi-card">
+                <div class="kpi-label">Assinantes Pagantes (Quorum)</div>
+                <div class="kpi-val" id="admin-enas-kpi-quorum">118 / 150</div>
+                <small id="admin-enas-kpi-quorum-pct" style="color: var(--text-secondary);">78% da meta atingida</small>
+              </div>
+              <div class="enas-kpi-card">
+                <div class="kpi-label">Receita Prevista</div>
+                <div class="kpi-val" id="admin-enas-kpi-revenue" style="color: #3b82f6;">17.850 MT</div>
+                <small style="color: var(--text-secondary);">150 x 119 MT/mês</small>
+              </div>
+              <div class="enas-kpi-card profit-kpi">
+                <div class="kpi-label">Lucro Líquido do Fundador</div>
+                <div class="kpi-val" id="admin-enas-kpi-profit">+8.850 MT</div>
+                <small style="color: #10b981; font-weight: 700;">Após pagar 9.000 MT de prémios</small>
+              </div>
+              <div class="enas-kpi-card">
+                <div class="kpi-label">Candidatos Inscritos</div>
+                <div class="kpi-val" id="admin-enas-kpi-total-reg">1.432</div>
+                <small style="color: var(--text-secondary);">11 províncias</small>
+              </div>
+            </div>
+
+            <!-- Painel de Controlo do ENAS -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 25px;">
+              <h4 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <span>⚙️</span> Painel de Configurações & Agendamento
+              </h4>
+              <form id="admin-enas-config-form">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                  <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">Interruptor da Edição ENAS:</label>
+                    <select id="admin-enas-input-active" style="width: 100%; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                      <option value="true">✅ ENAS Ativo (Inscrições e Acesso Abertos)</option>
+                      <option value="false">⏸️ ENAS Pausado (Aguardando Decisão do Admin)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">Estado Atual da Prova:</label>
+                    <select id="admin-enas-input-status" style="width: 100%; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                      <option value="scheduled">📅 Agendado (Inscrições & Quorum Ativos)</option>
+                      <option value="live">🔴 Prova Ao Vivo (Liberada em Tempo Real)</option>
+                      <option value="postponed">⏳ Prorrogado (Mais prazo para adesão)</option>
+                      <option value="completed">🏁 Concluído (Ranking Oficial Finalizado)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">Data e Hora da Prova:</label>
+                    <input type="datetime-local" id="admin-enas-input-date" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">Quorum Mínimo de Assinantes Pagantes:</label>
+                    <input type="number" id="admin-enas-input-quorum" value="150" min="50" max="2000" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                    <small style="font-size: 0.72rem; color: var(--text-secondary);">Garante lucro mínimo antes da realização da prova.</small>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                  <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">1º Lugar (MT):</label>
+                    <input type="number" id="admin-enas-input-p1" value="5000" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">2º Lugar (MT):</label>
+                    <input type="number" id="admin-enas-input-p2" value="3000" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">3º Lugar (MT):</label>
+                    <input type="number" id="admin-enas-input-p3" value="1000" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">Preço Plano Mensal (MT):</label>
+                    <input type="number" id="admin-enas-input-price" value="119" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                  <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px;">Comunicado Oficial / Aviso aos Estudantes:</label>
+                  <textarea id="admin-enas-input-notice" rows="2" placeholder="Ex: Inscrições estendidas por mais 7 dias a pedido das comissões de estudantes!" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <button type="submit" class="btn btn-primary" id="btn-save-enas-config">💾 Guardar Configurações do ENAS</button>
+                  <button type="button" class="btn btn-outline" id="btn-admin-postpone-enas" style="border-color: #f59e0b; color: #d97706;">⏳ Prorrogar por +7 Dias (Manter Quorum)</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Tabela de Candidatos Registados no ENAS -->
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary);">📋 Lista de Candidatos Inscritos</h4>
+                <span id="admin-enas-table-count" style="font-size: 0.8rem; color: var(--text-secondary);">A carregar...</span>
+              </div>
+              <div class="table-responsive" style="overflow-x: auto; max-height: 400px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                      <th style="padding: 10px;">ID</th>
+                      <th style="padding: 10px;">Nome do Estudante</th>
+                      <th style="padding: 10px;">Telemóvel</th>
+                      <th style="padding: 10px;">Província</th>
+                      <th style="padding: 10px;">Universidade / Curso</th>
+                      <th style="padding: 10px;">Código Referral</th>
+                      <th style="padding: 10px;">Indicado Por</th>
+                      <th style="padding: 10px;">Plano</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-enas-registrations-tbody">
+                    <tr><td colspan="8" style="padding: 20px; text-align: center; color: var(--text-secondary);">A carregar inscrições...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -2225,10 +2417,29 @@
     </div>
   </div>
 
-  <!-- Floating WhatsApp & Support Button -->
-  <a href="https://wa.me/258849517984?text=Ol%C3%A1%20Vilhete%20Solutions!%20Preciso%20de%20ajuda%20com%20o%20ExamePronto." target="_blank" rel="noopener noreferrer" id="floating-whatsapp-btn" style="position: fixed; bottom: 25px; right: 25px; background: #25D366; color: white; padding: 12px 18px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4); text-decoration: none; z-index: 9998; transition: transform 0.2s ease;">
-    <span>💬 WhatsApp Ajuda</span>
+  <!-- Floating WhatsApp & Support Button (World-Class Responsive FAB) -->
+  <a href="https://wa.me/258849517984?text=Ol%C3%A1%20Vilhete%20Solutions!%20Preciso%20de%20ajuda%20com%20o%20ExamePronto." target="_blank" rel="noopener noreferrer" id="floating-whatsapp-btn" class="floating-whatsapp-fab" title="Suporte Oficial WhatsApp Vilhete Solutions">
+    <span>💬</span> <span>WhatsApp Ajuda</span>
   </a>
+
+  <!-- Modal: Cartaz Oficial de Lançamento ENAS 2026 -->
+  <div class="modal-overlay" id="enas-poster-modal" style="display: none;">
+    <div class="modal-card" style="max-width: 600px; text-align: center; position: relative;">
+      <button class="modal-close-btn" id="btn-close-enas-poster">&times;</button>
+      <div style="margin-bottom: 12px;">
+        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #d97706; font-weight: 800;">MATERIAL OFICIAL DE DIVULGAÇÃO</span>
+        <h3 style="margin: 8px 0 4px 0; color: var(--primary);">🏆 Cartaz Oficial: 1º Simulado Nacional ENAS</h3>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Partilha nos grupos da tua turma para atingir o Quorum de Lucro!</p>
+      </div>
+      <div style="border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.25); margin-bottom: 15px; border: 1px solid var(--border-color);">
+        <img src="/images/enas_cartaz_oficial.jpg" alt="Cartaz Oficial ENAS 2026" style="width: 100%; height: auto; display: block;" onerror="this.src='/enas_cartaz_oficial_1791041345169.jpg'">
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn btn-sm btn-primary" id="btn-share-poster-wa">📲 Partilhar no WhatsApp com Texto Viral</button>
+        <button class="btn btn-sm btn-outline" id="btn-copy-viral-copy">📋 Copiar Texto de Divulgação</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast Notification Container -->
   <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>

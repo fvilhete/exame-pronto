@@ -263,9 +263,44 @@ pool.query(`
     recommendations TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
+
+  -- Pilar 2: Configurações do ENAS e Quorum de Lucro do Administrador
+  CREATE TABLE IF NOT EXISTS enas_config (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
+    title VARCHAR(255) DEFAULT 'ENAS 2026: Exame Nacional Aberto e Simulado',
+    edition VARCHAR(255) DEFAULT 'Edição Oficial de Abertura',
+    scheduled_date TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '14 days'),
+    min_quorum INTEGER DEFAULT 150,
+    monthly_plan_price NUMERIC DEFAULT 119.0,
+    prize_first NUMERIC DEFAULT 5000.0,
+    prize_second NUMERIC DEFAULT 3000.0,
+    prize_third NUMERIC DEFAULT 1000.0,
+    status VARCHAR(50) DEFAULT 'scheduled',
+    notice_message VARCHAR(500) DEFAULT 'Inscrições abertas para todas as 11 províncias!',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  INSERT INTO enas_config (id, is_active, min_quorum, status)
+  VALUES (1, TRUE, 150, 'scheduled')
+  ON CONFLICT (id) DO NOTHING;
+
+  ALTER TABLE enas_registrations ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100);
+  ALTER TABLE enas_registrations ADD COLUMN IF NOT EXISTS referred_by VARCHAR(100);
+  ALTER TABLE enas_registrations ADD COLUMN IF NOT EXISTS is_paid_subscriber BOOLEAN DEFAULT FALSE;
+
+  -- Pilar 2: Rastreio de Cliques e Conversões de Links Virais de Indicação
+  CREATE TABLE IF NOT EXISTS referral_clicks (
+    id SERIAL PRIMARY KEY,
+    referrer_phone VARCHAR(50) NOT NULL,
+    referral_code VARCHAR(100),
+    visitor_ip VARCHAR(100),
+    converted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 `, (err) => {
   if (err) console.warn('⚠️ [Database] Aviso na migração de tabelas e colunas:', err.message);
-  else console.log('✅ [Database] Migrações globais (ENAS, B2B Escolas, Predictor, OMR e Fórum) verificadas com sucesso.');
+  else console.log('✅ [Database] Migrações globais (ENAS, Quorum, Referrals, B2B Escolas, Predictor, OMR e Fórum) verificadas com sucesso.');
 });
 
 console.log('Base de dados: Camada de compatibilidade Supabase/PostgreSQL inicializada.');

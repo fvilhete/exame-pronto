@@ -1587,62 +1587,152 @@ app.post('/api/whatsapp/simulate', (req, res) => {
 // --- PILAR 2: ENAS (EXAME NACIONAL ABERTO E SIMULADO EM TEMPO REAL) ---
 // =============================================================================
 app.get('/api/enas/current', (req, res) => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const lastDay = new Date(year, month + 1, 0);
-  const lastSunday = new Date(year, month + 1, 0);
-  lastSunday.setDate(lastDay.getDate() - lastDay.getDay());
-  lastSunday.setHours(9, 0, 0, 0);
-
-  db.get('SELECT count(*) as total FROM enas_registrations', [], (err, countRow) => {
-    const totalReg = (countRow ? countRow.total : 0) + 1420;
-
-    res.json({
+  db.get('SELECT * FROM enas_config WHERE id = 1', [], (cfgErr, configRow) => {
+    const config = configRow || {
+      id: 1,
+      is_active: true,
       title: "ENAS 2026: Exame Nacional Aberto e Simulado",
-      edition: "Edição Oficial de Setembro",
-      scheduledDate: lastSunday.toISOString(),
-      durationMinutes: 120,
-      totalQuestions: 50,
-      registeredCount: totalReg,
-      prizes: [
-        { position: "1º Lugar Nacional", prize: "5.000 MT via M-Pesa", badge: "🏆 Campeão Nacional" },
-        { position: "2º Lugar Nacional", prize: "3.000 MT via M-Pesa", badge: "🥈 Vice-Campeão" },
-        { position: "3º Lugar Nacional", prize: "1.000 MT via M-Pesa", badge: "🥉 Bronze Nacional" },
-        { position: "Melhor de Cada Província", prize: "Acesso Premium Anual + Certificado Nobre", badge: "🇲🇿 Destaque Provincial" }
-      ],
-      rules: [
-        "Início simultâneo em todas as 11 províncias de Moçambique",
-        "Monitoramento anti-fraude: deteção de alternância de abas",
-        "Classificação calculada pelo Algoritmo TRI 3PL (Teoria de Resposta ao Item)",
-        "Validação pública do resultado com QR Code no Boletim Nacional"
-      ]
+      edition: "Edição Oficial de Abertura",
+      scheduled_date: new Date(Date.now() + 14 * 86400000).toISOString(),
+      min_quorum: 150,
+      monthly_plan_price: 119.0,
+      prize_first: 5000.0,
+      prize_second: 3000.0,
+      prize_third: 1000.0,
+      status: "scheduled",
+      notice_message: "Inscrições abertas para todas as 11 províncias!"
+    };
+
+    db.get('SELECT count(*) as total FROM enas_registrations', [], (err, countRow) => {
+      const realReg = countRow ? parseInt(countRow.total) || 0 : 0;
+      const totalReg = realReg + 1420;
+
+      // Contagem de assinantes pagantes ativos para o Quorum de Lucro
+      db.get('SELECT count(*) as paid_total FROM users WHERE (premium_until > ? OR is_premium = true)', [Date.now()], (uErr, userRow) => {
+        const actualPaid = userRow ? parseInt(userRow.paid_total) || 0 : 0;
+        // Seed baseline dinâmico para lançamento inicial (118 assinantes base + reais)
+        const currentPaidSubscribers = Math.max(actualPaid, 118);
+        const minQuorum = parseInt(config.min_quorum) || 150;
+        const quorumMet = currentPaidSubscribers >= minQuorum;
+        const quorumPercentage = Math.min(100, Math.round((currentPaidSubscribers / minQuorum) * 100));
+
+        const prizeFirst = parseFloat(config.prize_first) || 5000;
+        const prizeSecond = parseFloat(config.prize_second) || 3000;
+        const prizeThird = parseFloat(config.prize_third) || 1000;
+        const totalPrizes = prizeFirst + prizeSecond + prizeThird;
+        const monthlyPrice = parseFloat(config.monthly_plan_price) || 119;
+        const projectedRevenue = currentPaidSubscribers * monthlyPrice;
+        const projectedProfit = projectedRevenue - totalPrizes;
+
+        res.json({
+          id: config.id || 1,
+          isActive: Boolean(config.is_active),
+          title: config.title || "ENAS 2026: Exame Nacional Aberto e Simulado",
+          edition: config.edition || "Edição Oficial de Abertura",
+          scheduledDate: config.scheduled_date || new Date(Date.now() + 14 * 86400000).toISOString(),
+          status: config.status || "scheduled",
+          noticeMessage: config.notice_message || "",
+          minQuorum,
+          currentPaidSubscribers,
+          quorumMet,
+          quorumPercentage,
+          financials: {
+            monthlyPlanPrice: monthlyPrice,
+            totalPrizes,
+            projectedRevenue,
+            projectedProfit,
+            marginPercent: Math.round((projectedProfit / projectedRevenue) * 100)
+          },
+          durationMinutes: 120,
+          totalQuestions: 50,
+          registeredCount: totalReg,
+          prizes: [
+            { position: "1º Lugar Nacional", prize: `${prizeFirst.toLocaleString()} MT via M-Pesa`, badge: "🏆 Campeão Nacional" },
+            { position: "2º Lugar Nacional", prize: `${prizeSecond.toLocaleString()} MT via M-Pesa`, badge: "🥈 Vice-Campeão" },
+            { position: "3º Lugar Nacional", prize: `${prizeThird.toLocaleString()} MT via M-Pesa`, badge: "🥉 Bronze Nacional" },
+            { position: "Melhor de Cada Província", prize: "Acesso Premium Anual + Certificado Nobre", badge: "🇲🇿 Destaque Provincial" }
+          ],
+          rules: [
+            "Início simultâneo em todas as 11 províncias de Moçambique",
+            "Monitoramento anti-fraude: deteção de alternância de abas",
+            "Classificação calculada pelo Algoritmo TRI 3PL (Teoria de Resposta ao Item)",
+            "Validação pública do resultado com QR Code no Boletim Nacional"
+          ]
+        });
+      });
     });
   });
 });
 
-app.post('/api/enas/register', authenticateToken, (req, res) => {
-  const { studentName, phone, province, targetUniversity, targetCourse } = req.body;
+app.post('/api/enas/register', (req, res) => {
+  const { studentName, phone, province, targetUniversity, targetCourse, referralCode, referredBy } = req.body;
   const name = studentName || (req.user ? 'Candidato ' + req.user.phone : 'Estudante Moçambicano');
   const userPhone = phone || (req.user ? req.user.phone : '+258840000000');
   const prov = province || (req.user ? req.user.province : 'Maputo Cidade');
   const uni = targetUniversity || 'UEM';
   const course = targetCourse || 'Medicina Geral';
   const userId = req.user ? req.user.id : null;
+  const myRefCode = referralCode || ('ref_' + userPhone.replace(/[^0-9]/g, '').slice(-8));
+  const sponsor = referredBy || null;
 
   db.run(
-    `INSERT INTO enas_registrations (user_id, student_name, phone, province, target_university, target_course, status) VALUES (?, ?, ?, ?, ?, ?, 'inscrito')`,
-    [userId, name, userPhone, prov, uni, course],
+    `INSERT INTO enas_registrations (user_id, student_name, phone, province, target_university, target_course, referral_code, referred_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'inscrito')`,
+    [userId, name, userPhone, prov, uni, course, myRefCode, sponsor],
     function(err) {
       if (err) return res.status(500).json({ error: 'Erro ao registar no ENAS: ' + err.message });
+      const regId = this.lastID;
+
+      // Se houver patrocinador, marcar conversão e creditar bónus
+      if (sponsor) {
+        db.run('UPDATE referral_clicks SET converted = TRUE WHERE referrer_phone = ? OR referral_code = ?', [sponsor, sponsor]);
+        db.run('UPDATE users SET referral_points = COALESCE(referral_points, 0) + 50 WHERE phone = ?', [sponsor]);
+      }
+
       res.status(201).json({
         success: true,
         message: 'Inscrição no ENAS confirmada com sucesso! Prepara-te para competir nacionalmente.',
-        registrationId: this.lastID,
+        registrationId: regId,
         studentName: name,
+        phone: userPhone,
         province: prov,
         university: uni,
-        course
+        course,
+        referralCode: myRefCode,
+        shareUrl: `https://examepronto.mz/#enas?ref=${encodeURIComponent(userPhone)}`
+      });
+    }
+  );
+});
+
+// Endpoint de Rastreio de Cliques em Link de Partilha
+app.post('/api/enas/referral-click', (req, res) => {
+  const { referrerPhone, referralCode } = req.body;
+  const ip = req.ip || req.headers['x-forwarded-for'] || '127.0.0.1';
+  if (!referrerPhone && !referralCode) return res.json({ tracked: false });
+
+  db.run(
+    'INSERT INTO referral_clicks (referrer_phone, referral_code, visitor_ip) VALUES (?, ?, ?)',
+    [referrerPhone || referralCode, referralCode || '', ip],
+    () => res.json({ tracked: true })
+  );
+});
+
+// Endpoint de Estatísticas de Indicação do Estudante
+app.get('/api/enas/referral-stats/:phone', (req, res) => {
+  const phone = req.params.phone;
+  if (!phone) return res.status(400).json({ error: 'Telefone obrigatório.' });
+
+  db.get(
+    'SELECT count(*) as invited_count FROM enas_registrations WHERE referred_by = ? OR referred_by = ?',
+    [phone, 'ref_' + phone.replace(/[^0-9]/g, '').slice(-8)],
+    (err, countRow) => {
+      const count = countRow ? parseInt(countRow.invited_count) || 0 : 0;
+      const bonusXp = count * 50;
+      res.json({
+        phone,
+        invitedCount: count,
+        bonusXp,
+        shareUrl: `https://examepronto.mz/#enas?ref=${encodeURIComponent(phone)}`
       });
     }
   );
@@ -2409,6 +2499,136 @@ app.post('/api/admin/ocr/process', requireAdmin, async (req, res) => {
   }
 });
 
+// 20. Painel Admin - Gestão Estratégica do ENAS & Quorum de Lucro
+app.get('/api/admin/enas/overview', requireAdmin, (req, res) => {
+  db.get('SELECT * FROM enas_config WHERE id = 1', [], (cfgErr, config) => {
+    const cfg = config || {
+      id: 1,
+      is_active: true,
+      title: "ENAS 2026: Exame Nacional Aberto e Simulado",
+      edition: "Edição Oficial de Abertura",
+      scheduled_date: new Date(Date.now() + 14 * 86400000).toISOString(),
+      min_quorum: 150,
+      monthly_plan_price: 119.0,
+      prize_first: 5000.0,
+      prize_second: 3000.0,
+      prize_third: 1000.0,
+      status: "scheduled",
+      notice_message: ""
+    };
+
+    db.get('SELECT count(*) as total_registered FROM enas_registrations', [], (regErr, regRow) => {
+      db.get('SELECT count(*) as paid_total FROM users WHERE (premium_until > ? OR is_premium = true)', [Date.now()], (uErr, userRow) => {
+        const actualPaid = userRow ? parseInt(userRow.paid_total) || 0 : 0;
+        const currentPaid = Math.max(actualPaid, 118);
+        const minQuorum = parseInt(cfg.min_quorum) || 150;
+        const totalPrizes = (parseFloat(cfg.prize_first) || 5000) + (parseFloat(cfg.prize_second) || 3000) + (parseFloat(cfg.prize_third) || 1000);
+        const price = parseFloat(cfg.monthly_plan_price) || 119;
+        const revenue = currentPaid * price;
+        const profit = revenue - totalPrizes;
+
+        res.json({
+          config: cfg,
+          totalRegistered: (regRow ? parseInt(regRow.total_registered) || 0 : 0) + 1420,
+          currentPaidSubscribers: currentPaid,
+          minQuorum,
+          quorumMet: currentPaid >= minQuorum,
+          quorumPercentage: Math.min(100, Math.round((currentPaid / minQuorum) * 100)),
+          financials: {
+            monthlyPlanPrice: price,
+            totalPrizes,
+            projectedRevenue: revenue,
+            projectedProfit: profit,
+            isProfitable: profit > 0
+          }
+        });
+      });
+    });
+  });
+});
+
+app.post('/api/admin/enas/config', requireAdmin, (req, res) => {
+  const {
+    is_active,
+    title,
+    edition,
+    scheduled_date,
+    min_quorum,
+    monthly_plan_price,
+    prize_first,
+    prize_second,
+    prize_third,
+    status,
+    notice_message
+  } = req.body;
+
+  const isActive = is_active !== undefined ? (is_active ? 1 : 0) : 1;
+  const statusVal = status || 'scheduled';
+  const minQ = parseInt(min_quorum) || 150;
+  const price = parseFloat(monthly_plan_price) || 119.0;
+  const p1 = parseFloat(prize_first) || 5000.0;
+  const p2 = parseFloat(prize_second) || 3000.0;
+  const p3 = parseFloat(prize_third) || 1000.0;
+  const tit = title || 'ENAS 2026: Exame Nacional Aberto e Simulado';
+  const edt = edition || 'Edição Oficial de Abertura';
+  const notMsg = notice_message !== undefined ? notice_message : '';
+  const schedDate = scheduled_date || new Date(Date.now() + 14 * 86400000).toISOString();
+
+  db.run(
+    `UPDATE enas_config SET 
+      is_active = ?, 
+      title = ?, 
+      edition = ?, 
+      scheduled_date = ?, 
+      min_quorum = ?, 
+      monthly_plan_price = ?, 
+      prize_first = ?, 
+      prize_second = ?, 
+      prize_third = ?, 
+      status = ?, 
+      notice_message = ?, 
+      updated_at = CURRENT_TIMESTAMP 
+    WHERE id = 1`,
+    [isActive, tit, edt, schedDate, minQ, price, p1, p2, p3, statusVal, notMsg],
+    function(err) {
+      if (err) return res.status(500).json({ error: 'Erro ao atualizar configurações do ENAS: ' + err.message });
+      res.json({ success: true, message: 'Configurações do ENAS atualizadas com sucesso!' });
+    }
+  );
+});
+
+app.post('/api/admin/enas/postpone', requireAdmin, (req, res) => {
+  const daysToAdd = parseInt(req.body.days) || 7;
+  db.get('SELECT scheduled_date FROM enas_config WHERE id = 1', [], (err, row) => {
+    let currentSched = row && row.scheduled_date ? new Date(row.scheduled_date) : new Date();
+    if (isNaN(currentSched.getTime()) || currentSched.getTime() < Date.now()) {
+      currentSched = new Date();
+    }
+    currentSched.setDate(currentSched.getDate() + daysToAdd);
+    const newDateStr = currentSched.toISOString();
+    const notice = `Prorrogação Oficial: Inscrições estendidas por mais ${daysToAdd} dias para adesão das escolas e cumprimento de quorum!`;
+
+    db.run(
+      'UPDATE enas_config SET scheduled_date = ?, status = ?, notice_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+      [newDateStr, 'postponed', notice],
+      function(uErr) {
+        if (uErr) return res.status(500).json({ error: 'Erro ao adiar ENAS: ' + uErr.message });
+        res.json({ success: true, newScheduledDate: newDateStr, message: `ENAS adiado com sucesso por ${daysToAdd} dias!` });
+      }
+    );
+  });
+});
+
+app.get('/api/admin/enas/registrations', requireAdmin, (req, res) => {
+  db.all(
+    'SELECT id, student_name, phone, province, target_university, target_course, referral_code, referred_by, is_paid_subscriber, status, created_at FROM enas_registrations ORDER BY id DESC LIMIT 100',
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Erro ao listar inscritos: ' + err.message });
+      res.json(rows || []);
+    }
+  );
+});
 
 // Exportar para a Vercel
 module.exports = app;

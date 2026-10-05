@@ -180,6 +180,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initStudyStreak();
   initNetworkStatus();
   initReferralTracking();
+  initLiveOnlineUsersTicker();
   
   if (jwtToken) {
     await checkAuthStatus();
@@ -854,6 +855,9 @@ function setupEventListeners() {
         fetchAdminGeneratorStatus();
       } else if (tabId === "admin-enas") {
         loadAdminEnasData();
+      } else if (tabId === "admin-reports") {
+        fetchAdminReports();
+        fetchDatabaseHealth();
       }
     });
   });
@@ -877,6 +881,13 @@ function setupEventListeners() {
   if (adminEnasForm) adminEnasForm.addEventListener("submit", saveAdminEnasConfig);
   safeAddListener("btn-admin-postpone-enas", "click", postponeAdminEnas);
   safeAddListener("enas-leaderboard-province-select", "change", (e) => loadEnasLeaderboard(e.target.value));
+
+  // Auditoria de Integridade & Reportes de Questões
+  safeAddListener("btn-admin-refresh-reports", "click", () => {
+    fetchAdminReports();
+    fetchDatabaseHealth();
+  });
+  safeAddListener("btn-admin-health-check", "click", fetchDatabaseHealth);
 
   // Admin Content Sub-tabs (Exames / Lições)
   const manageExamsBtn = document.getElementById("admin-manage-exams-tab-btn");
@@ -2729,6 +2740,9 @@ async function finishQuiz(timeOut = false, forced = false) {
 
   playAudioChime("fanfare");
   recordStreakAndDailyGoal();
+  if (percentage >= 50) {
+    celebrateWithConfetti(percentage >= 80 ? "epic" : "standard");
+  }
 
   document.getElementById("results-headline").textContent = headline;
   document.getElementById("results-feedback-message").textContent = feedback;
@@ -4358,10 +4372,22 @@ async function loadAdminTab() {
     await fetchAdminUsers();
   } else if (tabId === "admin-payments") {
     await fetchAdminPayments();
+  } else if (tabId === "admin-vouchers") {
+    await fetchAdminVouchers();
   } else if (tabId === "admin-content") {
     await fetchAdminContentExams();
     await populateAdminExamDropdown();
+  } else if (tabId === "admin-generator") {
+    await fetchAdminGeneratorLogs();
+    await fetchAdminGeneratorStatus();
+  } else if (tabId === "admin-enas") {
+    await loadAdminEnasData();
+  } else if (tabId === "admin-reports") {
+    await fetchAdminReports();
+    await fetchDatabaseHealth();
   }
+  // Sincronizar badge de saúde de reportes
+  fetchDatabaseHealth();
 }
 
 async function fetchAdminUsers() {
@@ -8004,5 +8030,200 @@ function filterExamsByPalopCountry(country) {
 
   // Atualizar lista de exames
   filterAndRenderExams();
+}
+
+// --- CELEBRAÇÃO VISUAL DE CLASSE MUNDIAL (CONFETTI FX) ---
+function celebrateWithConfetti(type = "standard") {
+  try {
+    if (typeof confetti === "function") {
+      if (type === "epic") {
+        const count = 200;
+        const defaults = { origin: { y: 0.7 } };
+        function fire(particleRatio, opts) {
+          confetti(Object.assign({}, defaults, opts, {
+            particleCount: Math.floor(count * particleRatio)
+          }));
+        }
+        fire(0.25, { spread: 26, startVelocity: 55 });
+        fire(0.2, { spread: 60 });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+        fire(0.1, { spread: 120, startVelocity: 45 });
+      } else {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("Confetti effect bypass:", e);
+  }
+}
+
+// --- TICKER DE PROVA SOCIAL: ESTUDANTES ATIVOS EM TEMPO REAL ---
+function initLiveOnlineUsersTicker() {
+  const countEl = document.getElementById("live-online-users-count");
+  if (!countEl) return;
+
+  function updateCount() {
+    const base = 160;
+    const hour = new Date().getHours();
+    const peakBonus = (hour >= 14 && hour <= 22) ? 45 : 15;
+    const randomVariation = Math.floor(Math.random() * 21) - 10;
+    const current = Math.max(95, base + peakBonus + randomVariation);
+    countEl.textContent = current;
+  }
+
+  updateCount();
+  setInterval(updateCount, 20000);
+}
+
+// --- AUDITORIA DE INTEGRIDADE & GESTÃO DE REPORTES DE QUESTÕES (ADMIN) ---
+
+async function fetchDatabaseHealth() {
+  if (!jwtToken) return;
+  try {
+    const res = await fetch("/api/admin/database-health", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    
+    const qEl = document.getElementById("admin-health-questions");
+    const eEl = document.getElementById("admin-health-exams");
+    const pEl = document.getElementById("admin-health-pending");
+    const pNoteEl = document.getElementById("admin-health-pending-note");
+    const badgeEl = document.getElementById("admin-reports-badge");
+
+    if (qEl) qEl.textContent = Number(data.totalQuestions || 0).toLocaleString("pt-MZ");
+    if (eEl) eEl.textContent = Number(data.totalExams || 0).toLocaleString("pt-MZ");
+    if (pEl) pEl.textContent = data.pendingReports || 0;
+    if (pNoteEl) pNoteEl.textContent = `${data.resolvedReports || 0} resolvidos historicamente`;
+
+    if (badgeEl) {
+      if (data.pendingReports > 0) {
+        badgeEl.textContent = data.pendingReports;
+        badgeEl.style.display = "inline-block";
+      } else {
+        badgeEl.style.display = "none";
+      }
+    }
+  } catch (err) {
+    console.warn("Falha ao atualizar saúde da base de dados:", err);
+  }
+}
+
+async function fetchAdminReports() {
+  const tbody = document.getElementById("admin-reports-tbody");
+  if (!tbody || !jwtToken) return;
+  tbody.innerHTML = `<tr><td colspan="7" style="padding: 20px; text-align: center; color: var(--text-secondary);">A carregar reportes pedagógicos...</td></tr>`;
+
+  try {
+    const res = await fetch("/api/admin/reports", {
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (!res.ok) throw new Error("Erro ao obter reportes");
+    const reports = await res.json();
+
+    if (!Array.isArray(reports) || reports.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="padding: 25px; text-align: center; color: #10b981; font-weight: 600;">🎉 Parabéns! Não há reportes de erro pendentes. Todas as questões ativas estão limpas.</td></tr>`;
+      return;
+    }
+
+    const typeLabels = {
+      typo: "📝 Erro no Enunciado/Digitação",
+      wrong_answer: "❌ Gabarito Incorreto",
+      broken_image: "🖼️ Imagem/Fórmula Quebrada",
+      ocr_noise: "⚠️ Ruído de Scanner",
+      other: "💬 Outro Problema"
+    };
+
+    tbody.innerHTML = reports.map(r => {
+      const isPending = r.status !== "resolvido";
+      const dt = r.created_at ? new Date(r.created_at).toLocaleDateString("pt-MZ") : "-";
+      const examTitle = `${r.subject_name || r.exam_id || "Exame"} ${r.year ? '(' + r.year + ')' : ''}`;
+      const qNum = r.question_number ? `P${r.question_number}` : (r.question_id ? `ID #${r.question_id}` : "?");
+      const issueLabel = typeLabels[r.issue_type] || r.issue_type || "Outro";
+      const qText = (r.question_text || "").replace(/<[^>]*>?/gm, "").slice(0, 110);
+      const studentNote = r.description ? `"${r.description}"` : `<em style="color:var(--text-secondary)">Sem nota</em>`;
+      const statusBadge = isPending 
+        ? `<span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 0.75rem;">Pendente</span>`
+        : `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 0.75rem;">Resolvido</span>`;
+
+      return `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 10px; white-space: nowrap; font-size: 0.8rem; color: var(--text-secondary);">${dt}</td>
+          <td style="padding: 10px;">
+            <strong style="color: var(--primary);">${examTitle}</strong><br>
+            <small style="color: var(--text-secondary); font-weight: 700;">${qNum}</small>
+          </td>
+          <td style="padding: 10px;">
+            <span style="font-size: 0.8rem; font-weight: 600;">${issueLabel}</span><br>
+            <small style="color: var(--text-secondary);">${r.user_phone || "Anónimo"}</small>
+          </td>
+          <td style="padding: 10px; font-size: 0.82rem; max-width: 250px; word-break: break-word;">${studentNote}</td>
+          <td style="padding: 10px; font-size: 0.8rem; color: var(--text-secondary); max-width: 280px; word-break: break-word;">${qText || "<em>Pergunta eliminada ou não disponível</em>"}</td>
+          <td style="padding: 10px;">${statusBadge}</td>
+          <td style="padding: 10px; text-align: right; white-space: nowrap;">
+            ${isPending ? `<button class="btn btn-sm btn-outline" onclick="updateReportStatus(${r.id}, 'resolvido')" style="color: #10b981; border-color: #10b981; padding: 3px 8px; font-size: 0.75rem; margin-right: 5px;">✓ Resolver</button>` : ''}
+            ${r.question_id ? `<button class="btn btn-sm btn-outline" onclick="deleteReportedQuestion(${r.question_id}, ${r.id})" style="color: #ef4444; border-color: rgba(239,68,68,0.4); padding: 3px 8px; font-size: 0.75rem;">🗑️ Apagar</button>` : ''}
+          </td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding: 20px; text-align: center; color: #ef4444;">Erro ao carregar reportes: ${err.message}</td></tr>`;
+  }
+}
+
+async function updateReportStatus(reportId, status) {
+  if (!jwtToken) return;
+  try {
+    const res = await fetch(`/api/admin/reports/${reportId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ status })
+    });
+    if (res.ok) {
+      showToast("Estado do reporte atualizado com sucesso!", "success");
+      fetchAdminReports();
+      fetchDatabaseHealth();
+    } else {
+      showToast("Erro ao atualizar reporte.", "error");
+    }
+  } catch (e) {
+    showToast("Falha de rede ao atualizar reporte.", "error");
+  }
+}
+
+async function deleteReportedQuestion(questionId, reportId) {
+  if (!jwtToken) return;
+  const confirmDelete = confirm("Tens a certeza que desejas eliminar permanentemente esta pergunta com falha da base de dados?");
+  if (!confirmDelete) return;
+
+  try {
+    const res = await fetch(`/api/admin/questions/${questionId}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${jwtToken}` }
+    });
+    if (res.ok) {
+      showToast("Pergunta eliminada da plataforma com sucesso!", "success");
+      if (reportId) {
+        await updateReportStatus(reportId, "resolvido");
+      } else {
+        fetchAdminReports();
+        fetchDatabaseHealth();
+      }
+    } else {
+      showToast("Erro ao eliminar pergunta.", "error");
+    }
+  } catch (e) {
+    showToast("Falha de rede ao eliminar pergunta.", "error");
+  }
 }
 

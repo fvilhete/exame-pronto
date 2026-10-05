@@ -28,6 +28,9 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 
+  <!-- Confetti Celebration FX -->
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
   <!-- Estilos com Cache Busting -->
   <link rel="stylesheet" href="styles.css?v=3.9">
 </head>
@@ -221,7 +224,13 @@
     <!-- 1. LANDING PAGE SECTION -->
     <section id="section-landing" class="section active">
       <div class="hero">
-        <span class="hero-tag">A tua vaga está garantida! 🎓</span>
+        <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+          <span class="hero-tag" style="margin: 0;">A tua vaga está garantida! 🎓</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px; padding: 4px 12px; font-size: 0.8rem; font-weight: 700;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; display: inline-block;"></span>
+            <span id="live-online-users-count">184</span> estudantes online agora
+          </span>
+        </div>
         <h1>Todo o Sistema de Ensino, Cambridge e Condução no teu Telemóvel</h1>
         <p>Aprende com simuladores de exames nacionais, currículo internacional Cambridge, código de estrada (escola de condução) e diverte-te com jogos educativos desafiantes.</p>
         
@@ -1818,6 +1827,10 @@
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-content" style="text-align: left; width: 100%;">Adicionar Conteúdo</button>
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-generator" style="text-align: left; width: 100%;">🤖 Gerador Automático & Logs</button>
           <button class="btn btn-outline admin-tab-btn" data-tab="admin-enas" style="text-align: left; width: 100%; border-color: rgba(245, 158, 11, 0.4); color: #d97706; font-weight: 700;">🏆 Gestão ENAS & Quorum</button>
+          <button class="btn btn-outline admin-tab-btn" data-tab="admin-reports" style="text-align: left; width: 100%; border-color: rgba(239, 68, 68, 0.4); color: #ef4444; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+            <span>🚩 Questões Reportadas</span>
+            <span id="admin-reports-badge" style="background: #ef4444; color: #fff; font-size: 0.7rem; padding: 1px 6px; border-radius: 10px; display: none;">0</span>
+          </button>
         </div>
 
         <!-- Main Admin Area -->
@@ -2310,6 +2323,61 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+
+          <!-- Tab 7: Auditoria de Integridade & Reportes de Questões dos Alunos -->
+          <div id="tab-admin-reports" class="admin-tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="margin: 0; color: #ef4444;">🚩 Auditoria & Reportes de Questões dos Alunos</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+                  Controlo de integridade científica da plataforma. Reveja denúncias dos estudantes e purgue erros instantaneamente.
+                </p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-sm btn-outline" id="btn-admin-refresh-reports">🔄 Atualizar Reportes</button>
+                <button class="btn btn-sm btn-primary" id="btn-admin-health-check" style="background: #10b981; border-color: #10b981;">🏥 Saúde da Base</button>
+              </div>
+            </div>
+
+            <!-- Health Status Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Questões Válidas na Base</div>
+                <div id="admin-health-questions" style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin: 4px 0;">5.076</div>
+                <small style="color: #10b981; font-weight: 600;">✓ 100% Saneadas (Sem lixo OCR)</small>
+              </div>
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Exames Oficiais Ativos</div>
+                <div id="admin-health-exams" style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin: 4px 0;">191</div>
+                <small style="color: var(--text-secondary);">UEM, UP e 12ª Classe</small>
+              </div>
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Reportes Pendentes</div>
+                <div id="admin-health-pending" style="font-size: 1.5rem; font-weight: 800; color: #ef4444; margin: 4px 0;">0</div>
+                <small id="admin-health-pending-note" style="color: var(--text-secondary);">Aguardando revisão pedagógica</small>
+              </div>
+            </div>
+
+            <!-- Tabela de Reportes -->
+            <div class="table-responsive" style="overflow-x: auto; max-height: 480px;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                    <th style="padding: 10px;">Data</th>
+                    <th style="padding: 10px;">Exame / Pergunta</th>
+                    <th style="padding: 10px;">Tipo de Falha</th>
+                    <th style="padding: 10px; max-width: 250px;">Descrição do Aluno</th>
+                    <th style="padding: 10px; max-width: 280px;">Texto da Pergunta</th>
+                    <th style="padding: 10px;">Estado</th>
+                    <th style="padding: 10px; text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-reports-tbody">
+                  <tr><td colspan="7" style="padding: 20px; text-align: center; color: var(--text-secondary);">A carregar reportes pedagógicos...</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

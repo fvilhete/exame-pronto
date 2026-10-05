@@ -1906,22 +1906,26 @@ async function startExam(examId, mode = 'exam') {
       return;
     }
 
-    currentQuiz.exam = exam;
-    currentQuiz.mode = mode; // 'exam' ou 'study'
-    currentQuiz.currentIndex = 0;
-    currentQuiz.answers = new Array(exam.questions.length).fill(null);
-    currentQuiz.skipped = new Array(exam.questions.length).fill(false);
-    currentQuiz.bookmarked = new Array(exam.questions.length).fill(false);
-    currentQuiz.elapsedStudySeconds = 0;
-    currentQuiz.timeRemaining = (exam.durationMinutes || exam.duration_minutes || 120) * 60;
-
-    renderQuestion();
-    startTimer();
-    showSection("quiz");
+    launchQuizSession(exam, mode);
 
   } catch (e) {
     alert("Erro de conexão ao servidor de exames.");
   }
+}
+
+function launchQuizSession(exam, mode = 'exam') {
+  currentQuiz.exam = exam;
+  currentQuiz.mode = mode; // 'exam' ou 'study'
+  currentQuiz.currentIndex = 0;
+  currentQuiz.answers = new Array(exam.questions.length).fill(null);
+  currentQuiz.skipped = new Array(exam.questions.length).fill(false);
+  currentQuiz.bookmarked = new Array(exam.questions.length).fill(false);
+  currentQuiz.elapsedStudySeconds = 0;
+  currentQuiz.timeRemaining = (exam.durationMinutes || exam.duration_minutes || 120) * 60;
+
+  renderQuestion();
+  startTimer();
+  showSection("quiz");
 }
 
 function startTimer() {
@@ -2746,6 +2750,19 @@ async function finishQuiz(timeOut = false, forced = false) {
 
   document.getElementById("results-headline").textContent = headline;
   document.getElementById("results-feedback-message").textContent = feedback;
+
+  // Gerar Diagnóstico Inteligente de Fraquezas & Opção de Mini-Treino Focado
+  const missedList = [];
+  for (let i = 0; i < totalQuestions; i++) {
+    const isCorrect = (currentQuiz.answers && currentQuiz.answers[i] && currentQuiz.answers[i].isCorrect) ? true : false;
+    if (!isCorrect && currentQuiz.exam.questions[i]) {
+      missedList.push({
+        index: i,
+        question: currentQuiz.exam.questions[i]
+      });
+    }
+  }
+  renderWeaknessDiagnostic(currentQuiz.exam, missedList);
 
   showSection("results");
   await fetchUserProgress();
@@ -8225,5 +8242,109 @@ async function deleteReportedQuestion(questionId, reportId) {
   } catch (e) {
     showToast("Falha de rede ao eliminar pergunta.", "error");
   }
+}
+
+// --- DIAGNÓSTICO INTELIGENTE DE FRAQUEZAS & MINI-TREINO FOCADO ---
+
+let lastMissedQuestionsForRemedial = [];
+
+function renderWeaknessDiagnostic(exam, missedList) {
+  const container = document.getElementById("results-weakness-diagnostic");
+  const countBadge = document.getElementById("diagnostic-missed-count-badge");
+  const summaryText = document.getElementById("diagnostic-summary-text");
+  const topicsContainer = document.getElementById("diagnostic-topics-container");
+  const remedialBtn = document.getElementById("btn-start-remedial-training");
+
+  if (!container || !topicsContainer) return;
+
+  lastMissedQuestionsForRemedial = missedList.map(m => m.question);
+
+  if (missedList.length === 0) {
+    container.style.display = "block";
+    if (countBadge) {
+      countBadge.textContent = "100% Acerto";
+      countBadge.style.background = "rgba(16, 185, 129, 0.15)";
+      countBadge.style.color = "#10b981";
+    }
+    if (summaryText) {
+      summaryText.textContent = "Excelente! Dominaste todas as questões deste exame oficial com perfeição!";
+    }
+    topicsContainer.innerHTML = `
+      <div style="padding: 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; color: #065f46; font-size: 0.85rem;">
+        🌟 <strong>Proficiência Máxima Atingida:</strong> O teu nível de preparação neste conteúdo está ao nível dos melhores candidatos admitidos na UEM e UP.
+      </div>
+    `;
+    if (remedialBtn) remedialBtn.style.display = "none";
+    return;
+  }
+
+  container.style.display = "block";
+  if (countBadge) {
+    countBadge.textContent = `${missedList.length} Dúvidas a Sanar`;
+    countBadge.style.background = "rgba(239, 68, 68, 0.15)";
+    countBadge.style.color = "#ef4444";
+  }
+  if (summaryText) {
+    summaryText.innerHTML = `Erraste <strong>${missedList.length}</strong> de <strong>${exam.questions.length}</strong> perguntas. Transforma estes pontos fracos em nota máxima antes do exame real:`;
+  }
+  if (remedialBtn) {
+    remedialBtn.style.display = "flex";
+    remedialBtn.innerHTML = `⚡ Iniciar Mini-Treino de Reforço (${missedList.length} Questões de Dúvida)`;
+    remedialBtn.onclick = () => startRemedialTrainingSession(exam, lastMissedQuestionsForRemedial);
+  }
+
+  // Agrupar por tópicos estimados com heurística pedagógica
+  const topicMap = {};
+  missedList.forEach(item => {
+    const text = (item.question.text || '').toLowerCase();
+    let topic = "Conceitos Gerais & Análise de Dados";
+    if (/tri[aâ]ngulo|seno|cosseno|tangente|trigonom|graus|radianos/i.test(text)) topic = "Trigonometria & Relações Métricas";
+    else if (/fun[cç][aã]o|gr[aá]fico|par[aá]bola|dom[ií]nio|v[eé]rtice|f\(x\)/i.test(text)) topic = "Funções & Álgebra";
+    else if (/limite|derivada|integral/i.test(text)) topic = "Cálculo & Limites";
+    else if (/probabilidade|combina[cç]|arranjo/i.test(text)) topic = "Probabilidade & Análise Combinatória";
+    else if (/cinem[aá]tica|velocidade|acelera[cç][aã]o|trajet[oó]ria/i.test(text)) topic = "Cinemática & Movimento";
+    else if (/for[cç]a|newton|atrito|gravidade|massa/i.test(text)) topic = "Dinâmica & Leis de Newton";
+    else if (/calor|temperatura|termodin|press[aã]o|g[aá]s/i.test(text)) topic = "Termodinâmica & Gases";
+    else if (/onda|frequ[eê]ncia|espectro|luz|refra[cç]|[oó]ptica/i.test(text)) topic = "Ondulatória & Óptica";
+    else if (/corrente|tens[aã]o|resistor|ohm|circuito|campo/i.test(text)) topic = "Eletromagnetismo & Circuitos";
+    else if (/qu[ií]mica org[aâ]nica|carbono|cadeia|hidrocarboneto/i.test(text)) topic = "Química Orgânica";
+    else if (/mol|massa molar|estequiometr|concentra[cç]/i.test(text)) topic = "Estequiometria & Soluções";
+    else if (/c[eé]lula|dna|rna|gen[eé]tica|mitose|meiose/i.test(text)) topic = "Biologia Celular & Genética";
+    else if (/ora[cç][aã]o|sujeito|predicado|conjun[cç][aã]o|sintaxe/i.test(text)) topic = "Gramática, Sintaxe & Coesão";
+    else if (/texto|autor|sentido|met[aá]fora|cr[oó]nica/i.test(text)) topic = "Interpretação e Literatura";
+
+    if (!topicMap[topic]) topicMap[topic] = [];
+    topicMap[topic].push(item.question.number || (item.index + 1));
+  });
+
+  topicsContainer.innerHTML = Object.entries(topicMap).map(([topic, qNums]) => {
+    return `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.82rem;">
+        <span style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+          <span style="color: #ef4444;">•</span> ${topic}
+        </span>
+        <span style="color: var(--text-secondary); font-size: 0.75rem; background: var(--bg-primary); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color);">
+          Perguntas: ${qNums.join(', ')}
+        </span>
+      </div>
+    `;
+  }).join("");
+}
+
+function startRemedialTrainingSession(originalExam, questionsToPractice) {
+  if (!questionsToPractice || questionsToPractice.length === 0) return;
+
+  const remedialExam = {
+    id: `${originalExam.id}_remedial_${Date.now()}`,
+    subject_name: `${originalExam.subject_name} (Reforço Focado)`,
+    level_name: originalExam.level_name,
+    year: originalExam.year,
+    duration_minutes: Math.max(10, questionsToPractice.length * 3),
+    questions: questionsToPractice,
+    isRemedial: true
+  };
+
+  showToast(`🚀 A iniciar Mini-Treino com ${questionsToPractice.length} questões de dúvida!`, "success");
+  launchQuizSession(remedialExam, "study");
 }
 

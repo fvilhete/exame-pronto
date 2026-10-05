@@ -1676,25 +1676,33 @@
           </div>
         </div>
 
-        <!-- Diagnóstico Pedagógico de Fraquezas & Mini-Treino Focado (Khan Academy / UWorld Style) -->
-        <div id="results-weakness-diagnostic" style="margin: 20px 0; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; text-align: left; display: none;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-            <div style="font-weight: 700; color: var(--primary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
-              🎯 Diagnóstico Pedagógico de Fraquezas
-            </div>
-            <span id="diagnostic-missed-count-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">
-              0 Dúvidas
+        <!-- Diagnóstico de Competências & Plano de Ação Imediato (Padrão Khan Academy / UWorld) -->
+        <div id="results-diagnostic-card" style="margin: 20px 0; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+              🎯 Diagnóstico Pedagógico & Plano de Ação
+            </h4>
+            <span id="results-diagnostic-badge" style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #d97706;">
+              Recuperação Ativa
             </span>
           </div>
-          <p id="diagnostic-summary-text" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
-            Analisámos os teus erros para acelerar a tua aprovação na UEM/UP.
+
+          <p id="results-diagnostic-summary" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.5;">
+            Analisámos as tuas respostas para identificar com precisão onde podes ganhar mais pontos no exame real.
           </p>
-          <div id="diagnostic-topics-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
-            <!-- Itens de tópicos com erros gerados dinamicamente -->
+
+          <div id="results-weakness-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+            <!-- Itens de fraquezas e erros gerados dinamicamente -->
           </div>
-          <button type="button" class="btn btn-primary" id="btn-start-remedial-training" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);">
-            ⚡ Fazer Mini-Treino de Reforço (Apenas Questões Erradas)
-          </button>
+
+          <div id="results-remedial-box" style="padding-top: 12px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 0.85rem; color: var(--text-secondary); max-width: 380px;">
+              💡 <strong>Regra de Ouro:</strong> Praticar imediatamente as questões erradas fixa o raciocínio e evita repetir o mesmo erro na prova real.
+            </div>
+            <button class="btn btn-sm btn-primary" id="btn-remedial-practice" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; font-weight: 700; padding: 8px 16px; border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+              ⚡ Fazer Treino Focado (Recuperar Questões Erradas)
+            </button>
+          </div>
         </div>
 
         <p id="results-feedback-message" style="font-weight: 600; margin-bottom: 25px;">Feedback.</p>

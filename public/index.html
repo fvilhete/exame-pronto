@@ -59,6 +59,10 @@
           <span>🏆</span> ENAS Nacional <span class="nav-pulse-badge">AO VIVO</span>
         </button>
 
+        <button class="nav-tab-btn nav-menu-item uem-edital-tab" data-target="predictor" style="border: 1px solid rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08); color: #d97706; font-weight: 700;">
+          <span>🎯</span> Guia UEM & Vagas <span class="nav-pulse-badge" style="background: #ef4444;">EDITAL</span>
+        </button>
+
         <button class="nav-tab-btn nav-menu-item" data-target="games">
           <span>🎮</span> Jogos & Ligas
         </button>
@@ -317,7 +321,40 @@
       <div class="dashboard-grid">
         <!-- Main Column: Select Level & Exams -->
         <div class="main-column">
-          <!-- Seletor de País / Expansão PALOP -->
+          <!-- BANNER OFICIAL: EDITAL UEM 2026/2027 (CAMPANHA & PROPAGANDA DE LANÇAMENTO) -->
+          <div class="uem-edital-alert-banner" style="margin-bottom: 20px; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%); border: 1px solid rgba(245, 158, 11, 0.45); border-radius: var(--radius-lg); padding: 22px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(30, 27, 75, 0.35);">
+            <div style="position: absolute; right: -15px; top: -15px; font-size: 7.5rem; opacity: 0.08; pointer-events: none; font-weight: 900; line-height: 1;">UEM</div>
+            <div style="display: flex; gap: 16px; align-items: flex-start; position: relative; z-index: 2; flex-wrap: wrap;">
+              <div style="background: rgba(245, 158, 11, 0.25); border: 2px solid #f59e0b; border-radius: 12px; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                📢
+              </div>
+              <div style="flex: 1; min-width: 260px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                  <span class="badge" style="background: #ef4444; color: white; font-weight: 800; font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;">
+                    🚨 EDITAL UEM 2026/2027 PUBLICADO
+                  </span>
+                  <span style="font-size: 0.8rem; color: #fde047; font-weight: 600;">Candidaturas Abertas</span>
+                </div>
+                <h3 style="margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 800; color: #ffffff; line-height: 1.25;">
+                  Vais concorrer à UEM? Descobre as disciplinas, pesos e vagas do teu curso!
+                </h3>
+                <p style="margin: 0 0 14px 0; font-size: 0.88rem; color: #c7d2fe; line-height: 1.45; max-width: 720px;">
+                  A UEM publicou as regras oficiais de acesso. Simula a tua <strong>Média Ponderada Oficial</strong> com base nas duas provas do teu curso e prepara-te com as <strong>7.994 questões oficiais com resolução comentada</strong> do ExamePronto.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                  <button type="button" class="btn btn-sm btn-accent" id="btn-open-uem-guide-banner" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #111827; font-weight: 800; padding: 10px 18px; border-radius: var(--radius-md); border: none; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); display: flex; align-items: center; gap: 8px;">
+                    <span>🎯</span> Simular Média & Ver Cursos UEM
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline" id="btn-quick-study-mozskills" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.3); font-weight: 700; padding: 10px 16px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 6px;">
+                    <span>💡</span> Ver 74 Provas Resolvidas UEM
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline" id="btn-banner-enas-cta" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.5); font-weight: 700; padding: 10px 16px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 6px;">
+                    <span>🏆</span> 1º Simulado ENAS (5.000 MT)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="palop-country-selector-wrap" style="margin-bottom: 18px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px;">
             <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
               🌍 Selecionar País / Currículo PALOP:
@@ -1218,116 +1255,260 @@
       </div>
     </section>
 
-    <!-- SEÇÃO: CALOIRO PREDICTOR IA (PROBABILIDADE DE ADMISSÃO UEM / UP) -->
+    <!-- SEÇÃO: GUIA OFICIAL DE CURSOS & CALCULADORA DE ADMISSÃO UEM (EDITAL 2026/2027) -->
     <section id="section-predictor" class="section">
-      <div class="dashboard-header">
+      <div class="dashboard-header" style="margin-bottom: 20px;">
         <div class="user-welcome">
-          <h2>Caloiro Predictor IA 🎯</h2>
-          <p>Descobre as tuas probabilidades reais de admissão nos cursos mais concorridos da UEM, UP, UniZambeze, UniLúrio e UCM com base no teu score TRI.</p>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 25px;" class="predictor-grid-layout">
-        <!-- Coluna Esquerda: Seletor de Curso & Cálculo -->
-        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--card-shadow); height: fit-content;">
-          <h4 style="margin: 0 0 14px 0; font-size: 1.1rem; color: var(--primary);">⚙️ Parâmetros da Candidatura</h4>
-          
-          <div style="display: flex; flex-direction: column; gap: 14px;">
-            <div>
-              <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 5px;">Universidade Desejada:</label>
-              <select id="pred-select-university" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem; font-weight: 600;">
-                <option value="UEM">Universidade Eduardo Mondlane (UEM)</option>
-                <option value="UP">Universidade Pedagógica (UP - Maputo/Delegações)</option>
-                <option value="UniZambeze">Universidade Zambeze (UniZambeze)</option>
-                <option value="UniLúrio">Universidade Lúrio (UniLúrio - Nampula/C. Delgado)</option>
-                <option value="UCM">Universidade Católica de Moçambique (UCM)</option>
-              </select>
-            </div>
-
-            <div>
-              <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 5px;">Curso Alvo:</label>
-              <select id="pred-select-course" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem; font-weight: 600;">
-                <!-- Carregado dinamicamente -->
-              </select>
-            </div>
-
-            <div>
-              <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 5px;">Tua Província de Candidatura:</label>
-              <select id="pred-select-province" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem;">
-                <option value="Maputo Cidade">Maputo Cidade</option>
-                <option value="Maputo Província">Maputo Província</option>
-                <option value="Gaza">Gaza</option>
-                <option value="Inhambane">Inhambane</option>
-                <option value="Sofala">Sofala</option>
-                <option value="Manica">Manica</option>
-                <option value="Tete">Tete</option>
-                <option value="Zambézia">Zambézia</option>
-                <option value="Nampula">Nampula</option>
-                <option value="Cabo Delgado">Cabo Delgado</option>
-                <option value="Niassa">Niassa</option>
-              </select>
-            </div>
-
-            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px;">
-                <span style="font-weight: 600;">Score TRI Atual na Plataforma:</span>
-                <span id="pred-display-tri" style="font-weight: 800; color: #8b5cf6;">650 pts</span>
-              </div>
-              <div style="font-size: 0.72rem; color: var(--text-secondary);">Calculado com base nas resoluções e simulados já feitos por ti.</div>
-            </div>
-
-            <button type="button" class="btn btn-primary" id="btn-run-caloiro-predictor" style="font-weight: 800; padding: 12px; font-size: 0.95rem; background: linear-gradient(135deg, #4f46e5, #7c3aed);">
-              🔮 Simular Probabilidade de Admissão
-            </button>
-          </div>
-        </div>
-
-        <!-- Coluna Direita: Termómetro Visual de Admissão & Prescrição Pedagógica -->
-        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--card-shadow);" id="predictor-results-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-            <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">📊 Diagnóstico Preditivo de Admissão</h4>
-            <span class="badge" id="pred-badge-status" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; padding: 5px 12px; border-radius: 20px;">
-              Carregando Análise...
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #d97706; font-weight: 800; font-size: 0.75rem; padding: 3px 10px; border-radius: 20px;">
+              📢 EDITAL UEM 2026/2027
             </span>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Guia Oficial de Acesso ao Ensino Superior</span>
+          </div>
+          <h2>Guia de Cursos & Simulador de Média Ponderada UEM 🎯</h2>
+          <p>Descobre as 2 provas obrigatórias do teu curso, a ponderação oficial (ex: 60% e 40%), o número de vagas e calcula a tua probabilidade real de admissão.</p>
+        </div>
+      </div>
+
+      <!-- Abas Internas: Calculadora vs Catálogo de Cursos -->
+      <div style="display: flex; gap: 10px; margin-bottom: 22px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-sm btn-primary active" id="btn-tab-uem-calc" style="border-radius: 20px; font-weight: 700; padding: 8px 18px;">
+          🧮 Calculadora de Média Ponderada
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" id="btn-tab-uem-catalog" style="border-radius: 20px; font-weight: 700; padding: 8px 18px;">
+          📚 Tabela de Todos os Cursos & Vagas UEM
+        </button>
+      </div>
+
+      <!-- PAINEL 1: CALCULADORA DE MÉDIA PONDERADA UEM -->
+      <div id="panel-uem-calc">
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px;" class="predictor-grid-layout">
+          
+          <!-- Coluna Esquerda: Seletor de Curso & Sliders de Nota -->
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--card-shadow); height: fit-content;">
+            <h4 style="margin: 0 0 14px 0; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+              <span>🎓</span> Selecionar Universidade & Curso
+            </h4>
+            
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 5px;">Universidade:</label>
+                <select id="pred-select-university" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem; font-weight: 600;">
+                  <option value="UEM" selected>Universidade Eduardo Mondlane (UEM)</option>
+                  <option value="UP">Universidade Pedagógica (UP)</option>
+                  <option value="UniZambeze">Universidade Zambeze (UniZambeze)</option>
+                  <option value="UniLúrio">Universidade Lúrio (UniLúrio)</option>
+                  <option value="UCM">Universidade Católica de Moçambique (UCM)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 5px;">Curso Alvo (Edital 2026/2027):</label>
+                <select id="pred-select-course" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem; font-weight: 700;">
+                  <!-- Carregado via JS -->
+                </select>
+              </div>
+
+              <!-- Cartão de Detalhes Oficiais do Curso -->
+              <div id="uem-course-meta-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span id="meta-faculty-name" style="font-size: 0.78rem; font-weight: 700; color: var(--primary);">Faculdade de Medicina</span>
+                  <span id="meta-regime-badge" class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-size: 0.72rem; padding: 2px 8px;">Laboral</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.78rem; margin-bottom: 10px;">
+                  <div>
+                    <span style="color: var(--text-secondary);">👥 Vagas Oficiais:</span>
+                    <strong id="meta-vagas-count" style="display: block; font-size: 0.9rem; color: var(--text-primary);">120 vagas</strong>
+                  </div>
+                  <div>
+                    <span style="color: var(--text-secondary);">📋 Requisito 12ª:</span>
+                    <strong id="meta-group-req" style="display: block; font-size: 0.85rem; color: var(--text-primary);">Grupo B</strong>
+                  </div>
+                </div>
+                <div style="background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.4); border-radius: 6px; padding: 8px; font-size: 0.78rem;">
+                  <span style="font-weight: 700; color: #d97706;">⚖️ Fórmula Oficial de Ponderação:</span>
+                  <div id="meta-formula-text" style="font-weight: 600; margin-top: 2px; color: var(--text-primary);">
+                    Biologia (60%) + Química (40%)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sliders Interativos de Nota (0 a 20 valores) -->
+              <div style="border-top: 1px solid var(--border-color); padding-top: 14px;">
+                <div style="font-size: 0.85rem; font-weight: 800; margin-bottom: 12px; color: var(--text-primary);">
+                  ✍️ Simula as tuas Notas nas 2 Provas (0 a 20):
+                </div>
+
+                <!-- Prova 1 -->
+                <div style="margin-bottom: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label id="label-exam1-name" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">
+                      Prova 1: Biologia (Peso 60%)
+                    </label>
+                    <span id="display-grade1-val" style="font-size: 1.05rem; font-weight: 800; color: #4f46e5;">15.0</span>
+                  </div>
+                  <input type="range" id="slider-grade1" min="0" max="20" step="0.5" value="15.0" style="width: 100%; accent-color: #4f46e5; cursor: pointer;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary);">
+                    <span>0 val</span>
+                    <span>10 (Mínimo)</span>
+                    <span>20 val</span>
+                  </div>
+                </div>
+
+                <!-- Prova 2 -->
+                <div style="margin-bottom: 10px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label id="label-exam2-name" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">
+                      Prova 2: Química (Peso 40%)
+                    </label>
+                    <span id="display-grade2-val" style="font-size: 1.05rem; font-weight: 800; color: #059669;">14.0</span>
+                  </div>
+                  <input type="range" id="slider-grade2" min="0" max="20" step="0.5" value="14.0" style="width: 100%; accent-color: #059669; cursor: pointer;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary);">
+                    <span>0 val</span>
+                    <span>10 (Mínimo)</span>
+                    <span>20 val</span>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-primary" id="btn-run-caloiro-predictor" style="font-weight: 800; padding: 12px; font-size: 0.95rem; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none;">
+                🔮 Calcular Média & Diagnóstico UEM
+              </button>
+            </div>
           </div>
 
-          <!-- Gauge / Barra de Probabilidade -->
-          <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px; text-align: center;">
-            <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 8px;">
-              Probabilidade Estimada de Admissão
+          <!-- Coluna Direita: Termómetro de Admissão, Diagnóstico & Campanha de Conversão -->
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--card-shadow);" id="predictor-results-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+              <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">📊 Diagnóstico de Admissão UEM</h4>
+              <span class="badge" id="pred-badge-status" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; padding: 5px 12px; border-radius: 20px;">
+                Cálculo em Tempo Real
+              </span>
             </div>
-            <div id="pred-prob-percent" style="font-size: 3rem; font-weight: 900; color: var(--primary); line-height: 1;">--%</div>
-            <div style="width: 100%; height: 14px; background: rgba(0,0,0,0.1); border-radius: 10px; margin: 15px 0 10px 0; overflow: hidden; position: relative;">
-              <div id="pred-prob-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%); transition: width 0.8s ease;"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
-              <span>0% (Risco Alto)</span>
-              <span>50% (Competitivo)</span>
-              <span>100% (Vaga Garantida)</span>
-            </div>
-          </div>
 
-          <!-- Comparativo Teu Score vs Nota de Corte -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
-              <div style="font-size: 0.75rem; color: var(--text-secondary);">Nota de Corte Histórica</div>
-              <div id="pred-cutoff-score" style="font-size: 1.4rem; font-weight: 800; color: #dc2626;">-- pts</div>
-            </div>
-            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
-              <div style="font-size: 0.75rem; color: var(--text-secondary);">Diferença para a Vaga</div>
-              <div id="pred-gap-score" style="font-size: 1.4rem; font-weight: 800; color: #059669;">-- pts</div>
-            </div>
-          </div>
+            <!-- Média Ponderada UEM Calculada -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; margin-bottom: 18px; text-align: center;">
+              <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">
+                Tua Média Ponderada Oficial UEM
+              </div>
+              <div id="pred-calculated-grade" style="font-size: 3.2rem; font-weight: 900; color: #4f46e5; line-height: 1;">
+                14.6
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+                escala moçambicana de 0 a 20 valores
+              </div>
 
-          <!-- Prescrição de Estudo de 30 Dias (Khan / Coursera Style) -->
-          <div>
-            <h5 style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--primary);">📋 Plano de Ação Prescritivo de 30 Dias:</h5>
-            <div id="pred-action-plan" style="display: flex; flex-direction: column; gap: 8px;">
-              <!-- Preenchido via IA / API -->
+              <!-- Barra / Gauge de Probabilidade -->
+              <div style="margin-top: 15px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px;">
+                  <span>Probabilidade Estimada de Vaga:</span>
+                  <span id="pred-prob-percent" style="color: #059669;">88%</span>
+                </div>
+                <div style="width: 100%; height: 14px; background: rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden;">
+                  <div id="pred-prob-bar" style="width: 88%; height: 100%; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%); transition: width 0.4s ease;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px;">
+                  <span>0% (Risco)</span>
+                  <span>50% (Competitivo)</span>
+                  <span>100% (Garantida)</span>
+                </div>
+              </div>
             </div>
+
+            <!-- Comparativo Média vs Nota de Corte -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Nota de Corte UEM Estimada</div>
+                <div id="pred-cutoff-score" style="font-size: 1.4rem; font-weight: 800; color: #dc2626;">15.6 val</div>
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">candidatos por vaga: <strong id="pred-cands-per-place">28</strong></div>
+              </div>
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Diferença para a Nota de Corte</div>
+                <div id="pred-gap-score" style="font-size: 1.4rem; font-weight: 800; color: #059669;">-1.0 val</div>
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">em relação à nota mínima</div>
+              </div>
+            </div>
+
+            <!-- Recomendações Estratégicas -->
+            <div style="margin-bottom: 20px;">
+              <h5 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--primary);">📋 Diagnóstico Estratégico do Teu Curso:</h5>
+              <div id="pred-action-plan" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+                <!-- Preenchido dinamicamente -->
+              </div>
+            </div>
+
+            <!-- SUPER PROPAGANDA & CONVERSÃO COMERCIAL EXAMEPRONTO -->
+            <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%); border: 1px solid rgba(79, 70, 229, 0.25); border-radius: var(--radius-md); padding: 16px;">
+              <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                🚀 Como Garantir a Tua Vaga na UEM no ExamePronto:
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0 0 12px 0; line-height: 1.4;">
+                Mais de 80% dos candidatos admitidos na UEM resolveram pelo menos 15 exames oficiais dos anos anteriores. Não vás à prova sem conhecer as armadilhas!
+              </p>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-sm btn-primary" id="btn-pred-practice-course" style="flex: 1; min-width: 170px; background: #4f46e5;">
+                  📖 Resolver Provas Deste Curso
+                </button>
+                <button type="button" class="btn btn-sm btn-accent" id="btn-pred-upgrade-premium" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #111827; font-weight: 800;">
+                  ⭐ Plano Mensal (119 MT)
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" id="btn-pred-enas-register" style="border-color: #10b981; color: #059669; font-weight: 700;">
+                  🏆 1º Simulado ENAS
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
+
+      <!-- PAINEL 2: CATÁLOGO DE TODOS OS CURSOS & VAGAS UEM (TABELA EDITAL 2026/2027) -->
+      <div id="panel-uem-catalog" style="display: none;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--card-shadow);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h4 style="margin: 0 0 4px 0; font-size: 1.2rem; color: var(--text-primary);">🏛️ Tabela Oficial de Cursos, Vagas & Pesos da UEM</h4>
+              <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">Pesquise o seu curso ou filtre por faculdade para ver as disciplinas de exame e calcular a sua nota.</p>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <input type="text" id="catalog-courses-search" placeholder="🔍 Pesquisar curso (ex: Medicina, Direito, Informática)..." class="chat-input" style="padding: 9px 14px; font-size: 0.88rem; min-width: 260px;">
+              <select id="catalog-faculty-filter" class="lesson-select" style="padding: 9px 12px; font-size: 0.88rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
+                <option value="all">Todas as Faculdades</option>
+                <option value="Medicina">Medicina & Saúde</option>
+                <option value="Engenharia">Engenharias</option>
+                <option value="Direito">Direito</option>
+                <option value="Economia">Economia & Gestão</option>
+                <option value="Ciências">Ciências Naturais & Computação</option>
+                <option value="Letras">Letras & Ciências Sociais</option>
+                <option value="Arquitetura">Arquitetura</option>
+                <option value="Educação">Educação & Psicologia</option>
+                <option value="Veterinária">Veterinária & Agronomia</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive" style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); background: var(--bg-primary);">
+                  <th style="padding: 12px;">Curso</th>
+                  <th style="padding: 12px;">Faculdade</th>
+                  <th style="padding: 12px;">Exame 1 (Peso)</th>
+                  <th style="padding: 12px;">Exame 2 (Peso)</th>
+                  <th style="padding: 12px;">Vagas</th>
+                  <th style="padding: 12px;">Nota Corte</th>
+                  <th style="padding: 12px; text-align: right;">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="uem-courses-table-tbody">
+                <!-- Preenchido dinamicamente via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </section>
 
     <!-- SEÇÃO: PORTAL B2B ESCOLAS & CENTROS PREPARATÓRIOS (SAAS) -->

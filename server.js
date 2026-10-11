@@ -1878,31 +1878,650 @@ app.post('/api/school/batch-omr', authenticateToken, (req, res) => {
 // =============================================================================
 // --- PILAR 4: CALOIRO PREDICTOR IA (NOTAS DE CORTE & PROBABILIDADE DE ADMISSÃO) ---
 // =============================================================================
+// --- PILAR 4: CALOIRO PREDICTOR IA & GUIA DE CURSOS UEM (EDITAL 2026/2027) ---
+// =============================================================================
 const HISTORICAL_CUTOFFS = [
-  { university: "UEM", course: "Medicina Geral", cutoff: 15.6, triCutoff: 780, difficulty: "Extrema", places: 120, candidatesPerPlace: 28 },
-  { university: "UEM", course: "Engenharia Informática", cutoff: 14.2, triCutoff: 720, difficulty: "Alta", places: 90, candidatesPerPlace: 19 },
-  { university: "UEM", course: "Direito", cutoff: 14.8, triCutoff: 745, difficulty: "Muito Alta", places: 150, candidatesPerPlace: 24 },
-  { university: "UEM", course: "Economia e Gestão", cutoff: 13.5, triCutoff: 680, difficulty: "Média-Alta", places: 140, candidatesPerPlace: 16 },
-  { university: "UEM", course: "Engenharia Civil", cutoff: 13.8, triCutoff: 695, difficulty: "Alta", places: 80, candidatesPerPlace: 15 },
-  { university: "UEM", course: "Arquitetura e Planeamento Físico", cutoff: 14.0, triCutoff: 710, difficulty: "Alta", places: 50, candidatesPerPlace: 18 },
-  { university: "UP", course: "Língua Portuguesa e Literatura", cutoff: 11.5, triCutoff: 580, difficulty: "Moderada", places: 120, candidatesPerPlace: 9 },
-  { university: "UP", course: "Matemática", cutoff: 11.0, triCutoff: 550, difficulty: "Moderada", places: 100, candidatesPerPlace: 8 },
-  { university: "UP", course: "Física", cutoff: 10.8, triCutoff: 540, difficulty: "Moderada", places: 90, candidatesPerPlace: 7 },
-  { university: "UniZambeze", course: "Medicina", cutoff: 14.5, triCutoff: 730, difficulty: "Alta", places: 60, candidatesPerPlace: 20 },
-  { university: "UniLúrio", course: "Medicina Geral", cutoff: 14.8, triCutoff: 740, difficulty: "Alta", places: 70, candidatesPerPlace: 22 },
-  { university: "UCM", course: "Medicina (Beira)", cutoff: 14.0, triCutoff: 700, difficulty: "Alta", places: 80, candidatesPerPlace: 14 }
+  // --- UEM: FACULDADE DE MEDICINA ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Medicina",
+    course: "Medicina Geral",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Química",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Biologia/Química)",
+    cutoff: 15.6,
+    triCutoff: 780,
+    difficulty: "Extrema",
+    places: 120,
+    candidatesPerPlace: 28,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Medicina",
+    course: "Medicina Dentária",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Química",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Biologia/Química)",
+    cutoff: 14.8,
+    triCutoff: 745,
+    difficulty: "Muito Alta",
+    places: 40,
+    candidatesPerPlace: 22,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Medicina",
+    course: "Farmácia",
+    exam1: "Química",
+    weight1: 60,
+    exam2: "Biologia",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Química/Biologia)",
+    cutoff: 14.5,
+    triCutoff: 730,
+    difficulty: "Alta",
+    places: 50,
+    candidatesPerPlace: 19,
+    regime: "Laboral",
+    subjectSlug1: "quimica",
+    subjectSlug2: "biologia"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Medicina",
+    course: "Enfermagem Geral",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Química",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Biologia/Química)",
+    cutoff: 13.8,
+    triCutoff: 690,
+    difficulty: "Alta",
+    places: 60,
+    candidatesPerPlace: 16,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  },
+
+  // --- UEM: FACULDADE DE ENGENHARIA ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Engenharia",
+    course: "Engenharia Informática",
+    exam1: "Matemática",
+    weight1: 60,
+    exam2: "Física",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Matemática/Física)",
+    cutoff: 14.2,
+    triCutoff: 720,
+    difficulty: "Alta",
+    places: 90,
+    candidatesPerPlace: 21,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "fisica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Engenharia",
+    course: "Engenharia Civil",
+    exam1: "Matemática",
+    weight1: 60,
+    exam2: "Física",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Matemática/Física)",
+    cutoff: 13.8,
+    triCutoff: 695,
+    difficulty: "Alta",
+    places: 80,
+    candidatesPerPlace: 17,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "fisica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Engenharia",
+    course: "Engenharia Electrotécnica",
+    exam1: "Matemática",
+    weight1: 60,
+    exam2: "Física",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Matemática/Física)",
+    cutoff: 13.6,
+    triCutoff: 685,
+    difficulty: "Alta",
+    places: 75,
+    candidatesPerPlace: 15,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "fisica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Engenharia",
+    course: "Engenharia Mecânica",
+    exam1: "Matemática",
+    weight1: 60,
+    exam2: "Física",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Matemática/Física)",
+    cutoff: 13.4,
+    triCutoff: 675,
+    difficulty: "Média-Alta",
+    places: 70,
+    candidatesPerPlace: 14,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "fisica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Engenharia",
+    course: "Engenharia Química",
+    exam1: "Química",
+    weight1: 60,
+    exam2: "Matemática",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Química/Matemática)",
+    cutoff: 13.5,
+    triCutoff: 680,
+    difficulty: "Alta",
+    places: 60,
+    candidatesPerPlace: 15,
+    regime: "Laboral",
+    subjectSlug1: "quimica",
+    subjectSlug2: "matematica"
+  },
+
+  // --- UEM: FACULDADE DE DIREITO ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Direito",
+    course: "Direito (Laboral)",
+    exam1: "Português",
+    weight1: 60,
+    exam2: "História",
+    weight2: 40,
+    group12: "Grupo A (Letras e Ciências Sociais)",
+    cutoff: 14.8,
+    triCutoff: 745,
+    difficulty: "Muito Alta",
+    places: 150,
+    candidatesPerPlace: 25,
+    regime: "Laboral",
+    subjectSlug1: "portugues",
+    subjectSlug2: "historia"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Direito",
+    course: "Direito (Pós-Laboral)",
+    exam1: "Português",
+    weight1: 60,
+    exam2: "História",
+    weight2: 40,
+    group12: "Grupo A (Letras e Ciências Sociais)",
+    cutoff: 13.6,
+    triCutoff: 685,
+    difficulty: "Alta",
+    places: 120,
+    candidatesPerPlace: 18,
+    regime: "Pós-Laboral",
+    subjectSlug1: "portugues",
+    subjectSlug2: "historia"
+  },
+
+  // --- UEM: FACULDADE DE ECONOMIA ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Economia",
+    course: "Economia",
+    exam1: "Matemática",
+    weight1: 50,
+    exam2: "Português",
+    weight2: 50,
+    group12: "Grupo A ou B (Com Matemática)",
+    cutoff: 13.8,
+    triCutoff: 690,
+    difficulty: "Alta",
+    places: 140,
+    candidatesPerPlace: 18,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "portugues"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Economia",
+    course: "Gestão de Empresas",
+    exam1: "Matemática",
+    weight1: 50,
+    exam2: "Português",
+    weight2: 50,
+    group12: "Grupo A ou B (Com Matemática)",
+    cutoff: 13.5,
+    triCutoff: 680,
+    difficulty: "Média-Alta",
+    places: 160,
+    candidatesPerPlace: 17,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "portugues"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Economia",
+    course: "Contabilidade e Finanças",
+    exam1: "Matemática",
+    weight1: 50,
+    exam2: "Português",
+    weight2: 50,
+    group12: "Grupo A ou B (Com Matemática)",
+    cutoff: 13.2,
+    triCutoff: 665,
+    difficulty: "Média-Alta",
+    places: 150,
+    candidatesPerPlace: 16,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "portugues"
+  },
+
+  // --- UEM: FACULDADE DE CIÊNCIAS ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Ciências",
+    course: "Ciência da Computação / Informática",
+    exam1: "Matemática",
+    weight1: 60,
+    exam2: "Física",
+    weight2: 40,
+    group12: "Grupo B (Ciências com Matemática)",
+    cutoff: 13.9,
+    triCutoff: 700,
+    difficulty: "Alta",
+    places: 80,
+    candidatesPerPlace: 18,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "fisica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Ciências",
+    course: "Biologia e Saúde",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Química",
+    weight2: 40,
+    group12: "Grupo B (Ciências)",
+    cutoff: 13.2,
+    triCutoff: 665,
+    difficulty: "Moderada",
+    places: 70,
+    candidatesPerPlace: 13,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Ciências",
+    course: "Química Aplicada",
+    exam1: "Química",
+    weight1: 60,
+    exam2: "Física",
+    weight2: 40,
+    group12: "Grupo B (Ciências)",
+    cutoff: 12.5,
+    triCutoff: 630,
+    difficulty: "Moderada",
+    places: 60,
+    candidatesPerPlace: 11,
+    regime: "Laboral",
+    subjectSlug1: "quimica",
+    subjectSlug2: "fisica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Ciências",
+    course: "Geologia",
+    exam1: "Física",
+    weight1: 50,
+    exam2: "Química",
+    weight2: 50,
+    group12: "Grupo B (Ciências)",
+    cutoff: 12.4,
+    triCutoff: 625,
+    difficulty: "Moderada",
+    places: 60,
+    candidatesPerPlace: 10,
+    regime: "Laboral",
+    subjectSlug1: "fisica",
+    subjectSlug2: "quimica"
+  },
+
+  // --- UEM: FACULDADE DE ARQUITETURA E PLANEAMENTO FÍSICO ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Arquitetura",
+    course: "Arquitetura e Planeamento Físico",
+    exam1: "Matemática",
+    weight1: 50,
+    exam2: "Desenho",
+    weight2: 50,
+    group12: "Grupo B ou Técnico de Construção",
+    cutoff: 14.0,
+    triCutoff: 710,
+    difficulty: "Alta",
+    places: 50,
+    candidatesPerPlace: 19,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "desenho"
+  },
+
+  // --- UEM: FACULDADE DE LETRAS E CIÊNCIAS SOCIAIS ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Letras e Ciências Sociais",
+    course: "Relações Internacionais",
+    exam1: "Português",
+    weight1: 60,
+    exam2: "História",
+    weight2: 40,
+    group12: "Grupo A (Letras)",
+    cutoff: 14.6,
+    triCutoff: 735,
+    difficulty: "Muito Alta",
+    places: 80,
+    candidatesPerPlace: 23,
+    regime: "Laboral",
+    subjectSlug1: "portugues",
+    subjectSlug2: "historia"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Letras e Ciências Sociais",
+    course: "Ciência Política",
+    exam1: "Português",
+    weight1: 60,
+    exam2: "História",
+    weight2: 40,
+    group12: "Grupo A (Letras)",
+    cutoff: 13.5,
+    triCutoff: 680,
+    difficulty: "Média-Alta",
+    places: 70,
+    candidatesPerPlace: 16,
+    regime: "Laboral",
+    subjectSlug1: "portugues",
+    subjectSlug2: "historia"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Letras e Ciências Sociais",
+    course: "Sociologia",
+    exam1: "Português",
+    weight1: 60,
+    exam2: "História",
+    weight2: 40,
+    group12: "Grupo A (Letras)",
+    cutoff: 12.8,
+    triCutoff: 645,
+    difficulty: "Moderada",
+    places: 80,
+    candidatesPerPlace: 13,
+    regime: "Laboral",
+    subjectSlug1: "portugues",
+    subjectSlug2: "historia"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Letras e Ciências Sociais",
+    course: "Tradução e Interpretação",
+    exam1: "Português",
+    weight1: 50,
+    exam2: "Inglês",
+    weight2: 50,
+    group12: "Grupo A (Letras)",
+    cutoff: 13.2,
+    triCutoff: 665,
+    difficulty: "Média-Alta",
+    places: 60,
+    candidatesPerPlace: 14,
+    regime: "Laboral",
+    subjectSlug1: "portugues",
+    subjectSlug2: "ingles"
+  },
+
+  // --- UEM: FACULDADE DE EDUCAÇÃO ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Educação",
+    course: "Psicologia Clínica",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Português",
+    weight2: 40,
+    group12: "Grupo A ou B",
+    cutoff: 14.1,
+    triCutoff: 710,
+    difficulty: "Alta",
+    places: 60,
+    candidatesPerPlace: 19,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "portugues"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Educação",
+    course: "Psicologia Escolar",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Português",
+    weight2: 40,
+    group12: "Grupo A ou B",
+    cutoff: 13.5,
+    triCutoff: 680,
+    difficulty: "Média-Alta",
+    places: 60,
+    candidatesPerPlace: 15,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "portugues"
+  },
+
+  // --- UEM: VETERINÁRIA & AGRONOMIA ---
+  {
+    university: "UEM",
+    faculty: "Faculdade de Veterinária",
+    course: "Medicina Veterinária",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Química",
+    weight2: 40,
+    group12: "Grupo B (Ciências)",
+    cutoff: 13.6,
+    triCutoff: 685,
+    difficulty: "Alta",
+    places: 50,
+    candidatesPerPlace: 15,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  },
+  {
+    university: "UEM",
+    faculty: "Faculdade de Agronomia",
+    course: "Engenharia Agronómica",
+    exam1: "Biologia",
+    weight1: 50,
+    exam2: "Química",
+    weight2: 50,
+    group12: "Grupo B (Ciências)",
+    cutoff: 12.6,
+    triCutoff: 635,
+    difficulty: "Moderada",
+    places: 70,
+    candidatesPerPlace: 11,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  },
+
+  // --- UP, UNIZAMBEZE & UNILÚRIO ---
+  {
+    university: "UP",
+    faculty: "Faculdade de Ciências da Linguagem",
+    course: "Língua Portuguesa e Literatura",
+    exam1: "Português",
+    weight1: 60,
+    exam2: "História",
+    weight2: 40,
+    group12: "Grupo A (Letras)",
+    cutoff: 11.5,
+    triCutoff: 580,
+    difficulty: "Moderada",
+    places: 120,
+    candidatesPerPlace: 9,
+    regime: "Laboral",
+    subjectSlug1: "portugues",
+    subjectSlug2: "historia"
+  },
+  {
+    university: "UP",
+    faculty: "Faculdade de Ciências Naturais",
+    course: "Matemática",
+    exam1: "Matemática",
+    weight1: 60,
+    exam2: "Física",
+    weight2: 40,
+    group12: "Grupo B (Ciências)",
+    cutoff: 11.0,
+    triCutoff: 550,
+    difficulty: "Moderada",
+    places: 100,
+    candidatesPerPlace: 8,
+    regime: "Laboral",
+    subjectSlug1: "matematica",
+    subjectSlug2: "fisica"
+  },
+  {
+    university: "UP",
+    faculty: "Faculdade de Ciências Naturais",
+    course: "Física",
+    exam1: "Física",
+    weight1: 60,
+    exam2: "Matemática",
+    weight2: 40,
+    group12: "Grupo B (Ciências)",
+    cutoff: 10.8,
+    triCutoff: 540,
+    difficulty: "Moderada",
+    places: 90,
+    candidatesPerPlace: 7,
+    regime: "Laboral",
+    subjectSlug1: "fisica",
+    subjectSlug2: "matematica"
+  },
+  {
+    university: "UniZambeze",
+    faculty: "Faculdade de Ciências de Saúde",
+    course: "Medicina",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Química",
+    weight2: 40,
+    group12: "Grupo B (Ciências)",
+    cutoff: 14.5,
+    triCutoff: 730,
+    difficulty: "Alta",
+    places: 60,
+    candidatesPerPlace: 20,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  },
+  {
+    university: "UniLúrio",
+    faculty: "Faculdade de Ciências de Saúde",
+    course: "Medicina Geral",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Química",
+    weight2: 40,
+    group12: "Grupo B (Ciências)",
+    cutoff: 14.8,
+    triCutoff: 740,
+    difficulty: "Alta",
+    places: 70,
+    candidatesPerPlace: 22,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  },
+  {
+    university: "UCM",
+    faculty: "Faculdade de Ciências de Saúde (Beira)",
+    course: "Medicina (Beira)",
+    exam1: "Biologia",
+    weight1: 60,
+    exam2: "Química",
+    weight2: 40,
+    group12: "Grupo B (Ciências)",
+    cutoff: 14.0,
+    triCutoff: 700,
+    difficulty: "Alta",
+    places: 80,
+    candidatesPerPlace: 14,
+    regime: "Laboral",
+    subjectSlug1: "biologia",
+    subjectSlug2: "quimica"
+  }
 ];
 
 app.get('/api/predictor/courses', (req, res) => {
   res.json(HISTORICAL_CUTOFFS);
 });
 
-app.post('/api/predictor/calculate', authenticateToken, (req, res) => {
-  const { university, course, studentGrade } = req.body;
-  const grade = parseFloat(studentGrade) || 13.5;
-  const target = HISTORICAL_CUTOFFS.find(c => c.university === university && c.course === course) || HISTORICAL_CUTOFFS[0];
+// Endpoint público para simulador de média e probabilidade UEM
+app.post('/api/predictor/calculate', (req, res) => {
+  const { university, course, studentGrade, grade1, grade2 } = req.body;
+  const targetUniv = university || "UEM";
+  const target = HISTORICAL_CUTOFFS.find(c => 
+    c.university.toLowerCase() === targetUniv.toLowerCase() && 
+    c.course.toLowerCase() === (course || "").toLowerCase()
+  ) || HISTORICAL_CUTOFFS[0];
 
-  const diff = grade - target.cutoff;
+  let calculatedGrade = 13.5;
+
+  if (grade1 !== undefined && grade2 !== undefined) {
+    const g1 = Math.max(0, Math.min(20, parseFloat(grade1) || 0));
+    const g2 = Math.max(0, Math.min(20, parseFloat(grade2) || 0));
+    const w1 = target.weight1 || 50;
+    const w2 = target.weight2 || 50;
+    calculatedGrade = Math.round(((g1 * (w1 / 100)) + (g2 * (w2 / 100))) * 10) / 10;
+  } else if (studentGrade !== undefined) {
+    calculatedGrade = Math.max(0, Math.min(20, parseFloat(studentGrade) || 13.5));
+  }
+
+  const diff = Math.round((calculatedGrade - target.cutoff) * 10) / 10;
   let probability = 50;
 
   if (diff >= 2.0) probability = 96;
@@ -1922,24 +2541,39 @@ app.post('/api/predictor/calculate', authenticateToken, (req, res) => {
     statusColor = "#ef4444";
   }
 
+  const gap = Math.max(0, Math.round((target.cutoff - calculatedGrade) * 10) / 10);
   const recommendations = [
-    `Faltam aproximadamente ${(Math.max(0, target.cutoff - grade)).toFixed(1)} valores para atingir a zona de segurança da ${target.university}.`,
-    "Intensifica o Treino Cirúrgico IA nas duas competências com menor percentil TRI.",
-    "Resolve pelo menos 4 simulados cronometrados completos deste exame nas próximas 2 semanas.",
-    "Inscreve-te no próximo Simulado Nacional Aberto (ENAS) para testar a tua posição real frente à concorrência."
+    gap > 0 
+      ? `Faltam aproximadamente ${gap} valores na média ponderada para atingir a zona segura da ${target.university}.`
+      : `Parabéns! A tua média de ${calculatedGrade} valores está acima da nota de corte (${target.cutoff}) da ${target.university}.`,
+    `A prova de ${target.exam1} tem peso decisivo de ${target.weight1}% na tua classificação final.`,
+    `Pratica agora com os exames oficiais resolvidos de ${target.exam1} e ${target.exam2} no ExamePronto.`,
+    `Participa no 1º Simulado Nacional Aberto (ENAS) para testares o teu ranking real antes dos exames oficiais da UEM.`
   ];
 
   res.json({
     university: target.university,
+    faculty: target.faculty,
     course: target.course,
-    studentGrade: grade,
+    exam1: target.exam1,
+    weight1: target.weight1,
+    exam2: target.exam2,
+    weight2: target.weight2,
+    group12: target.group12,
+    places: target.places,
+    regime: target.regime,
+    studentGrade: calculatedGrade,
     cutoffGrade: target.cutoff,
     difficulty: target.difficulty,
     candidatesPerPlace: target.candidatesPerPlace,
     probabilityPercent: probability,
     statusLabel,
     statusColor,
-    recommendations
+    recommendations,
+    practiceLinks: {
+      subject1: target.subjectSlug1,
+      subject2: target.subjectSlug2
+    }
   });
 });
 

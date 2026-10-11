@@ -710,9 +710,67 @@ function setupEventListeners() {
     loadEnasLeaderboard(e.target.value);
   });
 
-  // Versão 9.5: Caloiro Predictor IA
+  // Versão 9.5: Caloiro Predictor IA & Guia UEM
   safeAddListener("btn-run-caloiro-predictor", "click", calculateCaloiroProbability);
   safeAddListener("pred-select-university", "change", updatePredictorCoursesDropdown);
+  safeAddListener("pred-select-course", "change", onPredictorCourseChanged);
+
+  // Banner Oficial Edital UEM (Propaganda & Navegação)
+  safeAddListener("btn-open-uem-guide-banner", "click", () => {
+    showSection("predictor");
+    activateMenuTab("predictor");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  safeAddListener("btn-quick-study-mozskills", "click", () => {
+    activeLevel = "superior";
+    activeSubject = "mozskills";
+    showSection("dashboard");
+    activateMenuTab("dashboard");
+    renderUniversityAndYearFilters();
+    filterAndRenderExams();
+  });
+  safeAddListener("btn-banner-enas-cta", "click", () => {
+    showSection("enas");
+    activateMenuTab("enas");
+  });
+
+  // Abas do Guia UEM (Calculadora vs Catálogo Completo)
+  safeAddListener("btn-tab-uem-calc", "click", () => switchUemGuideTab("calc"));
+  safeAddListener("btn-tab-uem-catalog", "click", () => switchUemGuideTab("catalog"));
+
+  // Sliders de Nota Ponderada UEM
+  const sGrade1 = document.getElementById("slider-grade1");
+  const sGrade2 = document.getElementById("slider-grade2");
+  if (sGrade1) {
+    sGrade1.addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value).toFixed(1);
+      const disp = document.getElementById("display-grade1-val");
+      if (disp) disp.textContent = val;
+      calculateCaloiroProbability();
+    });
+  }
+  if (sGrade2) {
+    sGrade2.addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value).toFixed(1);
+      const disp = document.getElementById("display-grade2-val");
+      if (disp) disp.textContent = val;
+      calculateCaloiroProbability();
+    });
+  }
+
+  // Ações de Conversão do Guia UEM
+  safeAddListener("btn-pred-practice-course", "click", handlePracticeCurrentCourse);
+  safeAddListener("btn-pred-upgrade-premium", "click", () => selectPlan("mensal"));
+  safeAddListener("btn-pred-enas-register", "click", () => {
+    showSection("enas");
+    activateMenuTab("enas");
+  });
+
+  // Filtro e Busca no Catálogo de Cursos UEM
+  const catSearch = document.getElementById("catalog-courses-search");
+  const catFilter = document.getElementById("catalog-faculty-filter");
+  if (catSearch) catSearch.addEventListener("input", renderUemCoursesTable);
+  if (catFilter) catFilter.addEventListener("change", renderUemCoursesTable);
 
   // Versão 9.5: Portal B2B Escolas & Centros Preparatórios
   safeAddListener("school-class-select", "change", () => loadSchoolDashboard());
@@ -7800,7 +7858,7 @@ function viewLaunchDossier() {
   window.open("/docs/plano_lancamento_enas_e_financiamento.md", "_blank");
 }
 
-// --- PILAR 4: CALOIRO PREDICTOR IA ---
+// --- PILAR 4: CALOIRO PREDICTOR IA & GUIA OFICIAL DE CURSOS UEM ---
 async function loadPredictorData() {
   try {
     const res = await fetch("/api/predictor/courses");
@@ -7808,14 +7866,8 @@ async function loadPredictorData() {
     if (data) {
       predictorCoursesCache = Array.isArray(data) ? data : (data.courses || []);
       updatePredictorCoursesDropdown();
+      renderUemCoursesTable();
     }
-
-    // Carregar TRI score atual do aluno
-    const triDisplay = document.getElementById("pred-display-tri");
-    const triVal = (userProfile && userProfile.tri_score) ? userProfile.tri_score : 650;
-    if (triDisplay) triDisplay.textContent = `${triVal} pts`;
-
-    calculateCaloiroProbability();
   } catch (e) {
     console.error("Erro ao carregar dados do Predictor:", e);
   }
@@ -7826,21 +7878,58 @@ function updatePredictorCoursesDropdown() {
   const courseSelect = document.getElementById("pred-select-course");
   if (!uniSelect || !courseSelect) return;
 
-  const selUni = uniSelect.value;
+  const selUni = uniSelect.value || "UEM";
   const filtered = predictorCoursesCache.filter(c => (c.university || "").toLowerCase() === selUni.toLowerCase());
-
   const list = filtered.length > 0 ? filtered : predictorCoursesCache;
 
-  courseSelect.innerHTML = list.map((c, idx) => {
+  courseSelect.innerHTML = list.map((c) => {
     const cName = c.course || c.course_name;
-    const cutoff = c.cutoff || c.cutoff_grade || 14.0;
-    const tri = c.triCutoff || c.min_tri_cutoff || 700;
+    const cutoff = c.cutoff || 14.0;
     return `
-      <option value="${cName}" data-uni="${c.university}">
-        ${escapeHtml(cName)} (Corte: ${cutoff} val / ${tri} pts)
+      <option value="${escapeHtml(cName)}" data-uni="${c.university}">
+        ${escapeHtml(cName)} (${c.faculty ? c.faculty + ' - ' : ''}Corte: ${cutoff} val)
       </option>
     `;
   }).join("");
+
+  onPredictorCourseChanged();
+}
+
+function onPredictorCourseChanged() {
+  const uniSelect = document.getElementById("pred-select-university");
+  const courseSelect = document.getElementById("pred-select-course");
+  if (!courseSelect) return;
+
+  const selUni = uniSelect ? uniSelect.value : "UEM";
+  const selCourse = courseSelect.value;
+
+  const course = predictorCoursesCache.find(c => 
+    (c.university || "").toLowerCase() === selUni.toLowerCase() &&
+    (c.course || "").toLowerCase() === (selCourse || "").toLowerCase()
+  ) || predictorCoursesCache.find(c => (c.university || "").toLowerCase() === selUni.toLowerCase()) || predictorCoursesCache[0];
+
+  if (!course) return;
+
+  // Atualizar Card de Detalhes Oficiais
+  const facEl = document.getElementById("meta-faculty-name");
+  const regEl = document.getElementById("meta-regime-badge");
+  const vagasEl = document.getElementById("meta-vagas-count");
+  const reqEl = document.getElementById("meta-group-req");
+  const formEl = document.getElementById("meta-formula-text");
+
+  if (facEl) facEl.textContent = course.faculty || "UEM";
+  if (regEl) regEl.textContent = course.regime || "Laboral";
+  if (vagasEl) vagasEl.textContent = `${course.places || 100} vagas`;
+  if (reqEl) reqEl.textContent = course.group12 || "12ª Classe Concluída";
+  if (formEl) formEl.textContent = `${course.exam1} (${course.weight1}%) + ${course.exam2} (${course.weight2}%)`;
+
+  // Atualizar Labels das Provas nos Sliders
+  const lExam1 = document.getElementById("label-exam1-name");
+  const lExam2 = document.getElementById("label-exam2-name");
+  if (lExam1) lExam1.textContent = `Prova 1: ${course.exam1} (Peso ${course.weight1}%)`;
+  if (lExam2) lExam2.textContent = `Prova 2: ${course.exam2} (Peso ${course.weight2}%)`;
+
+  calculateCaloiroProbability();
 }
 
 async function calculateCaloiroProbability() {
@@ -7850,86 +7939,218 @@ async function calculateCaloiroProbability() {
 
   const selUni = uniSelect ? uniSelect.value : "UEM";
   const selCourse = courseSelect.value || "Medicina Geral";
-  const userTri = (userProfile && userProfile.tri_score) ? userProfile.tri_score : 650;
-  const approxGrade = Math.round((userTri / 1000) * 20 * 10) / 10;
+
+  const s1 = document.getElementById("slider-grade1");
+  const s2 = document.getElementById("slider-grade2");
+  const grade1 = s1 ? parseFloat(s1.value) : 15.0;
+  const grade2 = s2 ? parseFloat(s2.value) : 14.0;
 
   try {
     const res = await fetch("/api/predictor/calculate", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": jwtToken ? `Bearer ${jwtToken}` : ""
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         university: selUni,
         course: selCourse,
-        studentGrade: approxGrade,
-        userTriScore: userTri
+        grade1: grade1,
+        grade2: grade2
       })
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+    if (!res.ok) throw new Error(data.error || "Erro no cálculo");
 
-    const prob = data.probabilityPercent !== undefined ? data.probabilityPercent : (data.probability || 65);
-    const cutoff = data.cutoffGrade || data.cutoff || 14.5;
-    const diffVal = Math.round((approxGrade - cutoff) * 10) / 10;
+    const prob = data.probabilityPercent !== undefined ? data.probabilityPercent : 65;
+    const studentGrade = data.studentGrade !== undefined ? data.studentGrade : 14.5;
+    const cutoff = data.cutoffGrade || 14.5;
+    const diffVal = Math.round((studentGrade - cutoff) * 10) / 10;
 
-    // Atualizar UI do Termómetro
+    // Atualizar UI da Média e Probabilidade
+    const calcGradeEl = document.getElementById("pred-calculated-grade");
     const pctEl = document.getElementById("pred-prob-percent");
     const barEl = document.getElementById("pred-prob-bar");
     const badgeEl = document.getElementById("pred-badge-status");
     const cutoffEl = document.getElementById("pred-cutoff-score");
+    const candsEl = document.getElementById("pred-cands-per-place");
     const gapEl = document.getElementById("pred-gap-score");
     const planEl = document.getElementById("pred-action-plan");
 
+    if (calcGradeEl) calcGradeEl.textContent = studentGrade.toFixed(1);
     if (pctEl) pctEl.textContent = `${prob}%`;
-    if (barEl) barEl.style.width = `${prob}%`;
+    if (barEl) {
+      barEl.style.width = `${prob}%`;
+      if (prob >= 75) barEl.style.background = "linear-gradient(90deg, #10b981, #059669)";
+      else if (prob >= 50) barEl.style.background = "linear-gradient(90deg, #f59e0b, #d97706)";
+      else barEl.style.background = "linear-gradient(90deg, #ef4444, #dc2626)";
+    }
 
     if (badgeEl) {
       badgeEl.textContent = data.statusLabel || (prob >= 75 ? "🟢 Alta Probabilidade" : prob >= 50 ? "🟡 Competitivo" : "🔴 Risco Elevado");
-      if (prob >= 75) {
-        badgeEl.style.background = "rgba(16, 185, 129, 0.15)";
-        badgeEl.style.color = "#059669";
-      } else if (prob >= 50) {
-        badgeEl.style.background = "rgba(245, 158, 11, 0.15)";
-        badgeEl.style.color = "#d97706";
-      } else {
-        badgeEl.style.background = "rgba(239, 68, 68, 0.15)";
-        badgeEl.style.color = "#dc2626";
-      }
+      badgeEl.style.color = data.statusColor || (prob >= 75 ? "#059669" : prob >= 50 ? "#d97706" : "#dc2626");
+      badgeEl.style.background = prob >= 75 ? "rgba(16, 185, 129, 0.15)" : prob >= 50 ? "rgba(245, 158, 11, 0.15)" : "rgba(239, 68, 68, 0.15)";
     }
 
-    if (cutoffEl) cutoffEl.textContent = `${cutoff} val (${data.triCutoff || 720} pts)`;
+    if (cutoffEl) cutoffEl.textContent = `${cutoff} val`;
+    if (candsEl) candsEl.textContent = data.candidatesPerPlace || "25";
+
     if (gapEl) {
-      const gapSign = diffVal >= 0 ? `+${diffVal}` : `${diffVal}`;
+      const gapSign = diffVal >= 0 ? `+${diffVal.toFixed(1)}` : `${diffVal.toFixed(1)}`;
       gapEl.textContent = `${gapSign} val`;
       gapEl.style.color = diffVal >= 0 ? "#059669" : "#dc2626";
     }
 
-    const plan = data.recommendations || data.actionPlan || [
-      "Semana 1: Foco intensivo nos exames UEM de 2021 a 2024.",
-      "Semana 2: Praticar no Treino Cirúrgico para eliminar fraquezas.",
-      "Semana 3: Fazer o Simulado Nacional Aberto (ENAS).",
-      "Semana 4: Revisão de macetes de 90 segundos e descanso ativo."
+    const plan = data.recommendations || [
+      `Foco decisivo na prova de maior peso da UEM.`,
+      `Resolver os cadernos oficiais dos anos anteriores no ExamePronto.`,
+      `Fazer o 1º Simulado ENAS para testar a tua posição no ranking nacional.`
     ];
 
     if (planEl) {
-      planEl.innerHTML = plan.map((step, idx) => `
-        <div class="pred-plan-item">
-          <input type="checkbox" id="pred-step-${idx}">
-          <label for="pred-step-${idx}" style="cursor: pointer; line-height: 1.4;">
-            <strong>Fase ${idx + 1}:</strong> ${escapeHtml(step)}
-          </label>
+      planEl.innerHTML = plan.map((step) => `
+        <div style="display: flex; align-items: flex-start; gap: 8px; background: var(--bg-primary); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+          <span style="color: #4f46e5; font-weight: 800; font-size: 0.9rem;">✓</span>
+          <span style="font-size: 0.82rem; line-height: 1.4; color: var(--text-primary);">${escapeHtml(step)}</span>
         </div>
       `).join("");
     }
 
-    playSound("correct");
   } catch (err) {
     console.error("Erro no cálculo do Predictor:", err);
   }
 }
+
+function switchUemGuideTab(tab) {
+  const btnCalc = document.getElementById("btn-tab-uem-calc");
+  const btnCatalog = document.getElementById("btn-tab-uem-catalog");
+  const panelCalc = document.getElementById("panel-uem-calc");
+  const panelCatalog = document.getElementById("panel-uem-catalog");
+
+  if (tab === "calc") {
+    if (btnCalc) btnCalc.className = "btn btn-sm btn-primary active";
+    if (btnCatalog) btnCatalog.className = "btn btn-sm btn-outline";
+    if (panelCalc) panelCalc.style.display = "block";
+    if (panelCatalog) panelCatalog.style.display = "none";
+  } else {
+    if (btnCalc) btnCalc.className = "btn btn-sm btn-outline";
+    if (btnCatalog) btnCatalog.className = "btn btn-sm btn-primary active";
+    if (panelCalc) panelCalc.style.display = "none";
+    if (panelCatalog) panelCatalog.style.display = "block";
+    renderUemCoursesTable();
+  }
+}
+
+function renderUemCoursesTable() {
+  const tbody = document.getElementById("uem-courses-table-tbody");
+  if (!tbody) return;
+
+  const searchInput = document.getElementById("catalog-courses-search");
+  const facultyFilter = document.getElementById("catalog-faculty-filter");
+
+  const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+  const facVal = facultyFilter ? facultyFilter.value : "all";
+
+  let list = predictorCoursesCache || [];
+
+  if (query) {
+    list = list.filter(c => 
+      (c.course && c.course.toLowerCase().includes(query)) ||
+      (c.faculty && c.faculty.toLowerCase().includes(query)) ||
+      (c.exam1 && c.exam1.toLowerCase().includes(query)) ||
+      (c.exam2 && c.exam2.toLowerCase().includes(query))
+    );
+  }
+
+  if (facVal && facVal !== "all") {
+    list = list.filter(c => 
+      c.faculty && c.faculty.toLowerCase().includes(facVal.toLowerCase())
+    );
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 25px; color: var(--text-secondary);">Nenhum curso encontrado para os filtros selecionados.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(c => `
+    <tr style="border-bottom: 1px solid var(--border-color); transition: background 0.2s;">
+      <td style="padding: 12px; font-weight: 700; color: var(--text-primary);">
+        ${escapeHtml(c.course)}
+        <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: normal;">
+          ${escapeHtml(c.group12 || "12ª Classe")} • ${escapeHtml(c.regime || "Laboral")}
+        </div>
+      </td>
+      <td style="padding: 12px; font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(c.faculty || "UEM")}</td>
+      <td style="padding: 12px;"><span class="badge" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5; font-weight: 700; font-size: 0.75rem;">${escapeHtml(c.exam1)} (${c.weight1}%)</span></td>
+      <td style="padding: 12px;"><span class="badge" style="background: rgba(5, 150, 105, 0.1); color: #059669; font-weight: 700; font-size: 0.75rem;">${escapeHtml(c.exam2)} (${c.weight2}%)</span></td>
+      <td style="padding: 12px; font-weight: 700; color: var(--text-primary);">${c.places || "-"}</td>
+      <td style="padding: 12px; font-weight: 800; color: #dc2626;">${c.cutoff || "-"} val</td>
+      <td style="padding: 12px; text-align: right;">
+        <button type="button" class="btn btn-sm btn-outline" style="border-radius: 20px; font-size: 0.78rem; padding: 4px 12px;" onclick="selectCourseToSimulate('${escapeHtml(c.course)}')">
+          🎯 Simular
+        </button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function selectCourseToSimulate(courseName) {
+  switchUemGuideTab("calc");
+  const courseSelect = document.getElementById("pred-select-course");
+  if (courseSelect) {
+    courseSelect.value = courseName;
+    onPredictorCourseChanged();
+  }
+  const calcPanel = document.getElementById("panel-uem-calc");
+  if (calcPanel) {
+    calcPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function handlePracticeCurrentCourse() {
+  const uniSelect = document.getElementById("pred-select-university");
+  const courseSelect = document.getElementById("pred-select-course");
+  const selUni = uniSelect ? uniSelect.value : "UEM";
+  const selCourse = courseSelect ? courseSelect.value : "";
+
+  const course = predictorCoursesCache.find(c => 
+    (c.university || "").toLowerCase() === selUni.toLowerCase() &&
+    (c.course || "").toLowerCase() === (selCourse || "").toLowerCase()
+  ) || predictorCoursesCache[0];
+
+  if (!course) return;
+
+  let targetSubject = course.subjectSlug1 || "matematica";
+  const ex1 = (course.exam1 || "").toLowerCase();
+  if (ex1.includes("biol")) targetSubject = "biologia";
+  else if (ex1.includes("quim") || ex1.includes("quím")) targetSubject = "quimica";
+  else if (ex1.includes("fís") || ex1.includes("fis")) targetSubject = "fisica";
+  else if (ex1.includes("port")) targetSubject = "portugues";
+  else if (ex1.includes("hist")) targetSubject = "historia";
+  else if (ex1.includes("geog")) targetSubject = "geografia";
+  else if (ex1.includes("ingl")) targetSubject = "ingles";
+  else if (ex1.includes("filo")) targetSubject = "filosofia";
+  else if (ex1.includes("fran")) targetSubject = "frances";
+  else targetSubject = "matematica";
+
+  activeLevel = "superior";
+  activeUniversity = course.university || "UEM";
+  activeSubject = targetSubject;
+
+  showSection("dashboard");
+  activateMenuTab("dashboard");
+  renderUniversityAndYearFilters();
+  filterAndRenderExams();
+
+  if (typeof showToast === "function") {
+    showToast(`🎯 Filtrando exames oficiais da ${course.university} de ${course.exam1} para o curso de ${course.course}!`, "success");
+  }
+}
+
+// Global scope bindings for inline HTML handlers
+window.selectCourseToSimulate = selectCourseToSimulate;
+window.switchUemGuideTab = switchUemGuideTab;
 
 // --- PILAR 3: PORTAL B2B ESCOLAS & CENTROS PREPARATÓRIOS ---
 async function loadSchoolDashboard() {

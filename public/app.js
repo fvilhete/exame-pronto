@@ -1475,6 +1475,25 @@ function renderUniversityAndYearFilters() {
     });
     subjectPillsContainer.appendChild(favPill);
 
+    // Pill "💡 Com Resolução Oficial (MozSkills / UEM)"
+    const mozCount = exams.filter(e => (e.id || "").includes("mozskills")).length;
+    if (mozCount > 0) {
+      const mozPill = document.createElement("button");
+      mozPill.type = "button";
+      mozPill.className = `filter-pill ${activeSubject === 'mozskills' ? 'active' : ''}`;
+      mozPill.style.color = activeSubject === 'mozskills' ? '#ffffff' : '#059669';
+      mozPill.style.borderColor = '#059669';
+      mozPill.innerHTML = `💡 Resolução Oficial <span class="pill-count" style="background: rgba(5, 150, 105, 0.2);">${mozCount}</span>`;
+      mozPill.addEventListener("click", () => {
+        activeSubject = "mozskills";
+        examsPageLimit = 16;
+        if (subjectLabel) subjectLabel.textContent = "💡 Provas com Resoluções Oficiais Comentadas (2013-2025)";
+        renderUniversityAndYearFilters();
+        filterAndRenderExams();
+      });
+      subjectPillsContainer.appendChild(mozPill);
+    }
+
     const subjectKeys = Object.keys(subjectCounts).sort((a, b) => {
       return subjectMeta[a].name.localeCompare(subjectMeta[b].name);
     });
@@ -1594,9 +1613,11 @@ function filterAndRenderExams() {
     list = list.filter(e => (e.university || "UEM").toLowerCase() === activeUniversity.toLowerCase());
   }
 
-  // Filtro por Disciplina ou Favoritos
+  // Filtro por Disciplina, Favoritos ou Resoluções Oficiais
   if (activeSubject === "favorites") {
     list = list.filter(e => userFavorites.includes(e.id));
+  } else if (activeSubject === "mozskills") {
+    list = list.filter(e => (e.id || "").includes("mozskills"));
   } else if (activeSubject !== "all") {
     list = list.filter(e => getSubjectCategory(e.subject_name).id === activeSubject);
   }
@@ -1760,6 +1781,11 @@ function filterAndRenderExams() {
             <span class="badge-university ${univSlug}">${escapeHtml(univName)}</span>
             <span class="badge-year">${exam.year}</span>
             <span class="badge-difficulty ${diff.level}">${diff.icon} ${diff.label}</span>
+            ${(exam.id || "").includes("mozskills") ? `
+              <span class="badge-mozskills" title="Exame Oficial com Resoluções Passo a Passo (Projecto MozSkills / Banco Mundial)" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(5, 150, 105, 0.3);">
+                💡 Resolução Oficial
+              </span>
+            ` : ''}
             ${badgeHtml}
           </div>
         </div>

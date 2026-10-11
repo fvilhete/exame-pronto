@@ -734,9 +734,10 @@ function setupEventListeners() {
     activateMenuTab("enas");
   });
 
-  // Abas do Guia UEM (Calculadora vs Catálogo Completo)
+  // Abas do Guia UEM (Calculadora vs Catálogo Completo vs Calendário Oficial)
   safeAddListener("btn-tab-uem-calc", "click", () => switchUemGuideTab("calc"));
   safeAddListener("btn-tab-uem-catalog", "click", () => switchUemGuideTab("catalog"));
+  safeAddListener("btn-tab-uem-schedule", "click", () => switchUemGuideTab("schedule"));
 
   // Sliders de Nota Ponderada UEM
   const sGrade1 = document.getElementById("slider-grade1");
@@ -8024,20 +8025,29 @@ async function calculateCaloiroProbability() {
 function switchUemGuideTab(tab) {
   const btnCalc = document.getElementById("btn-tab-uem-calc");
   const btnCatalog = document.getElementById("btn-tab-uem-catalog");
+  const btnSchedule = document.getElementById("btn-tab-uem-schedule");
   const panelCalc = document.getElementById("panel-uem-calc");
   const panelCatalog = document.getElementById("panel-uem-catalog");
+  const panelSchedule = document.getElementById("panel-uem-schedule");
+
+  // Reset classes
+  if (btnCalc) btnCalc.className = "btn btn-sm btn-outline";
+  if (btnCatalog) btnCatalog.className = "btn btn-sm btn-outline";
+  if (btnSchedule) btnSchedule.className = "btn btn-sm btn-outline";
+  if (panelCalc) panelCalc.style.display = "none";
+  if (panelCatalog) panelCatalog.style.display = "none";
+  if (panelSchedule) panelSchedule.style.display = "none";
 
   if (tab === "calc") {
     if (btnCalc) btnCalc.className = "btn btn-sm btn-primary active";
-    if (btnCatalog) btnCatalog.className = "btn btn-sm btn-outline";
     if (panelCalc) panelCalc.style.display = "block";
-    if (panelCatalog) panelCatalog.style.display = "none";
-  } else {
-    if (btnCalc) btnCalc.className = "btn btn-sm btn-outline";
+  } else if (tab === "catalog") {
     if (btnCatalog) btnCatalog.className = "btn btn-sm btn-primary active";
-    if (panelCalc) panelCalc.style.display = "none";
     if (panelCatalog) panelCatalog.style.display = "block";
     renderUemCoursesTable();
+  } else if (tab === "schedule") {
+    if (btnSchedule) btnSchedule.className = "btn btn-sm btn-primary active";
+    if (panelSchedule) panelSchedule.style.display = "block";
   }
 }
 

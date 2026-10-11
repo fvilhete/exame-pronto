@@ -338,9 +338,20 @@
                 <h3 style="margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 800; color: #ffffff; line-height: 1.25;">
                   Vais concorrer à UEM? Descobre as disciplinas, pesos e vagas do teu curso!
                 </h3>
-                <p style="margin: 0 0 14px 0; font-size: 0.88rem; color: #c7d2fe; line-height: 1.45; max-width: 720px;">
-                  A UEM publicou as regras oficiais de acesso. Simula a tua <strong>Média Ponderada Oficial</strong> com base nas duas provas do teu curso e prepara-te com as <strong>7.994 questões oficiais com resolução comentada</strong> do ExamePronto.
-                </p>
+                <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+                    <span>⏳</span>
+                    <span>Fim das Inscrições: <strong style="color: #fde047;">04 Dez 2026 (12h)</strong></span>
+                  </div>
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+                    <span>📅</span>
+                    <span>Provas de Exame: <strong style="color: #34d399;">05 a 08 Jan 2027</strong></span>
+                  </div>
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+                    <span>👥</span>
+                    <span>Vagas Presenciais: <strong style="color: #67e8f9;">4.830 Vagas</strong></span>
+                  </div>
+                </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                   <button type="button" class="btn btn-sm btn-accent" id="btn-open-uem-guide-banner" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #111827; font-weight: 800; padding: 10px 18px; border-radius: var(--radius-md); border: none; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); display: flex; align-items: center; gap: 8px;">
                     <span>🎯</span> Simular Média & Ver Cursos UEM
@@ -1270,13 +1281,16 @@
         </div>
       </div>
 
-      <!-- Abas Internas: Calculadora vs Catálogo de Cursos -->
+      <!-- Abas Internas: Calculadora vs Catálogo de Cursos vs Calendário Oficial -->
       <div style="display: flex; gap: 10px; margin-bottom: 22px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; flex-wrap: wrap;">
         <button type="button" class="btn btn-sm btn-primary active" id="btn-tab-uem-calc" style="border-radius: 20px; font-weight: 700; padding: 8px 18px;">
           🧮 Calculadora de Média Ponderada
         </button>
         <button type="button" class="btn btn-sm btn-outline" id="btn-tab-uem-catalog" style="border-radius: 20px; font-weight: 700; padding: 8px 18px;">
           📚 Tabela de Todos os Cursos & Vagas UEM
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" id="btn-tab-uem-schedule" style="border-radius: 20px; font-weight: 700; padding: 8px 18px;">
+          📅 Calendário Oficial de Provas (05 a 08 Jan 2027)
         </button>
       </div>
 
@@ -1506,6 +1520,240 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <!-- PAINEL 3: CALENDÁRIO OFICIAL DE PROVAS UEM (05 A 08 JANEIRO 2027) -->
+      <div id="panel-uem-schedule" style="display: none;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--card-shadow);">
+          
+          <!-- Cabeçalho Oficial do Calendário -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #059669; font-weight: 800; font-size: 0.75rem; padding: 3px 10px; border-radius: 20px;">
+                  📅 TABELA OFICIAL A4 - REITORIA DA UEM
+                </span>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">Ano Lectivo 2027 (50 Anos UEM)</span>
+              </div>
+              <h3 style="margin: 0 0 6px 0; font-size: 1.35rem; color: var(--text-primary);">
+                Calendário Oficial das Provas de Exame de Admissão
+              </h3>
+              <p style="margin: 0; font-size: 0.88rem; color: var(--text-secondary); max-width: 800px;">
+                Os exames serão realizados de <strong>05 a 08 de Janeiro de 2027</strong> em todas as províncias do país. Consulta abaixo os dias, horários de chegada obrigatória e duração de cada prova.
+              </p>
+            </div>
+            <a href="https://prereg.uem.mz" target="_blank" class="btn btn-sm btn-outline" style="border-radius: 20px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              <span>🌐</span> Portal de Pré-Registo UEM
+            </a>
+          </div>
+
+          <!-- Cards Informativos Chave do Edital -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px;">
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+              <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Prazo de Pagamento</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #dc2626; margin-top: 3px;">04 Dezembro 2026 (12:00h)</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Data limite de validação bancária</div>
+            </div>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+              <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Duração dos Exames</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #4f46e5; margin-top: 3px;">3 Horas (Integrado)</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">2 disciplinas num único momento</div>
+            </div>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+              <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Taxa de Inscrição</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #059669; margin-top: 3px;">900,00 MT (Integrado)</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">450,00 MT p/ exame não integrado</div>
+            </div>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+              <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Fecho dos Portões</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; margin-top: 3px;">08:00h e 14:00h Pontual</div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Chegada 30 min antes (07:30 / 13:30)</div>
+            </div>
+          </div>
+
+          <!-- Grade de Provas Dia por Dia (05 a 08 Jan 2027) -->
+          <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 26px;">
+            
+            <!-- DIA 1: Terça-feira, 05/01/2027 -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-left: 5px solid #4f46e5; border-radius: var(--radius-md); padding: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                  <span class="badge" style="background: #4f46e5; color: white; padding: 4px 10px; border-radius: 6px;">DIA 1</span>
+                  Terça-feira, 05 de Janeiro de 2027
+                </h4>
+                <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;">Exames Integrados (3h) & Específicos</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" class="predictor-grid-layout">
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: #4f46e5; margin-bottom: 6px;">
+                    <span>🌅 TURNO DA MANHÃ</span>
+                    <span>Chegada: 07:30h | Prova: 08:00 - 11:00h</span>
+                  </div>
+                  <ul style="margin: 0; padding-left: 18px; font-size: 0.83rem; color: var(--text-primary); line-height: 1.5;">
+                    <li><strong>Matemática-III e Desenho:</strong> Arquitectura e Planeamento Físico</li>
+                    <li><strong>Matemática-III e Química-II:</strong> Agronomia, Eng. Florestal, Geologia e Pesquisa Mineral, Agro-economia</li>
+                    <li><strong>Matemática-III e Geografia-II:</strong> Economia Agrária</li>
+                    <li><strong>Prova Escrita de Música / Teatro:</strong> 08:00 - 09:30h (1h30)</li>
+                  </ul>
+                </div>
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: #7c3aed; margin-bottom: 6px;">
+                    <span>🌆 TURNO DA TARDE</span>
+                    <span>Chegada: 13:30h | Prova: 14:00 - 17:00h</span>
+                  </div>
+                  <ul style="margin: 0; padding-left: 18px; font-size: 0.83rem; color: var(--text-primary); line-height: 1.5;">
+                    <li><strong>Português-I e História-I:</strong> Direito (60%/40%), Administração Pública, Ciência Política, Jornalismo, Marketing, História, Sociologia, Serviço Social, Linguística, Antropologia</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- DIA 2: Quarta-feira, 06/01/2027 -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-left: 5px solid #059669; border-radius: var(--radius-md); padding: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                  <span class="badge" style="background: #059669; color: white; padding: 4px 10px; border-radius: 6px;">DIA 2</span>
+                  Quarta-feira, 06 de Janeiro de 2027
+                </h4>
+                <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;">Engenharias, Computação, Letras & Ciências</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" class="predictor-grid-layout">
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: #059669; margin-bottom: 6px;">
+                    <span>🌅 TURNO DA MANHÃ</span>
+                    <span>Chegada: 07:30h | Prova: 08:00 - 11:00h</span>
+                  </div>
+                  <ul style="margin: 0; padding-left: 18px; font-size: 0.83rem; color: var(--text-primary); line-height: 1.5;">
+                    <li><strong>Matemática-I e Física-I:</strong> Todas as Engenharias (Civil, Informática, Eléctrica, Electrónica, Mecânica, Química, Petróleo e Gás, Telecomunicações, Ambiente), Física, Matemática, Meteorologia, Geo-física, Hidrogeologia</li>
+                  </ul>
+                </div>
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: #10b981; margin-bottom: 6px;">
+                    <span>🌆 TURNO DA TARDE</span>
+                    <span>Chegada: 13:30h | Prova: 14:00 - 17:00h</span>
+                  </div>
+                  <ul style="margin: 0; padding-left: 18px; font-size: 0.83rem; color: var(--text-primary); line-height: 1.5;">
+                    <li><strong>Português-III e Inglês:</strong> Ensino de Inglês, Tradução Português/Inglês, Língua Chinesa</li>
+                    <li><strong>Português-III e Biologia-II:</strong> Psicologia Social, Organizacional, Educacional, Educação Ambiental</li>
+                    <li><strong>História-II e Geografia-I:</strong> Arqueologia e Gestão do Património, Geografia</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- DIA 3: Quinta-feira, 07/01/2027 -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-left: 5px solid #d97706; border-radius: var(--radius-md); padding: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                  <span class="badge" style="background: #d97706; color: white; padding: 4px 10px; border-radius: 6px;">DIA 3</span>
+                  Quinta-feira, 07 de Janeiro de 2027
+                </h4>
+                <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;">Saúde, Medicina, Economia, Gestão & Filosofia</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" class="predictor-grid-layout">
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: #d97706; margin-bottom: 6px;">
+                    <span>🌅 TURNO DA MANHÃ</span>
+                    <span>Chegada: 07:30h | Prova: 08:00 - 11:00h</span>
+                  </div>
+                  <ul style="margin: 0; padding-left: 18px; font-size: 0.83rem; color: var(--text-primary); line-height: 1.5;">
+                    <li><strong>Biologia-I e Química-I:</strong> Medicina Geral (50%/50%), Medicina Veterinária, Biologia Aplicada, Biologia e Saúde, Ciência e Tecnologia Animal, Ciência e Tecnologia de Alimentos, Ecologia</li>
+                  </ul>
+                </div>
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: #b45309; margin-bottom: 6px;">
+                    <span>🌆 TURNO DA TARDE</span>
+                    <span>Chegada: 13:30h | Prova: 14:00 - 17:00h</span>
+                  </div>
+                  <ul style="margin: 0; padding-left: 18px; font-size: 0.83rem; color: var(--text-primary); line-height: 1.5;">
+                    <li><strong>Matemática-II e Português-II:</strong> Economia (60%/40%), Gestão, Contabilidade e Finanças, Finanças, Informática (Ciências), Estatística, Gestão de Empresas</li>
+                    <li><strong>Francês e Português-II:</strong> Ensino e Tradução de Francês</li>
+                    <li><strong>Filosofia e Português-II:</strong> Filosofia e Ensino de Filosofia</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- DIA 4: Sexta-feira, 08/01/2027 -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-left: 5px solid #8b5cf6; border-radius: var(--radius-md); padding: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                  <span class="badge" style="background: #8b5cf6; color: white; padding: 4px 10px; border-radius: 6px;">DIA 4</span>
+                  Sexta-feira, 08 de Janeiro de 2027
+                </h4>
+                <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;">Provas Práticas de Aptidão</span>
+              </div>
+              <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;">
+                <div style="font-size: 0.78rem; font-weight: 700; color: #8b5cf6; margin-bottom: 6px;">
+                  🏃 TURNO ÚNICO - PROVAS PRÁTICAS (Chegada: 07:30h)
+                </div>
+                <ul style="margin: 0; padding-left: 18px; font-size: 0.83rem; color: var(--text-primary); line-height: 1.5;">
+                  <li><strong>Ciências do Desporto:</strong> Prova Prática de Aptidão Física (08:00 - 13:00h) - Exigido fato de treino, sapatilhas e atestado médico obrigatório.</li>
+                  <li><strong>Música:</strong> Prova Prática de Música (08:00 - 16:00h) - Trazer instrumento musical próprio (exceto piano e bateria).</li>
+                  <li><strong>Teatro:</strong> Prova Prática de Teatro (08:00 - 16:00h).</li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Locais de Realização em Moçambique & Regras de Sala -->
+          <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; margin-bottom: 22px;" class="predictor-grid-layout">
+            
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+              <h5 style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+                <span>📍</span> Locais Oficiais de Exame por Província (Tabela A5):
+              </h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem; color: var(--text-secondary);">
+                <div><strong>Maputo Cidade:</strong> Campus Principal, Direito, Engenharia, Medicina</div>
+                <div><strong>Maputo Prov.:</strong> Externato 03 de Maio - Matola Rio</div>
+                <div><strong>Gaza:</strong> ESNE - Chibuto, Univ Save - Chonguene</div>
+                <div><strong>Inhambane:</strong> ESHT - Inhambane, ESDR - Vilankulo, Maxixe</div>
+                <div><strong>Sofala:</strong> Univ Zambeze - Matacuane, Univ Licungo - Beira</div>
+                <div><strong>Manica:</strong> Univ Púnguè e Univ Zambeze - Chimoio</div>
+                <div><strong>Tete:</strong> Fac. Ciências de Saúde Univ Zambeze, Púnguè</div>
+                <div><strong>Zambézia:</strong> FEAF Mocuba, Univ Licungo Quelimane</div>
+                <div><strong>Nampula:</strong> Inst. Ciências de Saúde, Sec. Muatala</div>
+                <div><strong>Cabo Delgado:</strong> Escola Secundária de Pemba</div>
+                <div><strong>Niassa:</strong> Escola Sec. Paulo Samuel Kankhomba</div>
+              </div>
+            </div>
+
+            <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 16px;">
+              <h5 style="margin: 0 0 8px 0; font-size: 0.95rem; color: #dc2626; display: flex; align-items: center; gap: 6px;">
+                <span>⚠️</span> Normas Estritas de Sala (Edital A.6):
+              </h5>
+              <ul style="margin: 0; padding-left: 18px; font-size: 0.8rem; color: var(--text-primary); line-height: 1.45;">
+                <li><strong>Caneta:</strong> Usar APENAS esferográfica azul ou preta de <em>corpo transparente</em>.</li>
+                <li><strong>Material Proibido:</strong> Proibido corrector líquido, máquina de calcular, telemóvel ou relógio inteligente.</li>
+                <li><strong>Identificação:</strong> Documento original de identificação com fotografia (BI, Passaporte, DIRE ou Cartão de Eleitor).</li>
+                <li><strong>Portões:</strong> Fecham rigorosamente às 08:00h e 14:00h. Candidatos atrasados não entram.</li>
+              </ul>
+            </div>
+
+          </div>
+
+          <!-- Propaganda & Chamada para Ação -->
+          <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); border-radius: var(--radius-md); padding: 20px; color: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 4px;">
+                🚀 Prepara-te com as 74 Provas Resolvidas Passo a Passo da UEM!
+              </div>
+              <p style="margin: 0; font-size: 0.85rem; color: #c7d2fe; max-width: 650px;">
+                Estuda com o acervo completo de exames de admissão com soluções detalhadas, fórmulas e macetes para garantires a melhor classificação na tua província.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="btn btn-sm btn-accent" onclick="selectPlan('mensal')" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #111827; font-weight: 800; padding: 10px 18px;">
+                ⭐ Plano Mensal (119 MT)
+              </button>
+              <button type="button" class="btn btn-sm btn-outline" onclick="showSection('dashboard'); activateMenuTab('dashboard');" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3); font-weight: 700; padding: 10px 18px;">
+                📖 Ir às Provas
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 

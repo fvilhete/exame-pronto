@@ -734,10 +734,17 @@ function setupEventListeners() {
     activateMenuTab("enas");
   });
 
-  // Abas do Guia UEM (Calculadora vs Catálogo Completo vs Calendário Oficial)
+  // Abas do Guia UEM & UP (Calculadora vs Catálogo Completo vs Calendários)
   safeAddListener("btn-tab-uem-calc", "click", () => switchUemGuideTab("calc"));
   safeAddListener("btn-tab-uem-catalog", "click", () => switchUemGuideTab("catalog"));
   safeAddListener("btn-tab-uem-schedule", "click", () => switchUemGuideTab("schedule"));
+  safeAddListener("btn-tab-up-schedule", "click", () => switchUemGuideTab("up-schedule"));
+  safeAddListener("btn-open-up-archive-banner", "click", () => {
+    showSection("predictor");
+    activateMenuTab("predictor");
+    switchUemGuideTab("up-schedule");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 
   // Sliders de Nota Ponderada UEM
   const sGrade1 = document.getElementById("slider-grade1");
@@ -767,11 +774,13 @@ function setupEventListeners() {
     activateMenuTab("enas");
   });
 
-  // Filtro e Busca no Catálogo de Cursos UEM
+  // Filtro e Busca no Catálogo de Cursos UEM & UP
   const catSearch = document.getElementById("catalog-courses-search");
   const catFilter = document.getElementById("catalog-faculty-filter");
+  const catUniv = document.getElementById("catalog-univ-filter");
   if (catSearch) catSearch.addEventListener("input", renderUemCoursesTable);
   if (catFilter) catFilter.addEventListener("change", renderUemCoursesTable);
+  if (catUniv) catUniv.addEventListener("change", renderUemCoursesTable);
 
   // Versão 9.5: Portal B2B Escolas & Centros Preparatórios
   safeAddListener("school-class-select", "change", () => loadSchoolDashboard());
@@ -8026,17 +8035,21 @@ function switchUemGuideTab(tab) {
   const btnCalc = document.getElementById("btn-tab-uem-calc");
   const btnCatalog = document.getElementById("btn-tab-uem-catalog");
   const btnSchedule = document.getElementById("btn-tab-uem-schedule");
+  const btnUpSchedule = document.getElementById("btn-tab-up-schedule");
   const panelCalc = document.getElementById("panel-uem-calc");
   const panelCatalog = document.getElementById("panel-uem-catalog");
   const panelSchedule = document.getElementById("panel-uem-schedule");
+  const panelUpSchedule = document.getElementById("panel-up-schedule");
 
   // Reset classes
   if (btnCalc) btnCalc.className = "btn btn-sm btn-outline";
   if (btnCatalog) btnCatalog.className = "btn btn-sm btn-outline";
   if (btnSchedule) btnSchedule.className = "btn btn-sm btn-outline";
+  if (btnUpSchedule) btnUpSchedule.className = "btn btn-sm btn-outline";
   if (panelCalc) panelCalc.style.display = "none";
   if (panelCatalog) panelCatalog.style.display = "none";
   if (panelSchedule) panelSchedule.style.display = "none";
+  if (panelUpSchedule) panelUpSchedule.style.display = "none";
 
   if (tab === "calc") {
     if (btnCalc) btnCalc.className = "btn btn-sm btn-primary active";
@@ -8048,6 +8061,10 @@ function switchUemGuideTab(tab) {
   } else if (tab === "schedule") {
     if (btnSchedule) btnSchedule.className = "btn btn-sm btn-primary active";
     if (panelSchedule) panelSchedule.style.display = "block";
+  } else if (tab === "up-schedule") {
+    if (btnUpSchedule) btnUpSchedule.className = "btn btn-sm btn-primary active";
+    if (panelUpSchedule) panelUpSchedule.style.display = "block";
+    loadUpExamArchive();
   }
 }
 
@@ -8057,18 +8074,27 @@ function renderUemCoursesTable() {
 
   const searchInput = document.getElementById("catalog-courses-search");
   const facultyFilter = document.getElementById("catalog-faculty-filter");
+  const univFilter = document.getElementById("catalog-univ-filter");
 
   const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
   const facVal = facultyFilter ? facultyFilter.value : "all";
+  const univVal = univFilter ? univFilter.value : "all";
 
   let list = predictorCoursesCache || [];
 
   if (query) {
     list = list.filter(c => 
       (c.course && c.course.toLowerCase().includes(query)) ||
+      (c.university && c.university.toLowerCase().includes(query)) ||
       (c.faculty && c.faculty.toLowerCase().includes(query)) ||
       (c.exam1 && c.exam1.toLowerCase().includes(query)) ||
       (c.exam2 && c.exam2.toLowerCase().includes(query))
+    );
+  }
+
+  if (univVal && univVal !== "all") {
+    list = list.filter(c => 
+      c.university && c.university.toLowerCase() === univVal.toLowerCase()
     );
   }
 
@@ -8079,7 +8105,7 @@ function renderUemCoursesTable() {
   }
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 25px; color: var(--text-secondary);">Nenhum curso encontrado para os filtros selecionados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 25px; color: var(--text-secondary);">Nenhum curso encontrado para os filtros selecionados.</td></tr>`;
     return;
   }
 
@@ -8091,13 +8117,18 @@ function renderUemCoursesTable() {
           ${escapeHtml(c.group12 || "12ª Classe")} • ${escapeHtml(c.regime || "Laboral")}
         </div>
       </td>
-      <td style="padding: 12px; font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(c.faculty || "UEM")}</td>
+      <td style="padding: 12px;">
+        <span class="badge" style="background: ${c.university === 'UEM' ? 'rgba(79, 70, 229, 0.1)' : 'rgba(37, 99, 235, 0.1)'}; color: ${c.university === 'UEM' ? '#4f46e5' : '#2563eb'}; font-weight: 800; font-size: 0.75rem;">
+          ${escapeHtml(c.university || "UEM")}
+        </span>
+      </td>
+      <td style="padding: 12px; font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(c.faculty || "Geral")}</td>
       <td style="padding: 12px;"><span class="badge" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5; font-weight: 700; font-size: 0.75rem;">${escapeHtml(c.exam1)} (${c.weight1}%)</span></td>
       <td style="padding: 12px;"><span class="badge" style="background: rgba(5, 150, 105, 0.1); color: #059669; font-weight: 700; font-size: 0.75rem;">${escapeHtml(c.exam2)} (${c.weight2}%)</span></td>
       <td style="padding: 12px; font-weight: 700; color: var(--text-primary);">${c.places || "-"}</td>
       <td style="padding: 12px; font-weight: 800; color: #dc2626;">${c.cutoff || "-"} val</td>
       <td style="padding: 12px; text-align: right;">
-        <button type="button" class="btn btn-sm btn-outline" style="border-radius: 20px; font-size: 0.78rem; padding: 4px 12px;" onclick="selectCourseToSimulate('${escapeHtml(c.course)}')">
+        <button type="button" class="btn btn-sm btn-outline" style="border-radius: 20px; font-size: 0.78rem; padding: 4px 12px;" onclick="selectCourseToSimulate('${escapeHtml(c.course)}', '${escapeHtml(c.university)}')">
           🎯 Simular
         </button>
       </td>
@@ -8105,8 +8136,13 @@ function renderUemCoursesTable() {
   `).join("");
 }
 
-function selectCourseToSimulate(courseName) {
+function selectCourseToSimulate(courseName, universityName) {
   switchUemGuideTab("calc");
+  const uniSelect = document.getElementById("pred-select-university");
+  if (uniSelect && universityName) {
+    uniSelect.value = universityName;
+    updatePredictorCoursesDropdown();
+  }
   const courseSelect = document.getElementById("pred-select-course");
   if (courseSelect) {
     courseSelect.value = courseName;
@@ -8115,6 +8151,120 @@ function selectCourseToSimulate(courseName) {
   const calcPanel = document.getElementById("panel-uem-calc");
   if (calcPanel) {
     calcPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+// Acervo e Cadernos de Exame UP (2025/2026)
+let upExamArchiveCache = null;
+
+async function loadUpExamArchive() {
+  const grid = document.getElementById("up-exams-archive-grid");
+  const badge = document.getElementById("up-exams-count-badge");
+  if (!grid) return;
+
+  if (upExamArchiveCache) {
+    renderUpExamCards(upExamArchiveCache);
+    return;
+  }
+
+  grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 25px; color: var(--text-secondary);">A carregar acervo oficial UP...</div>`;
+
+  try {
+    const res = await fetch("/api/exams/up/archive");
+    const data = await res.json();
+    upExamArchiveCache = data.exams || [];
+    if (badge) badge.textContent = `${upExamArchiveCache.length} Provas Disponíveis`;
+    renderUpExamCards(upExamArchiveCache);
+  } catch (err) {
+    console.error("Erro ao carregar acervo UP:", err);
+    grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 25px; color: #ef4444;">Erro ao carregar cadernos de exame UP.</div>`;
+  }
+}
+
+function renderUpExamCards(exams) {
+  const grid = document.getElementById("up-exams-archive-grid");
+  if (!grid) return;
+
+  if (!exams || exams.length === 0) {
+    grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 25px; color: var(--text-secondary);">Nenhum exame encontrado no acervo.</div>`;
+    return;
+  }
+
+  const subjectIcons = {
+    "biologia": "🧬",
+    "matematica": "📐",
+    "fisica": "⚡",
+    "quimica": "🧪",
+    "portugues": "📖",
+    "historia": "📜",
+    "geografia": "🌍",
+    "filosofia": "🤔",
+    "ingles": "🇬🇧",
+    "frances": "🇫🇷",
+    "desenho": "🎨"
+  };
+
+  grid.innerHTML = exams.map(e => {
+    const cleanSubj = e.subject.toLowerCase();
+    let icon = "📄";
+    for (const [k, v] of Object.entries(subjectIcons)) {
+      if (cleanSubj.includes(k)) { icon = v; break; }
+    }
+
+    return `
+      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; transition: transform 0.2s, box-shadow 0.2s;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 1.25rem;">${icon}</span>
+            <span class="badge" style="background: ${e.year === 2026 ? '#10b981' : 'rgba(37,99,235,0.1)'}; color: ${e.year === 2026 ? '#fff' : '#2563eb'}; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px;">
+              ${e.year}
+            </span>
+          </div>
+          <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); line-height: 1.3;">
+            Exame de ${escapeHtml(e.subject)}
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 3px;">
+            Caderno Oficial UP • Texto Selecionável
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <a href="${e.url}" target="_blank" class="btn btn-sm btn-outline" style="flex: 1; text-align: center; font-size: 0.78rem; padding: 6px 10px; border-radius: var(--radius-sm); text-decoration: none;">
+            📥 Baixar PDF
+          </a>
+          <button type="button" class="btn btn-sm btn-primary" style="flex: 1; font-size: 0.78rem; padding: 6px 10px; border-radius: var(--radius-sm); background: #2563eb;" onclick="practiceUpExam('${escapeHtml(e.subject)}')">
+            🎯 Praticar
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function practiceUpExam(subjectName) {
+  let slug = "matematica";
+  const s = subjectName.toLowerCase();
+  if (s.includes("biol")) slug = "biologia";
+  else if (s.includes("quim") || s.includes("quím")) slug = "quimica";
+  else if (s.includes("fis") || s.includes("fís")) slug = "fisica";
+  else if (s.includes("port")) slug = "portugues";
+  else if (s.includes("hist")) slug = "historia";
+  else if (s.includes("geog")) slug = "geografia";
+  else if (s.includes("filo")) slug = "filosofia";
+  else if (s.includes("ingl")) slug = "ingles";
+  else if (s.includes("fran")) slug = "frances";
+
+  activeLevel = "superior";
+  activeUniversity = "UP";
+  activeSubject = slug;
+
+  showSection("dashboard");
+  activateMenuTab("dashboard");
+  renderUniversityAndYearFilters();
+  filterAndRenderExams();
+
+  if (typeof showToast === "function") {
+    showToast(`🎯 Filtrando exames oficiais da UP de ${subjectName}!`, "success");
   }
 }
 
@@ -8161,6 +8311,8 @@ function handlePracticeCurrentCourse() {
 // Global scope bindings for inline HTML handlers
 window.selectCourseToSimulate = selectCourseToSimulate;
 window.switchUemGuideTab = switchUemGuideTab;
+window.loadUpExamArchive = loadUpExamArchive;
+window.practiceUpExam = practiceUpExam;
 
 // --- PILAR 3: PORTAL B2B ESCOLAS & CENTROS PREPARATÓRIOS ---
 async function loadSchoolDashboard() {

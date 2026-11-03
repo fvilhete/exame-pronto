@@ -81,6 +81,8 @@ const mozQuizQuestions = [
   }
 ];
 
+let activeQuizQuestions = [...mozQuizQuestions];
+
 // Estados do Duelo 1 vs 1
 let gameDuelTimer = null;
 let gameDuelAiTimer = null;
@@ -108,6 +110,21 @@ const flashcardsData = [
     back: "F = m · a\nA força resultante (F em Newtons) é igual ao produto da massa (m em kg) pela aceleração (a em m/s²)."
   },
   {
+    topic: "Física (Eletricidade)",
+    front: "Qual é a Primeira Lei de Ohm e como calcular a Resistência Equivalente em Paralelo?",
+    back: "U = R · I (Tensão = Resistência × Corrente)\nPara 2 resistores em paralelo: Req = (R1 · R2) / (R1 + R2)."
+  },
+  {
+    topic: "Física (Energia)",
+    front: "Qual é a fórmula da Energia Cinética e da Energia Potencial Gravítica?",
+    back: "Ec = (m · v²) / 2\nEpg = m · g · h\nA energia mecânica total é a soma: Em = Ec + Ep."
+  },
+  {
+    topic: "Física (Hidrostática)",
+    front: "O que diz o Princípio de Arquimedes (Força de Impulso)?",
+    back: "I = ρ · g · V_imerso\nTodo corpo mergulhado num fluido recebe uma força vertical para cima igual ao peso do fluido deslocado."
+  },
+  {
     topic: "Matemática (Álgebra)",
     front: "Qual é a Fórmula de Bhaskara para Equações Quadráticas?",
     back: "x = (-b ± √Δ) / (2a), onde Δ = b² - 4ac\nSe Δ > 0: duas raízes reais distintas.\nSe Δ = 0: uma raiz real dupla.\nSe Δ < 0: não tem raízes reais."
@@ -118,24 +135,94 @@ const flashcardsData = [
     back: "a_n = a₁ + (n - 1) · r\nOnde a₁ é o primeiro termo, n é o número do termo e r é a razão da PA."
   },
   {
-    topic: "Código de Estrada (INATRO)",
-    front: "Quem tem prioridade num cruzamento sem sinalização em Moçambique?",
-    back: "Prioridade da Direita:\nO condutor deve ceder passagem aos veículos que se apresentem pela direita, exceto se saírem de garagens ou vias privadas."
+    topic: "Matemática (Progressões)",
+    front: "Qual é a soma dos infinitos termos de uma PG decrescente (|q| < 1)?",
+    back: "S_∞ = a₁ / (1 - q)\nFórmula clássica de convergência em exames de admissão da UEM e UP!"
   },
   {
-    topic: "Código de Estrada (INATRO)",
-    front: "O que indica um sinal triangular com orla vermelha e vértice para cima?",
-    back: "Sinal de Perigo:\nAlerta para a existência de um risco na via adiante (ex: curva perigosa, estrada escorregadia, passagem de crianças)."
+    topic: "Matemática (Trigonometria)",
+    front: "Qual é a Relação Fundamental da Trigonometria?",
+    back: "sin²(x) + cos²(x) = 1\nDerivadas úteis:\n1 + tan²(x) = 1 / cos²(x) = sec²(x)."
+  },
+  {
+    topic: "Matemática (Cálculo)",
+    front: "Qual é a regra imediata da derivada da potência (x^n)?",
+    back: "(x^n)' = n · x^(n - 1)\nExemplo UEM: (3x² - 5x + 7)' = 6x - 5."
+  },
+  {
+    topic: "Química (Gases)",
+    front: "Qual é a Equação Geral dos Gases Ideais (Clapeyron)?",
+    back: "P · V = n · R · T\nOnde P é a pressão, V o volume em litros, n o número de moles, R a constante (0,082 atm·L/mol·K) e T a temperatura em Kelvin (T = °C + 273)."
+  },
+  {
+    topic: "Química (Soluções)",
+    front: "Como calcular a Concentração Molar (Molaridade) de uma solução?",
+    back: "M = m₁ / (MM · V_L)\nOnde m₁ é a massa do soluto em gramas, MM a massa molar em g/mol e V o volume da solução em litros."
+  },
+  {
+    topic: "Química (Equilíbrio)",
+    front: "O que é o pH e como se calcula a partir da concentração de iões H⁺?",
+    back: "pH = -log[H⁺]\nSolução ácida: pH < 7\nSolução neutra: pH = 7\nSolução básica (alcalina): pH > 7."
+  },
+  {
+    topic: "Biologia (Citologia)",
+    front: "Quais são as 4 fases da Mitose na ordem correta?",
+    back: "Mnemónica: PRO-META-ANA-TELO\n1. Prófase\n2. Metáfase (cromossomas alinhados na placa equatorial)\n3. Anáfase (separação dos cromatídeos irmãos)\n4. Telófase (citocinese e reconstituição nuclear)."
+  },
+  {
+    topic: "Biologia (Genética)",
+    front: "O que enuncia a Primeira Lei de Mendel (Lei da Segregação dos Fatores)?",
+    back: "Cada carácter é condicionado por um par de fatores (genes alelos) que se separam na formação dos gâmetas. Cruzamento Aa × Aa resulta na proporção fenotípica 3:1."
+  },
+  {
+    topic: "Biologia (Fisiologia)",
+    front: "Quais são os grupos sanguíneos do Sistema ABO e qual é o dador universal?",
+    back: "Grupos: A, B, AB e O.\nDador Universal de glóbulos vermelhos: Grupo O (Rh negativo).\nReceptor Universal: Grupo AB (Rh positivo)."
+  },
+  {
+    topic: "Português (Gramática)",
+    front: "Como identificar uma Oração Subordinada Substantiva Integrante?",
+    back: "É introduzida pelas conjunções integrantes 'que' ou 'se' e pode ser inteiramente substituída pelo pronome 'isto'.\nEx: 'Ele disse [que viria]' => 'Ele disse [isto]'."
+  },
+  {
+    topic: "Português (Estilística)",
+    front: "Qual é a diferença entre Metáfora e Comparação?",
+    back: "Comparação usa conectivo explícito: 'Os teus olhos são como estrelas'.\nMetáfora faz transferência direta sem conectivo: 'Os teus olhos são estrelas'."
   },
   {
     topic: "História de Moçambique",
     front: "Em que data foi proclamada a Independência Nacional de Moçambique?",
-    back: "25 de Junho de 1975\nProclamada no Estádio da Machava pelo Presidente Samora Moisés Machel."
+    back: "25 de Junho de 1975\nProclamada no Estádio da Machava pelo Presidente Samora Moisés Machel, após os Acordos de Lusaka."
+  },
+  {
+    topic: "História de Moçambique",
+    front: "Quando e onde teve início a Luta Armada de Libertação Nacional?",
+    back: "25 de Setembro de 1964\nCom o ataque ao posto administrativo colonial português de Chai, na província de Cabo Delgado."
+  },
+  {
+    topic: "História de África",
+    front: "O que foi a Conferência de Berlim e quando ocorreu?",
+    back: "1884 - 1885\nConferência europeia que estabeleceu as regras para a partilha colonial de África, substituindo o direito histórico pelo princípio da 'ocupação efetiva'."
   },
   {
     topic: "Geografia de Moçambique",
     front: "Qual é o ponto de maior altitude (ponto mais alto) de Moçambique?",
-    back: "Monte Binga (2.436 metros)\nLocalizado na província de Manica, na fronteira com o Zimbabwe."
+    back: "Monte Binga (2.436 metros)\nLocalizado na província de Manica, na cadeia dos montes Chimanimani."
+  },
+  {
+    topic: "Geografia de Moçambique",
+    front: "Qual é a maior bacia hidrográfica de Moçambique?",
+    back: "Bacia do Rio Zambeze\nCom a Albufeira de Cahora Bassa na província de Tete, geradora da principal energia hidroelétrica do país."
+  },
+  {
+    topic: "Código de Estrada (INATRO)",
+    front: "Quem tem prioridade num cruzamento sem sinalização em Moçambique?",
+    back: "Prioridade da Direita:\nO condutor deve ceder passagem a qualquer veículo que se apresente pela sua direita, exceto se sair de prédios/garagens ou veículos de emergência com sirene."
+  },
+  {
+    topic: "Código de Estrada (INATRO)",
+    front: "Qual é a velocidade máxima permitida para veículos ligeiros dentro das localidades?",
+    back: "60 km/h\nRegra geral de trânsito em todas as cidades e vilas de Moçambique, salvo sinalização em contrário."
   }
 ];
 
@@ -171,6 +258,8 @@ const duelQuestionsBank = [
     correct: 0
   }
 ];
+
+let activeDuelQuestions = [...duelQuestionsBank];
 
 // --- INICIALIZAÇÃO ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -505,6 +594,21 @@ function setupEventListeners() {
   safeAddListener("auth-toggle-link", "click", toggleAuthMode);
   safeAddListener("auth-submit-btn", "click", submitAuth);
   safeAddListener("header-logout-btn", "click", logout);
+
+  // Recuperação de Senha / PIN
+  safeAddListener("auth-forgot-link", "click", (e) => {
+    e.preventDefault();
+    showAuthResetView();
+  });
+  safeAddListener("auth-reset-back-link", "click", (e) => {
+    e.preventDefault();
+    hideAuthResetView();
+  });
+  safeAddListener("auth-reset-submit-btn", "click", submitAuthReset);
+  safeAddListener("auth-reset-form", "submit", (e) => {
+    e.preventDefault();
+    submitAuthReset();
+  });
 
   // Tabs de Filtro de Ensino (ESG 10ª/12ª, Superior, Técnico, Cambridge, Condução)
   document.querySelectorAll("#education-level-grid .uni-card").forEach(card => {
@@ -1047,14 +1151,116 @@ function openAuthModal() {
   document.getElementById("auth-title").textContent = "Iniciar Sessão";
   document.getElementById("auth-submit-btn").textContent = "Entrar";
   document.getElementById("auth-toggle-link").innerHTML = 'Não tem conta? <span style="color: var(--primary); font-weight: 600; cursor: pointer;">Registe-se aqui</span>';
+  document.getElementById("auth-toggle-link").style.display = "block";
   document.getElementById("auth-error-alert").style.display = "none";
   document.getElementById("auth-success-alert").style.display = "none";
   document.getElementById("auth-phone-input").value = "";
   document.getElementById("auth-password-input").value = "";
+  
+  const authForm = document.getElementById("auth-form");
+  if (authForm) authForm.style.display = "block";
+  const resetForm = document.getElementById("auth-reset-form");
+  if (resetForm) resetForm.style.display = "none";
+
   const provGroup = document.getElementById("auth-province-group");
   if (provGroup) provGroup.style.display = "none";
   document.getElementById("auth-overlay").style.display = "flex";
   document.getElementById("auth-phone-input").focus();
+}
+
+function showAuthResetView() {
+  document.getElementById("auth-title").textContent = "Recuperar Palavra-passe / PIN";
+  document.getElementById("auth-error-alert").style.display = "none";
+  document.getElementById("auth-success-alert").style.display = "none";
+  
+  const authForm = document.getElementById("auth-form");
+  if (authForm) authForm.style.display = "none";
+  const toggleLink = document.getElementById("auth-toggle-link");
+  if (toggleLink) toggleLink.style.display = "none";
+  const resetForm = document.getElementById("auth-reset-form");
+  if (resetForm) resetForm.style.display = "block";
+
+  const resetPhone = document.getElementById("auth-reset-phone-input");
+  const loginPhone = document.getElementById("auth-phone-input");
+  if (resetPhone && loginPhone) {
+    resetPhone.value = loginPhone.value;
+  }
+  const newPass = document.getElementById("auth-reset-newpass-input");
+  if (newPass) {
+    newPass.value = "";
+    if (resetPhone && resetPhone.value) newPass.focus();
+    else if (resetPhone) resetPhone.focus();
+  }
+}
+
+function hideAuthResetView() {
+  document.getElementById("auth-title").textContent = "Iniciar Sessão";
+  document.getElementById("auth-error-alert").style.display = "none";
+  document.getElementById("auth-success-alert").style.display = "none";
+
+  const resetForm = document.getElementById("auth-reset-form");
+  if (resetForm) resetForm.style.display = "none";
+  const authForm = document.getElementById("auth-form");
+  if (authForm) authForm.style.display = "block";
+  const toggleLink = document.getElementById("auth-toggle-link");
+  if (toggleLink) toggleLink.style.display = "block";
+}
+
+async function submitAuthReset() {
+  const phone = document.getElementById("auth-reset-phone-input").value.replace(/\D/g, "");
+  const newPassword = document.getElementById("auth-reset-newpass-input").value;
+  const errorAlert = document.getElementById("auth-error-alert");
+  const successAlert = document.getElementById("auth-success-alert");
+
+  errorAlert.style.display = "none";
+  successAlert.style.display = "none";
+
+  if (!phone || !newPassword) {
+    errorAlert.textContent = "Por favor, introduza o número de telemóvel e a nova palavra-passe.";
+    errorAlert.style.display = "block";
+    return;
+  }
+
+  if (newPassword.length < 4) {
+    errorAlert.textContent = "A nova palavra-passe deve ter pelo menos 4 caracteres.";
+    errorAlert.style.display = "block";
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, newPassword })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      jwtToken = data.token;
+      userProfile = data.user;
+      localStorage.setItem("examepronto_token", jwtToken);
+      
+      successAlert.textContent = "Palavra-passe redefinida com sucesso! A iniciar sessão...";
+      successAlert.style.display = "block";
+
+      setTimeout(async () => {
+        document.getElementById("auth-overlay").style.display = "none";
+        hideAuthResetView();
+        updateAuthUI();
+        await fetchUserProgress();
+        showSection("dashboard");
+        activateMenuTab("dashboard");
+        await renderExamsList();
+      }, 1200);
+    } else {
+      errorAlert.textContent = data.error || "Erro ao redefinir a palavra-passe.";
+      errorAlert.style.display = "block";
+    }
+  } catch (e) {
+    errorAlert.textContent = "Erro de conexão ao servidor.";
+    errorAlert.style.display = "block";
+  }
 }
 
 function toggleAuthMode() {
@@ -3557,7 +3763,7 @@ async function endMathGame() {
 }
 
 // 2. Mozambique Quiz Game Engine
-function startMozQuiz() {
+async function startMozQuiz() {
   document.getElementById("game-selection-panel").style.display = "none";
   document.getElementById("game-quiz-arena").style.display = "block";
   document.getElementById("game-over-screen").style.display = "none";
@@ -3566,12 +3772,33 @@ function startMozQuiz() {
   gameQuizState.score = 0;
 
   document.getElementById("game-quiz-score").textContent = "0";
+  document.getElementById("game-quiz-number").textContent = "A carregar...";
+  document.getElementById("game-quiz-question").textContent = "A sortear perguntas oficiais do acervo de exames de Moçambique...";
+  document.getElementById("game-quiz-options-container").innerHTML = "<div style='text-align: center; padding: 25px; color: var(--text-secondary); font-size: 0.95rem;'>A aceder a 12.408 questões nacionais...</div>";
+
+  try {
+    const res = await fetch("/api/games/questions?game=moz_quiz&limit=10");
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length >= 3) {
+        activeQuizQuestions = data;
+      }
+    }
+  } catch (e) {
+    console.warn("A usar questões locais para o Moz Quiz:", e);
+    activeQuizQuestions = [...mozQuizQuestions];
+  }
+
   renderQuizQuestion();
 }
 
 function renderQuizQuestion() {
-  const q = mozQuizQuestions[gameQuizState.currentIndex];
-  document.getElementById("game-quiz-number").textContent = `${gameQuizState.currentIndex + 1}/${mozQuizQuestions.length}`;
+  const q = activeQuizQuestions[gameQuizState.currentIndex];
+  if (!q) {
+    endQuizGame();
+    return;
+  }
+  document.getElementById("game-quiz-number").textContent = `${gameQuizState.currentIndex + 1}/${activeQuizQuestions.length}`;
   document.getElementById("game-quiz-question").textContent = q.text;
 
   const container = document.getElementById("game-quiz-options-container");
@@ -3587,7 +3814,8 @@ function renderQuizQuestion() {
 }
 
 function verifyQuizChoice(chosenIdx) {
-  const q = mozQuizQuestions[gameQuizState.currentIndex];
+  const q = activeQuizQuestions[gameQuizState.currentIndex];
+  if (!q) return;
   const buttons = document.querySelectorAll("#game-quiz-options-container .option-btn");
   
   buttons.forEach((btn, idx) => {
@@ -3606,7 +3834,7 @@ function verifyQuizChoice(chosenIdx) {
 
   setTimeout(() => {
     gameQuizState.currentIndex++;
-    if (gameQuizState.currentIndex < mozQuizQuestions.length) {
+    if (gameQuizState.currentIndex < activeQuizQuestions.length) {
       renderQuizQuestion();
     } else {
       endQuizGame();
@@ -3813,7 +4041,7 @@ function cancelDuelMatchmaking() {
   document.getElementById("duel-mode-selection").style.display = "block";
 }
 
-function startAiDuel() {
+async function startAiDuel() {
   duelIsLiveMatch = false;
   document.getElementById("duel-mode-selection").style.display = "none";
   document.getElementById("duel-matchmaking-overlay").style.display = "none";
@@ -3831,6 +4059,24 @@ function startAiDuel() {
 
   document.getElementById("duel-p1-score").textContent = "0";
   document.getElementById("duel-p2-score").textContent = "0";
+
+  document.getElementById("duel-category-tag").textContent = "A carregar...";
+  document.getElementById("duel-question-text").textContent = "A sortear perguntas oficiais do acervo de Moçambique...";
+
+  try {
+    const res = await fetch("/api/games/questions?game=duel&limit=5");
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length >= 3) {
+        activeDuelQuestions = data;
+        gameDuelState.maxRounds = data.length;
+      }
+    }
+  } catch (e) {
+    console.warn("A usar banco local para duelo IA:", e);
+    activeDuelQuestions = [...duelQuestionsBank];
+    gameDuelState.maxRounds = duelQuestionsBank.length;
+  }
 
   loadDuelRound();
 }
@@ -3946,11 +4192,11 @@ function loadDuelRound() {
   const banner = document.getElementById("duel-round-banner");
   if (banner) banner.style.display = "none";
 
-  const qIndex = (gameDuelState.round - 1) % duelQuestionsBank.length;
-  const q = duelQuestionsBank[qIndex];
+  const qIndex = (gameDuelState.round - 1) % activeDuelQuestions.length;
+  const q = activeDuelQuestions[qIndex];
   gameDuelState.currentQuestion = q;
 
-  document.getElementById("duel-category-tag").textContent = q.category;
+  document.getElementById("duel-category-tag").textContent = q.category || q.subject || "Duelo do Saber";
   document.getElementById("duel-question-text").textContent = q.text;
 
   const timerBar = document.getElementById("duel-timer-bar");
@@ -4564,7 +4810,7 @@ async function submitManualPayment() {
     const data = await res.json();
 
     if (res.ok) {
-      const channelLabel = method.includes("MKESH") ? "mKesh (826727204)" : "M-Pesa (849517984)";
+      const channelLabel = method.includes("EMOLA") ? "e-Mola (866555579)" : (method.includes("MKESH") ? "mKesh (826727204)" : "M-Pesa (849517984)");
       const amountVal = selectedPlan === "semanal" ? "49.00" : "119.00";
       const planLabel = selectedPlan === "semanal" ? "Semanal (7 dias)" : "Mensal (30 dias)";
       const waMsg = encodeURIComponent(`Olá Vilhete Solutions! Acabei de efetuar o depósito de ${amountVal} MT (${planLabel}) via ${channelLabel}.\n\nRef/Código: ${transactionRef}\nContacto: ${senderPhone}\n\nPodem aprovar o meu Acesso Premium no ExamePronto?`);

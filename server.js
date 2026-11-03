@@ -166,7 +166,7 @@ app.post('/api/auth/register', (req, res) => {
   const salt = bcrypt.genSaltSync(10);
   const passwordHash = bcrypt.hashSync(password, salt);
 
-  const adminPhone = process.env.ADMIN_PHONE || '840000000';
+  const adminPhone = process.env.ADMIN_PHONE || '849517984';
   const cleanAdminPhone = adminPhone.replace(/\D/g, '');
   const isAdmin = (cleanPhone === cleanAdminPhone) ? 1 : 0;
   const userProvince = province || 'Maputo Cidade';
@@ -218,7 +218,7 @@ app.post('/api/auth/login', (req, res) => {
       return res.status(400).json({ error: 'Número de telefone ou palavra-passe incorretos.' });
     }
 
-    const adminPhone = process.env.ADMIN_PHONE || '840000000';
+    const adminPhone = process.env.ADMIN_PHONE || '849517984';
     const cleanAdminPhone = adminPhone.replace(/\D/g, '');
     const shouldBeAdmin = (user.phone === cleanAdminPhone);
 
@@ -248,6 +248,58 @@ app.post('/api/auth/login', (req, res) => {
     } else {
       sendLoginResponse(user);
     }
+  });
+});
+
+// Redefinição de Palavra-passe / PIN de Estudante
+app.post('/api/auth/reset-password', (req, res) => {
+  const { phone, newPassword } = req.body;
+
+  if (!phone || !newPassword) {
+    return res.status(400).json({ error: 'Número de telefone e nova palavra-passe são obrigatórios.' });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  if (cleanPhone.length !== 9 || !/^(84|85|86|87|82)/.test(cleanPhone)) {
+    return res.status(400).json({ error: 'Número de telefone moçambicano inválido (deve iniciar com 82, 84, 85, 86 ou 87).' });
+  }
+
+  if (newPassword.length < 4) {
+    return res.status(400).json({ error: 'A nova palavra-passe / PIN deve ter pelo menos 4 caracteres.' });
+  }
+
+  db.get('SELECT id, phone, province, is_admin, premium_until FROM users WHERE phone = ?', [cleanPhone], (err, user) => {
+    if (err) {
+      return res.status(500).json({ error: 'Erro ao verificar o utilizador.' });
+    }
+    if (!user) {
+      return res.status(404).json({ error: 'Não existe nenhuma conta registada com este número de telefone.' });
+    }
+
+    const salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync(newPassword, salt);
+
+    db.run('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, user.id], function(updateErr) {
+      if (updateErr) {
+        return res.status(500).json({ error: 'Erro ao atualizar a palavra-passe no sistema.' });
+      }
+
+      const now = new Date().getTime();
+      const isPremium = user.premium_until > now;
+      const token = jwt.sign({ id: user.id, phone: user.phone }, JWT_SECRET, { expiresIn: '7d' });
+
+      res.json({
+        message: 'Palavra-passe redefinida com sucesso! Sessão iniciada.',
+        token,
+        user: {
+          id: user.id,
+          phone: user.phone,
+          province: user.province || 'Maputo Cidade',
+          isPremium,
+          isAdmin: user.is_admin === 1
+        }
+      });
+    });
   });
 });
 
@@ -483,34 +535,94 @@ app.post('/api/tutor/chat', requireAuth, tutorRateLimit, async (req, res) => {
   let responseText = "";
   const queryText = message.toLowerCase();
 
-  // Vocabulário de explicações escolares comuns
+  // Vocabulário de explicações escolares moçambicanas e exames UEM / UP / 10ª / 12ª
   if (queryText.includes("fração") || queryText.includes("fracao")) {
-    responseText = "Uma fração é uma divisão! Por exemplo, se dividires uma capulana em 4 partes iguais e deres 3 partes à tua irmã, deste-lhe 3/4 da capulana. O número de cima (3) é o numerador e o de baixo (4) é o denominador.";
+    responseText = "Uma fração representa partes de um todo! Por exemplo, se dividires uma capulana em 4 partes iguais e deres 3 partes à tua irmã, deste-lhe 3/4. O número de cima (3) é o numerador e o de baixo (4) é o denominador. Na soma de frações com denominadores diferentes, calcula sempre o MMC!";
+  } else if (queryText.includes("bhaskara") || queryText.includes("quadrática") || queryText.includes("quadratica") || queryText.includes("equação do 2") || queryText.includes("delta")) {
+    responseText = "Para resolver ax² + bx + c = 0, usamos a Fórmula de Bhaskara:\n1. Calcula o discriminante: Δ = b² - 4ac\n2. Se Δ > 0: duas raízes reais distintas x = (-b ± √Δ) / (2a)\n3. Se Δ = 0: uma raiz real dupla x = -b / (2a)\n4. Se Δ < 0: não existem raízes no conjunto dos números reais (ℝ).\nDica UEM: A soma das raízes é S = -b/a e o produto é P = c/a!";
+  } else if (queryText.includes("derivada") || queryText.includes("derivar") || queryText.includes("cálculo") || queryText.includes("calculo")) {
+    responseText = "Regras essenciais de derivadas para exames de admissão UEM e UP:\n• Potência: (xⁿ)' = n · xⁿ⁻¹ (Ex: (x³)' = 3x²)\n• Constante: (c)' = 0 e (c · u)' = c · u'\n• Soma: (u + v)' = u' + v'\n• Produto: (u · v)' = u'v + uv'\n• Quociente: (u/v)' = (u'v - uv') / v²\n• Exponencial: (eˣ)' = eˣ\n• Logaritmo: (ln x)' = 1/x\nPara achar pontos de máximo ou mínimo de uma função, basta igualar a derivada a zero: f'(x) = 0!";
+  } else if (queryText.includes("limite") || queryText.includes("indeterminação") || queryText.includes("indeterminacao") || queryText.includes("hospital") || queryText.includes("hopital")) {
+    responseText = "Nas indeterminações em exames UEM/UP:\n1. Indeterminação 0/0 com polinómios: fatora numerador e denominador (produtos notáveis ou Briot-Ruffini) para simplificar o fator que anula!\n2. Com raízes quadradas: multiplica numerador e denominador pelo conjugado (ex: √(x) - 2 multiplica por √(x) + 2).\n3. Regra de L'Hôpital: se o limite dá 0/0 ou ∞/∞, podes derivar o numerador e o denominador separadamente: lim [f(x)/g(x)] = lim [f'(x)/g'(x)]!\n4. Limite Notável Fundamental: lim(x→0) [sin(x) / x] = 1.";
+  } else if (queryText.includes("trigonometria") || queryText.includes("seno") || queryText.includes("cosseno") || queryText.includes("tangente")) {
+    responseText = "Relações trigonométricas fundamentais:\n• Relação Fundamental: sin²(x) + cos²(x) = 1\n• Tangente: tan(x) = sin(x) / cos(x)\n• Relação secante: 1 + tan²(x) = sec²(x) = 1 / cos²(x)\nÂngulos Notáveis:\n• 30°: sin=1/2, cos=√3/2, tan=√3/3\n• 45°: sin=√2/2, cos=√2/2, tan=1\n• 60°: sin=√3/2, cos=1/2, tan=√3";
+  } else if (queryText.includes("progressão") || queryText.includes("progressao") || queryText.includes(" pa ") || queryText.includes(" pg ")) {
+    responseText = "Progressões Matemáticas (Frequentes na 12ª classe e UEM):\n• PA (Progressão Aritmética):\n  - Termo Geral: aₙ = a₁ + (n - 1) · r\n  - Soma dos n termos: Sₙ = [(a₁ + aₙ) · n] / 2\n• PG (Progressão Geométrica):\n  - Termo Geral: aₙ = a₁ · qⁿ⁻¹\n  - Soma infinita (|q| < 1): S_∞ = a₁ / (1 - q)";
+  } else if (queryText.includes("ohm") || queryText.includes("resistor") || queryText.includes("circuito") || queryText.includes("eletricidade")) {
+    responseText = "Eletrodinâmica & Leis de Ohm:\n• 1ª Lei de Ohm: U = R · I (Tensão = Resistência × Corrente)\n• Potência Elétrica: P = U · I = R · I² = U² / R\n• Associação em Série: Req = R₁ + R₂ + ... (a corrente I é constante)\n• Associação em Paralelo: 1/Req = 1/R₁ + 1/R₂ (a tensão U é constante)\nMacete para 2 resistores em paralelo: Req = (R₁ · R₂) / (R₁ + R₂)!";
+  } else if (queryText.includes("newton") || queryText.includes("inércia") || queryText.includes("inercia") || queryText.includes("força")) {
+    responseText = "As 3 Leis de Newton:\n1ª Lei (Inércia): Todo corpo permanece em repouso ou em Movimento Retilíneo Uniforme a menos que uma força resultante atue sobre ele.\n2ª Lei (Dinâmica): F = m · a (Força resultante = massa × aceleração).\n3ª Lei (Ação e Reação): A toda ação corresponde uma reação de mesma intensidade, mesma direção e sentidos opostos, aplicadas em corpos diferentes!";
+  } else if (queryText.includes("cinemática") || queryText.includes("cinematica") || queryText.includes("velocidade") || queryText.includes("torricelli")) {
+    responseText = "Fórmulas de Movimento em Física:\n• MRU (Velocidade constante): S = S₀ + v · t\n• MRUV (Aceleração constante):\n  - v = v₀ + a · t\n  - S = S₀ + v₀·t + (a·t²)/2\n  - Equação de Torricelli (sem tempo): v² = v₀² + 2·a·ΔS\nNa queda livre na Terra, usa a = g ≈ 10 m/s² (ou 9,8 m/s² conforme o enunciado).";
+  } else if (queryText.includes("ph") || queryText.includes("ácido") || queryText.includes("acido") || queryText.includes("base") || queryText.includes("alcalin")) {
+    responseText = "Equilíbrio Iónico e pH em Química:\n• pH = -log[H⁺] e pOH = -log[OH⁻]\n• Em solução aquosa a 25°C: pH + pOH = 14\n• pH < 7: Meio Ácido (ex: sumo de limão, ácido clorídrico)\n• pH = 7: Meio Neutro (água pura)\n• pH > 7: Meio Básico / Alcalino (ex: soda cáustica, sabão)";
+  } else if (queryText.includes("molaridade") || queryText.includes("concentração") || queryText.includes("concentracao") || queryText.includes("solução") || queryText.includes("solucao")) {
+    responseText = "Cálculo de Soluções Químicas:\n• Concentração Molar (Molaridade): M = n / V(L) = m₁ / (MM · V_L)\n  onde m₁ é a massa do soluto em gramas, MM a massa molar (g/mol) e V o volume da solução em litros.\n• Diluição de Soluções: C₁ · V₁ = C₂ · V₂ (a quantidade de matéria de soluto permanece constante).";
+  } else if (queryText.includes("mitose") || queryText.includes("meiose") || queryText.includes("célula") || queryText.includes("celula")) {
+    responseText = "Divisão Celular em Biologia:\n• Mitose (Divisão Equacional 2n → 2n): produz 2 células idênticas para crescimento e cicatrização. Fases (Mnemónica: PRO-META-ANA-TELO): Prófase, Metáfase (cromossomas no equador), Anáfase (separação dos cromatídeos), Telófase.\n• Meiose (Divisão Reducional 2n → n): produz 4 células haplóides com variabilidade genética (Crossing-over) para formação de gâmetas (óvulo e espermatozoide).";
+  } else if (queryText.includes("mendel") || queryText.includes("genética") || queryText.includes("genetica") || queryText.includes("alelo") || queryText.includes("hereditariedade")) {
+    responseText = "Genética e Leis de Mendel:\n• 1ª Lei de Mendel (Segregação dos Fatores): Cada característica é determinada por dois alelos que se separam na formação dos gâmetas.\n• Cruzamento de heterozigotos (Aa × Aa):\n  - Genótipos: 1 AA : 2 Aa : 1 aa (25% AA, 50% Aa, 25% aa)\n  - Fenótipos: 3 Dominantes : 1 Recessivo (proporção 3:1).";
+  } else if (queryText.includes("oração") || queryText.includes("oracao") || queryText.includes("subordinada") || queryText.includes("coordenada") || queryText.includes("sintaxe")) {
+    responseText = "Orações Complexas em Português:\n• Subordinadas Substantivas: integram a oração principal e substituem-se por 'isto' ('Quero [que estudes]' => 'Quero [isto]').\n• Subordinadas Adjetivas: qualificam um substantivo antecedente com pronome relativo ('que', 'cujo'). Se tiver vírgulas é Explicativa; sem vírgulas é Restritiva.\n• Subordinadas Adverbiais: expressam circunstâncias (Causal: 'porque', Concessiva: 'embora', Condicional: 'se', Final: 'para que', Temporal: 'quando').";
+  } else if (queryText.includes("figura de estilo") || queryText.includes("metáfora") || queryText.includes("metafora") || queryText.includes("metonímia") || queryText.includes("metonimia")) {
+    responseText = "Figuras de Estilo Comuns nos Exames de Português:\n• Metáfora: transferência de significado sem conectivo ('Ele é uma fera nos estudos').\n• Comparação: transferência com conectivo explícito ('Ele estuda como uma fera').\n• Metonímia: troca da causa pelo efeito ou continente pelo conteúdo ('Lemos Mia Couto' = a obra de Mia Couto).\n• Personificação / Prosopopeia: atribuir vida ou sentimentos humanos a seres inanimados.\n• Antítese: aproximação de palavras de sentido oposto ('O riso e o pranto').";
+  } else if (queryText.includes("samora") || queryText.includes("independência") || queryText.includes("independencia") || queryText.includes("frelimo") || queryText.includes("lusaka") || queryText.includes("chai")) {
+    responseText = "Marcos Históricos de Moçambique:\n• 25 de Junho de 1962: Fundação da FRELIMO em Dar-es-Salaam, sob liderança de Eduardo Mondlane.\n• 25 de Setembro de 1964: Início da Luta Armada de Libertação Nacional no posto de Chai (Cabo Delgado).\n• 7 de Setembro de 1974: Assinatura dos Acordos de Lusaka (cessar-fogo e governo de transição).\n• 25 de Junho de 1975: Proclamação da Independência Nacional por Samora Moisés Machel no Estádio da Machava.";
+  } else if (queryText.includes("binga") || queryText.includes("zambeze") || queryText.includes("cahora bassa") || queryText.includes("clima") || queryText.includes("geografia")) {
+    responseText = "Geografia de Moçambique (Dados Oficiais):\n• Ponto mais alto: Monte Binga com 2.436 metros (Serra de Chimanimani, província de Manica).\n• Maior Bacia Hidrográfica: Bacia do Rio Zambeze (onde se localiza a Albufeira e Hidroelétrica de Cahora Bassa em Tete).\n• Relevo: Planícies no Sul e Litoral (0-200m), Planaltos no Centro/Norte (200-1000m) e Montanhas no interior (>1000m).\n• Clima predominante: Tropical Húmido no Norte/Litoral e Tropical Seco no Sul/Interior.";
+  } else if (queryText.includes("cruzamento") || queryText.includes("prioridade") || queryText.includes("rotunda") || queryText.includes("inatro") || queryText.includes("condução")) {
+    responseText = "Regras de Ouro do Código de Estrada Moçambicano (INATRO):\n• Cruzamentos sem sinalização: Prioridade absoluta da Direita!\n• Rotundas: A prioridade é sempre dos veículos que já circulam dentro da rotunda.\n• Velocidades Máximas para Ligeiros: 60 km/h dentro das localidades e 120 km/h nas auto-estradas / fora das localidades.\n• Álcool: Tolerância zero (proibição de conduzir sob efeito de substâncias psicotrópicas).";
   } else if (queryText.includes("percentagem") || queryText.includes("lucro")) {
-    responseText = "Percentagem quer dizer 'por cada 100'. No comércio: se compras um peixe por 100 MT e vendes por 130 MT, o teu lucro é de 30 MT. Como o custo inicial era 100 MT, o teu lucro é exatamente de 30% (trinta por cento)!";
-  } else if (queryText.includes("sujeito") || queryText.includes("predicado")) {
-    responseText = "Muito simples! Sujeito é 'quem faz a ação' (ex: 'O João estuda'). Perguntas 'Quem estuda?' -> O João (Sujeito). O Predicado é 'o que o sujeito faz' e contém o verbo (ex: 'estuda para o exame' é o predicado).";
-  } else if (queryText.includes("limite") || queryText.includes("indeterminação")) {
-    responseText = "Nas indeterminações do tipo 0/0 nos exames da UEM, deves fatorizar a expressão algébrica! Por exemplo, x²-9 vira (x-3)(x+3). Se dividires por (x-3), o termo nulo desaparece e ficas apenas com (x+3). Aí substituis o limite!";
-  } else if (queryText.includes("newton") || queryText.includes("inércia") || queryText.includes("lei de newton")) {
-    responseText = "A Primeira Lei de Newton (Lei da Inércia) diz que se nenhuma força resultante atua num corpo, ele fica parado ou move-se em linha reta com velocidade constante. É por isso que quando o chapa trava de repente, nós somos projetados para a frente!";
+    responseText = "Percentagem quer dizer 'por cada 100'. No comércio: se compras um produto por 100 MT e vendes por 130 MT, o teu lucro é de 30 MT. Como o custo inicial era 100 MT, a tua margem de lucro é exatamente de 30%!";
   } else if (queryText.includes("malária") || queryText.includes("malaria")) {
-    responseText = "A malária é transmitida pela picada do mosquito Anopheles fêmea infectado, que injeta o parasita Plasmodium no nosso sangue. A prevenção é feita usando redes mosquiteiras e eliminando águas paradas onde o mosquito se reproduz.";
-  } else if (queryText.includes("cruzamento") || queryText.includes("prioridade") || queryText.includes("condução")) {
-    responseText = "No código de estrada de Moçambique, a regra de ouro em cruzamentos sem sinalização é a **prioridade de passagem pela direita**. Deves ceder passagem a qualquer veículo que se apresente pela tua direita. As únicas exceções são veículos em serviço de emergência (ambulâncias, bombeiros) ou ao sair de garagens/vias privadas.";
-  } else if (queryText.includes("simultaneous") || queryText.includes("equations")) {
-    responseText = "To solve simultaneous equations like 2x + y = 7 and x - y = 2, you can use the **elimination method**. Just add the two equations together: (2x+y) + (x-y) = 7+2 => 3x = 9 => x = 3. Then, substitute x = 3 back: 3 - y = 2 => y = 1. The solution is (3, 1).";
-  } else {
-    responseText = `Olá! Como teu Explicador Virtual de ${subject ? subject.charAt(0).toUpperCase() + subject.slice(1) : 'Estudos'}, estou aqui para te apoiar. A tua pergunta sobre "${message}" é muito interessante. Para obteres explicações detalhadas e completas sobre este e outros tópicos escolares de Moçambique, ativa o teu plano Premium. Força nos estudos!`;
+    responseText = "A malária é causada pelo parasita unicelular Plasmodium e transmitida pela picada do mosquito Anopheles fêmea infectado. Os sintomas incluem febres altas, calafrios e cefaleias. Prevenção: uso de redes mosquiteiras tratadas com inseticida e destruição de criadouros de águas paradas.";
   }
 
-  if (!isPremium) {
-    responseText += "\n\n⚠️ *Nota: Estás na conta Gratuita. Podes fazer mais perguntas e tirar todas as tuas dúvidas ativando o acesso Premium por 49 MT.*";
+  const returnTutorResponse = (text) => {
+    let finalMsg = text;
+    if (!isPremium) {
+      finalMsg += "\n\n💡 *Dica: Tens acesso a explicações completas e ilimitadas com o Plano Premium por apenas 49 MT/semana.*";
+    }
+    return res.json({ reply: finalMsg, isPremium });
+  };
+
+  if (responseText) {
+    return returnTutorResponse(responseText);
   }
 
-  res.json({
-    reply: responseText,
-    isPremium
+  // Fallback Inteligente: Pesquisar no acervo de 12.408 questões com resolução comentada
+  const searchTerms = message.trim().split(/\s+/).filter(w => w.length > 3).slice(0, 3);
+  let dbQuery = `
+    SELECT q.id, q.text, q.options, q.explanation, e.subject_name, e.year, e.university
+    FROM questions q
+    JOIN exams e ON q.exam_id = e.id
+    WHERE q.explanation IS NOT NULL 
+      AND LENGTH(q.explanation) > 15
+  `;
+  const dbParams = [];
+
+  if (searchTerms.length > 0) {
+    dbQuery += " AND (q.text ILIKE ? OR q.explanation ILIKE ?)";
+    dbParams.push(`%${searchTerms[0]}%`, `%${searchTerms[0]}%`);
+  }
+
+  dbQuery += " ORDER BY RANDOM() LIMIT 1";
+
+  db.get(dbQuery, dbParams, (err, examRow) => {
+    if (!err && examRow) {
+      let opts = [];
+      try { opts = JSON.parse(examRow.options); } catch(e){}
+      const optsText = opts.length ? `\nOpções: ${opts.join(" | ")}` : "";
+      
+      responseText = `Olá! Encontrei no nosso acervo uma questão real de ${examRow.subject_name} (${examRow.university || 'Moçambique'} ${examRow.year || ''}) relacionada com a tua dúvida:\n\n` +
+        `📝 "${examRow.text.slice(0, 180)}..."${optsText}\n\n` +
+        `💡 Explicação Oficial:\n${examRow.explanation}`;
+      return returnTutorResponse(responseText);
+    }
+
+    // Resposta padrão orientadora
+    responseText = `Olá! Como teu Explicador Virtual de ${subject ? subject.charAt(0).toUpperCase() + subject.slice(1) : 'Estudos'}, estou aqui para te apoiar. A tua dúvida sobre "${message}" envolve conceitos importantes do currículo nacional moçambicano. Podes perguntar diretamente sobre fórmulas (ex: Bhaskara, Derivadas, Leis de Newton, Ohm), regras de gramática, datas históricas de Moçambique ou limites!`;
+    return returnTutorResponse(responseText);
   });
 });
 
@@ -534,7 +646,7 @@ app.post('/api/games/score', requireAuth, (req, res) => {
   if (gameName === 'math_rush' && intScore > 100) {
     return res.status(400).json({ error: 'Pontuação bloqueada pelo sistema anti-cheat (velocidade suspeita).' });
   }
-  if (gameName === 'moz_quiz' && intScore > 50) {
+  if (gameName === 'moz_quiz' && intScore > 100) {
     return res.status(400).json({ error: 'Pontuação bloqueada pelo sistema anti-cheat (limite excedido).' });
   }
 
@@ -581,6 +693,63 @@ app.get('/api/games/leaderboard', (req, res) => {
     });
 
     res.json(maskedRows);
+  });
+});
+
+// 2.1. Obter Perguntas Aleatórias Dinâmicas para Jogos (Moz Quiz & Duelo 1v1 do Acervo Real)
+app.get('/api/games/questions', (req, res) => {
+  const { game, subject, limit } = req.query;
+  const qLimit = Math.min(30, Math.max(5, parseInt(limit, 10) || 10));
+
+  let query = `
+    SELECT q.id, q.number, q.text, q.options, q.correct_option, q.explanation,
+           e.subject, e.subject_name, e.university, e.year, e.level
+    FROM questions q
+    JOIN exams e ON q.exam_id = e.id
+    WHERE q.options IS NOT NULL 
+      AND LENGTH(q.text) >= 15
+      AND q.text NOT LIKE '%[🔒%'
+  `;
+  const params = [];
+
+  if (subject && subject !== 'all') {
+    query += " AND (e.subject = ? OR e.subject_name ILIKE ?)";
+    params.push(subject.toLowerCase(), `%${subject}%`);
+  }
+
+  query += " ORDER BY RANDOM() LIMIT ?";
+  params.push(Math.max(qLimit * 2, 20));
+
+  db.all(query, params, (err, rows) => {
+    if (err || !rows) {
+      return res.status(500).json({ error: 'Erro ao carregar perguntas dinâmicas do acervo.' });
+    }
+
+    const formatted = [];
+    rows.forEach(r => {
+      let opts = [];
+      try {
+        opts = JSON.parse(r.options);
+      } catch (e) {
+        opts = [];
+      }
+
+      if (Array.isArray(opts) && opts.length >= 3) {
+        formatted.push({
+          id: r.id,
+          number: r.number,
+          text: r.text,
+          options: opts,
+          correct: (r.correct_option !== null && r.correct_option !== undefined) ? r.correct_option : 0,
+          explanation: r.explanation || `Resolução comentada da questão de ${r.subject_name}.`,
+          category: r.subject_name || 'Conhecimento Geral',
+          subject: r.subject || 'geral',
+          exam: `${r.subject_name} (${r.year || 'Exame Oficial'})`
+        });
+      }
+    });
+
+    res.json(formatted.slice(0, qLimit));
   });
 });
 
@@ -1515,6 +1684,66 @@ app.get('/api/micro-lessons', (req, res) => {
       summary: 'Regra de ouro da prioridade à direita e exceções de veículos prioritários segundo o Regulamento do Trânsito Moçambicano.',
       keyTakeaway: 'Na ausência de sinalização, a prioridade pertence sempre ao condutor que se apresenta pela direita, exceto veículos de urgência ou quem entra numa rotunda.',
       exampleProblem: 'Num cruzamento sem semáforos nem sinais, o veículo A segue em frente e B vem da sua direita: B avança primeiro.'
+    },
+    {
+      id: 'ml_5',
+      title: 'Mnemónica Infalível das Fases da Mitose',
+      subject: 'Biologia',
+      duration: '90s',
+      tag: 'Citologia & Genética',
+      summary: 'Memorize a sequência exata das 4 fases da divisão celular com a mnemónica PRO-META-ANA-TELO.',
+      keyTakeaway: '1. Prófase (condensação), 2. Metáfase (placa equatorial), 3. Anáfase (separação dos cromatídeos irmãos), 4. Telófase (citocinese e núcleos novos).',
+      exampleProblem: 'Questão UEM: Em qual das fases os cromossomas atingem o grau máximo de condensação e alinham-se no centro da célula? Resposta: Metáfase!'
+    },
+    {
+      id: 'ml_6',
+      title: 'O Teste do "ISTO" nas Orações Subordinadas',
+      subject: 'Português',
+      duration: '90s',
+      tag: 'Sintaxe & Gramática',
+      summary: 'Como distinguir instantaneamente uma Oração Integrante de uma Oração Relativa nos exames da 12ª classe.',
+      keyTakeaway: 'Se puderes substituir a oração introduzida por "que" pelo pronome "ISTO", ela é Subordinada Substantiva Integrante! Se qualificar um nome anterior, é Adjetiva.',
+      exampleProblem: 'Exame: "Ele garantiu [que passaria no exame]". Teste: "Ele garantiu [ISTO]". Como faz sentido total, é uma Substantiva Integrante (função de CD).'
+    },
+    {
+      id: 'ml_7',
+      title: 'A Cronologia da Luta Armada aos Acordos de Lusaka',
+      subject: 'História',
+      duration: '90s',
+      tag: 'História de Moçambique',
+      summary: 'As datas decisivas da libertação nacional que caem em praticamente todos os exames de admissão.',
+      keyTakeaway: '• 1962: Fundação da FRELIMO\n• 25 Set 1964: Ataque a Chai (início da luta armada)\n• 7 Set 1974: Acordos de Lusaka\n• 25 Jun 1975: Proclamação da Independência.',
+      exampleProblem: 'Questão UP: Quem assinou os Acordos de Lusaka em representação da FRELIMO? Resposta: Samora Moisés Machel (Presidente da FRELIMO).'
+    },
+    {
+      id: 'ml_8',
+      title: 'Monte Binga & Bacias Hidrográficas Nacionais',
+      subject: 'Geografia',
+      duration: '90s',
+      tag: 'Geografia Física',
+      summary: 'Os extremos orográficos e a rede fluvial estratégica de Moçambique.',
+      keyTakeaway: 'O ponto culminante de Moçambique é o Monte Binga (2.436m) na cordilheira de Chimanimani (Manica). A maior bacia e potencial energético é o Rio Zambeze (Cahora Bassa).',
+      exampleProblem: 'Exame Nacional: Qual é a província onde se localiza o ponto mais alto de Moçambique? Resposta: Província de Manica.'
+    },
+    {
+      id: 'ml_9',
+      title: 'Etnofilosofia vs Filosofia Profissional Africana',
+      subject: 'Filosofia',
+      duration: '90s',
+      tag: 'Filosofia Africana',
+      summary: 'O grande debate sobre a existência e natureza do pensamento filosófico africano.',
+      keyTakeaway: 'A Etnofilosofia (Placide Tempels, Alexis Kagame) vê a filosofia nos mitos e provérbios coletivos. Os Críticos Profissionais (Paulin Hountondji, Kwasi Wiredu) exigem pensamento crítico, escrito e individual.',
+      exampleProblem: 'Questão 12ª Classe: Quem cunhou o termo pejorativo "Etnofilosofia" para criticar a visão mítica coletiva? Resposta: Paulin Hountondji.'
+    },
+    {
+      id: 'ml_10',
+      title: 'Regra de L\'Hôpital: Limites 0/0 sem Fatoração',
+      subject: 'Matemática',
+      duration: '90s',
+      tag: 'Cálculo Avançado',
+      summary: 'Destrua indeterminações de frações derivando em cima e em baixo sem contas longas.',
+      keyTakeaway: 'Se lim [f(x) / g(x)] resultar em 0/0 ou ∞/∞, faz lim [f\'(x) / g\'(x)]. Basta derivar numerador e denominador de forma independente!',
+      exampleProblem: 'Exame UEM: lim(x→2) (x² - 4)/(x - 2). Derivadas: (2x)/(1) no ponto x=2 dá 2(2)/1 = 4 em 3 segundos.'
     }
   ];
 
@@ -3382,7 +3611,7 @@ app.post('/api/payments/callback', (req, res) => {
   });
 });
 
-// Submissão de Pagamento Manual (M-Pesa / mKesh)
+// Submissão de Pagamento Manual (M-Pesa / e-Mola / mKesh)
 app.post('/api/payments/manual', requireAuth, (req, res) => {
   const { plan, method, senderPhone, transactionRef } = req.body;
 
@@ -3392,7 +3621,7 @@ app.post('/api/payments/manual', requireAuth, (req, res) => {
 
   const cleanPhone = (senderPhone || req.user.phone).replace(/\D/g, '');
   const amount = plan === 'semanal' ? 49.00 : 119.00;
-  const prefix = method.includes('MKESH') ? 'MKESH-' : 'MPESA-';
+  const prefix = method.includes('EMOLA') ? 'EMOLA-' : (method.includes('MKESH') ? 'MKESH-' : 'MPESA-');
   const finalRef = prefix + transactionRef.trim().toUpperCase();
 
   db.run(

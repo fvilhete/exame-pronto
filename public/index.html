@@ -2543,16 +2543,19 @@
 
           <!-- Payment Method Toggle -->
           <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button class="btn btn-sm btn-primary active" id="btn-pay-method-manual" style="flex: 1; font-size: 0.85rem;">📝 Transferência M-Pesa / mKesh</button>
+            <button class="btn btn-sm btn-primary active" id="btn-pay-method-manual" style="flex: 1; font-size: 0.85rem;">📝 Transferência M-Pesa / e-Mola / mKesh</button>
             <button class="btn btn-sm btn-outline" id="btn-pay-method-voucher" style="flex: 1; font-size: 0.85rem;">🎟️ Ativar com Raspadinha</button>
           </div>
 
-          <!-- Method 1: Manual Direct Transfer (M-Pesa & mKesh) -->
+          <!-- Method 1: Manual Direct Transfer (M-Pesa, e-Mola & mKesh) -->
           <div id="pay-panel-manual" style="display: block; background: var(--bg-primary); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
             <h4 style="color: var(--accent); margin-bottom: 12px; font-size: 1rem;">Contas Oficiais Vilhete Solutions:</h4>
             <div style="font-size: 0.85rem; line-height: 1.6; margin-bottom: 15px;">
               <div style="padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #ef4444;">
                 🔴 <strong>Vodacom M-Pesa:</strong> <span style="font-size: 1.1rem; font-weight: bold; color: #ef4444; font-family: monospace;">849517984</span> (Vilhete Solutions)
+              </div>
+              <div style="padding: 8px 12px; background: rgba(249, 115, 22, 0.1); border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #f97316;">
+                🟠 <strong>Movitel e-Mola:</strong> <span style="font-size: 1.1rem; font-weight: bold; color: #f97316; font-family: monospace;">866555579</span> (Vilhete Solutions)
               </div>
               <div style="padding: 8px 12px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; border-left: 4px solid #d97706;">
                 🟡 <strong>TMcel mKesh:</strong> <span style="font-size: 1.1rem; font-weight: bold; color: #d97706; font-family: monospace;">826727204</span> (Vilhete Solutions)
@@ -2567,8 +2570,9 @@
 
             <form id="manual-payment-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 10px;">
               <select id="manual-method-select" class="lesson-select" style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-md);">
-                <option value="MPESA_849517984">M-Pesa (849517984)</option>
-                <option value="MKESH_826727204">mKesh (826727204)</option>
+                <option value="MPESA_849517984">Vodacom M-Pesa (849517984)</option>
+                <option value="EMOLA_866555579">Movitel e-Mola (866555579)</option>
+                <option value="MKESH_826727204">TMcel mKesh (826727204)</option>
               </select>
               <input type="tel" id="manual-sender-phone" placeholder="O seu número de telemóvel (ex: 841234567)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
               <input type="text" id="manual-ref-input" placeholder="Código / Ref. da transação SMS (ex: 8HJ992KA)" required class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
@@ -3215,6 +3219,10 @@
             <input type="password" id="auth-password-input" class="auth-input-text" placeholder="Insira a sua senha" required>
           </div>
 
+          <div style="text-align: right; margin-top: -6px; margin-bottom: 12px;" id="auth-forgot-link-container">
+            <a href="#" id="auth-forgot-link" style="font-size: 0.78rem; color: var(--primary); text-decoration: none; font-weight: 500;">Esqueceu o PIN / Senha?</a>
+          </div>
+
           <div class="form-group" id="auth-province-group" style="display: none;">
             <label for="auth-province-select">A Tua Província (para a Liga Nacional):</label>
             <select id="auth-province-select" class="auth-input-text" style="width: 100%; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-sm);">
@@ -3235,6 +3243,38 @@
           <button type="submit" class="btn btn-primary" id="auth-submit-btn" style="width: 100%; margin-top: 10px;">
             Entrar
           </button>
+        </form>
+
+        <!-- Formulário de Recuperação de Palavra-passe / PIN -->
+        <form id="auth-reset-form" onsubmit="return false;" style="display: none;">
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4;">
+            Esqueceu a sua palavra-passe? Indique o seu número de telemóvel e defina uma nova senha para entrar imediatamente:
+          </p>
+          
+          <div class="form-group">
+            <label for="auth-reset-phone-input">Número de Telemóvel (+258):</label>
+            <div class="input-phone-container">
+              <span class="phone-prefix">+258</span>
+              <input type="tel" id="auth-reset-phone-input" class="input-phone" placeholder="84 123 4567" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="auth-reset-newpass-input">Nova Palavra-passe / PIN:</label>
+            <input type="password" id="auth-reset-newpass-input" class="auth-input-text" placeholder="Mínimo 4 caracteres ou dígitos" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="auth-reset-submit-btn" style="width: 100%; margin-top: 10px;">
+            Redefinir Palavra-passe e Entrar 🚀
+          </button>
+
+          <div style="text-align: center; margin-top: 14px;">
+            <a href="#" id="auth-reset-back-link" style="font-size: 0.82rem; color: var(--text-secondary); text-decoration: none;">← Voltar ao Início de Sessão</a>
+          </div>
+
+          <div style="margin-top: 14px; padding: 10px; background: rgba(37, 211, 102, 0.1); border-radius: 6px; font-size: 0.75rem; text-align: center; color: #15803d; border: 1px solid rgba(37, 211, 102, 0.25);">
+            Suporte imediato? <a href="https://wa.me/258849517984?text=Ola%20Vilhete%20Solutions%2C%20preciso%20de%20ajuda%20com%20minha%20conta%20no%20ExamePronto" target="_blank" style="color: #15803d; font-weight: 700; text-decoration: underline;">Falar no WhatsApp Vilhete Solutions</a>
+          </div>
         </form>
         
         <p class="auth-toggle-link" id="auth-toggle-link">
@@ -3748,7 +3788,7 @@
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <a href="https://wa.me/258840000000?text=Ola%20ExamePronto" target="_blank" class="btn btn-sm" style="background: #25d366; color: white; font-weight: 700; font-size: 0.72rem; padding: 5px 10px; border-radius: 12px; text-decoration: none;">
+          <a href="https://wa.me/258849517984?text=Ola%20Vilhete%20Solutions%2C%20preciso%20de%20apoio%20no%20ExamePronto" target="_blank" class="btn btn-sm" style="background: #25d366; color: white; font-weight: 700; font-size: 0.72rem; padding: 5px 10px; border-radius: 12px; text-decoration: none;">
             Abrir App Real
           </a>
           <button type="button" class="modal-close-btn" id="whatsapp-modal-close-btn" style="color: white; font-size: 1.4rem;">&times;</button>

@@ -336,8 +336,11 @@ function updateAuthUI() {
     authBtn.style.display = "none";
     logoutBtn.style.display = "inline-flex";
     phoneText.style.display = "inline-flex";
-    phoneText.textContent = `+258 ${userProfile.phone}`;
-    welcomeTitle.textContent = `Olá, Estudante (+258 ${userProfile.phone.substring(0,3)}***${userProfile.phone.substring(6)})! 👋`;
+    const displayName = userProfile.name ? userProfile.name.split(' ')[0] : `+258 ${userProfile.phone}`;
+    phoneText.innerHTML = `👤 <span>${escapeHtml(displayName)}</span>`;
+    welcomeTitle.textContent = userProfile.name 
+      ? `Olá, ${escapeHtml(userProfile.name)}! 👋` 
+      : `Olá, Estudante (+258 ${userProfile.phone.substring(0,3)}***${userProfile.phone.substring(6)})! 👋`;
     mainNavMenu.style.display = "flex";
 
     const adminBtn = document.getElementById("nav-admin-btn");
@@ -608,6 +611,36 @@ function setupEventListeners() {
   safeAddListener("auth-reset-form", "submit", (e) => {
     e.preventDefault();
     submitAuthReset();
+  });
+
+  // Perfil do Estudante & Configurações
+  safeAddListener("header-user-phone", "click", openProfileModal);
+  safeAddListener("profile-modal-close-btn", "click", closeProfileModal);
+  safeAddListener("profile-save-btn", "click", submitProfileEdit);
+  safeAddListener("profile-edit-form", "submit", (e) => { e.preventDefault(); submitProfileEdit(); });
+  safeAddListener("profile-change-pass-btn", "click", submitChangePassword);
+  safeAddListener("profile-password-form", "submit", (e) => { e.preventDefault(); submitChangePassword(); });
+  safeAddListener("profile-open-voucher-btn", "click", () => {
+    closeProfileModal();
+    showSection("checkout");
+    activateMenuTab("checkout");
+    document.getElementById("btn-pay-method-voucher")?.click();
+  });
+
+  // Simulado Prático ENAS
+  safeAddListener("btn-start-enas-practice", "click", startEnasPracticeExam);
+
+  // USSD M-Pesa Simulator Buttons
+  safeAddListener("ussd-cancel-btn", "click", () => {
+    const overlay = document.getElementById("mpesa-ussd-overlay");
+    if (overlay) overlay.style.display = "none";
+  });
+  safeAddListener("ussd-success-close-btn", "click", async () => {
+    const overlay = document.getElementById("mpesa-ussd-overlay");
+    if (overlay) overlay.style.display = "none";
+    if (jwtToken) await checkAuthStatus();
+    showSection("dashboard");
+    activateMenuTab("dashboard");
   });
 
   // Tabs de Filtro de Ensino (ESG 10ª/12ª, Superior, Técnico, Cambridge, Condução)
@@ -1260,6 +1293,218 @@ async function submitAuthReset() {
   } catch (e) {
     errorAlert.textContent = "Erro de conexão ao servidor.";
     errorAlert.style.display = "block";
+  }
+}
+
+// --- CONTROLO DO PERFIL DO ESTUDANTE & CONFIGURAÇÕES ---
+function openProfileModal() {
+  if (!userProfile) {
+    openAuthModal();
+    return;
+  }
+
+  const modal = document.getElementById("profile-modal");
+  if (!modal) return;
+
+  const phoneEl = document.getElementById("profile-card-phone");
+  const statusEl = document.getElementById("profile-card-status");
+  const badgeEl = document.getElementById("profile-card-badge");
+  const expiryEl = document.getElementById("profile-card-expiry");
+  const alertEl = document.getElementById("profile-feedback-alert");
+
+  if (alertEl) alertEl.style.display = "none";
+
+  if (phoneEl) phoneEl.textContent = `+258 ${userProfile.phone}`;
+
+  if (userProfile.isPremium) {
+    if (statusEl) statusEl.textContent = "Assinatura Premium Ativa 🚀";
+    if (badgeEl) {
+      badgeEl.textContent = "PREMIUM";
+      badgeEl.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+      badgeEl.style.color = "#111";
+    }
+    if (expiryEl && userProfile.premiumExpires) {
+      const expDate = new Date(parseInt(userProfile.premiumExpires));
+      expiryEl.textContent = `Válido até: ${expDate.toLocaleDateString('pt-MZ')}`;
+    }
+  } else {
+    if (statusEl) statusEl.textContent = "Plano Gratuito";
+    if (badgeEl) {
+      badgeEl.textContent = "GRÁTIS";
+      badgeEl.style.background = "rgba(100,116,139,0.2)";
+      badgeEl.style.color = "var(--text-secondary)";
+    }
+    if (expiryEl) expiryEl.textContent = "Acesso limitado a exames demonstrativos";
+  }
+
+  const nameInput = document.getElementById("profile-input-name");
+  const provSelect = document.getElementById("profile-select-province");
+  const univSelect = document.getElementById("profile-select-university");
+  const courseInput = document.getElementById("profile-input-course");
+
+  if (nameInput) nameInput.value = userProfile.name || "";
+  if (provSelect) provSelect.value = userProfile.province || "Maputo Cidade";
+  if (univSelect) univSelect.value = userProfile.targetUniversity || "UEM";
+  if (courseInput) courseInput.value = userProfile.targetCourse || "";
+
+  modal.style.display = "flex";
+}
+
+function closeProfileModal() {
+  const modal = document.getElementById("profile-modal");
+  if (modal) modal.style.display = "none";
+}
+
+async function submitProfileEdit() {
+  if (!jwtToken) return;
+
+  const name = document.getElementById("profile-input-name")?.value.trim();
+  const province = document.getElementById("profile-select-province")?.value;
+  const targetUniversity = document.getElementById("profile-select-university")?.value;
+  const targetCourse = document.getElementById("profile-input-course")?.value.trim();
+
+  const alertEl = document.getElementById("profile-feedback-alert");
+
+  try {
+    const res = await fetch("/api/user/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ name, province, targetUniversity, targetCourse })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      if (userProfile) {
+        userProfile.name = name;
+        userProfile.province = province;
+        userProfile.targetUniversity = targetUniversity;
+        userProfile.targetCourse = targetCourse;
+      }
+      updateAuthUI();
+      if (alertEl) {
+        alertEl.textContent = "✅ Perfil atualizado com sucesso!";
+        alertEl.className = "auth-alert success";
+        alertEl.style.display = "block";
+      }
+      showToast("Perfil atualizado com sucesso!", "success");
+      setTimeout(() => closeProfileModal(), 1200);
+    } else {
+      if (alertEl) {
+        alertEl.textContent = data.error || "Erro ao atualizar perfil.";
+        alertEl.className = "auth-alert error";
+        alertEl.style.display = "block";
+      }
+    }
+  } catch (e) {
+    if (alertEl) {
+      alertEl.textContent = "Erro de conexão ao servidor.";
+      alertEl.className = "auth-alert error";
+      alertEl.style.display = "block";
+    }
+  }
+}
+
+async function submitChangePassword() {
+  if (!jwtToken) return;
+
+  const currentPassword = document.getElementById("profile-input-current-pass")?.value;
+  const newPassword = document.getElementById("profile-input-new-pass")?.value;
+  const alertEl = document.getElementById("profile-feedback-alert");
+
+  if (!currentPassword || !newPassword) {
+    if (alertEl) {
+      alertEl.textContent = "Introduza a senha atual e a nova senha.";
+      alertEl.className = "auth-alert error";
+      alertEl.style.display = "block";
+    }
+    return;
+  }
+
+  if (newPassword.length < 4) {
+    if (alertEl) {
+      alertEl.textContent = "A nova senha deve ter pelo menos 4 caracteres.";
+      alertEl.className = "auth-alert error";
+      alertEl.style.display = "block";
+    }
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/user/change-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById("profile-password-form")?.reset();
+      if (alertEl) {
+        alertEl.textContent = "✅ Palavra-passe alterada com sucesso!";
+        alertEl.className = "auth-alert success";
+        alertEl.style.display = "block";
+      }
+      showToast("Palavra-passe alterada com sucesso!", "success");
+    } else {
+      if (alertEl) {
+        alertEl.textContent = data.error || "Erro ao alterar palavra-passe.";
+        alertEl.className = "auth-alert error";
+        alertEl.style.display = "block";
+      }
+    }
+  } catch (e) {
+    if (alertEl) {
+      alertEl.textContent = "Erro de conexão ao servidor.";
+      alertEl.className = "auth-alert error";
+      alertEl.style.display = "block";
+    }
+  }
+}
+
+// --- SIMULADO DE TREINO OFICIAL ENAS (25 QUESTÕES MULTIDISCIPLINARES) ---
+async function startEnasPracticeExam() {
+  showToast("A gerar Simulado Geral ENAS com 25 questões...", "info");
+
+  try {
+    const res = await fetch("/api/games/questions?limit=25");
+    if (!res.ok) throw new Error("Falha ao obter questões");
+
+    const questions = await res.json();
+    if (!Array.isArray(questions) || questions.length < 10) {
+      throw new Error("Poucas questões retornadas");
+    }
+
+    // Criar exame simulado sintético ENAS
+    const enasExam = {
+      id: 999999,
+      level: "superior",
+      level_name: "Simulado Nacional ENAS",
+      subject: "enas_multidisciplinar",
+      subject_name: "Simulado Geral ENAS Moçambique",
+      university: "ENAS 2026 (Nacional)",
+      year: 2026,
+      duration_minutes: 45,
+      durationMinutes: 45,
+      questions: questions.map((q, idx) => ({
+        id: q.id,
+        number: idx + 1,
+        text: q.text,
+        options: q.options,
+        correct_option: q.correct,
+        explanation: q.explanation || "Resolução oficial comentada ExamePronto / ENAS."
+      }))
+    };
+
+    startQuiz(enasExam, 'exam');
+  } catch (err) {
+    console.error("Erro ao iniciar simulado ENAS:", err);
+    showToast("Erro ao carregar simulado ENAS. Tente novamente.", "error");
   }
 }
 

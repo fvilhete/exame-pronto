@@ -289,6 +289,11 @@ pool.query(`
   ALTER TABLE enas_registrations ADD COLUMN IF NOT EXISTS referred_by VARCHAR(100);
   ALTER TABLE enas_registrations ADD COLUMN IF NOT EXISTS is_paid_subscriber BOOLEAN DEFAULT FALSE;
 
+  -- Perfil Completo do Estudante Moçambicano
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS target_university TEXT;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS target_course TEXT;
+
   -- Pilar 2: Rastreio de Cliques e Conversões de Links Virais de Indicação
   CREATE TABLE IF NOT EXISTS referral_clicks (
     id SERIAL PRIMARY KEY,

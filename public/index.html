@@ -196,7 +196,7 @@
         <button class="btn btn-sm btn-primary nav-auth-btn" id="header-auth-btn">
           Entrar
         </button>
-        <span id="header-user-phone" style="display: none; font-size: 0.8rem; font-weight: 700; color: var(--primary);"></span>
+        <button type="button" id="header-user-phone" class="btn btn-sm btn-outline" style="display: none; font-size: 0.82rem; font-weight: 700; color: var(--primary); padding: 4px 10px; border-radius: 20px; align-items: center; gap: 6px; cursor: pointer; border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.06);" title="Abrir Perfil do Estudante & Configurações"></button>
         <button class="btn btn-sm btn-outline" id="header-logout-btn" style="display: none; padding: 4px 8px; font-size: 0.75rem;">
           Sair
         </button>
@@ -1165,6 +1165,29 @@
               🚀 Inscrever-me Gratuitamente
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- Banner de Ação Imediata: Simulado Prático Geral ENAS -->
+      <div style="background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.08)); border: 2px solid var(--primary); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="max-width: 580px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <span class="badge" style="background: var(--primary); color: white; font-weight: 800; font-size: 0.75rem; padding: 3px 10px; border-radius: 20px;">
+              🔥 TREINO OFICIAL DISPONÍVEL
+            </span>
+            <span style="font-size: 0.82rem; color: #10b981; font-weight: 700;">Simulado Geral Multidisciplinar</span>
+          </div>
+          <h3 style="margin: 0 0 6px 0; font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">
+            Queres testar o teu nível para o ENAS agora mesmo?
+          </h3>
+          <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+            Inicia um simulado cronometrado de <strong>25 questões reais</strong> (Português, Matemática e Conhecimentos Gerais) para avaliar a tua nota de 0 a 20 e calcular a tua pontuação TRI nacional!
+          </p>
+        </div>
+        <div>
+          <button type="button" class="btn btn-primary" id="btn-start-enas-practice" style="padding: 12px 24px; font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(37,99,235,0.35);">
+            <span>🚀</span> Iniciar Simulado de Treino ENAS
+          </button>
         </div>
       </div>
 
@@ -4027,9 +4050,124 @@
     </div>
   </div>
 
+  <!-- Modal 9: Perfil Completo do Estudante & Configurações da Conta -->
+  <div id="profile-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog" style="max-width: 540px; width: 95%;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+          👤 Meu Perfil de Estudante
+        </h3>
+        <button type="button" class="modal-close-btn" id="profile-modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px;">
+        <!-- Status Card -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary);" id="profile-card-phone">+258 ...</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;" id="profile-card-status">Conta Gratuita</div>
+          </div>
+          <div style="text-align: right;">
+            <span class="badge" id="profile-card-badge" style="font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: rgba(16,185,129,0.15); color: #10b981; font-weight: 700;">
+              Ativo
+            </span>
+            <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px;" id="profile-card-expiry"></div>
+          </div>
+        </div>
+
+        <div id="profile-feedback-alert" class="auth-alert" style="display: none; margin-bottom: 15px;"></div>
+
+        <!-- Form de Edição de Perfil -->
+        <form id="profile-edit-form" onsubmit="return false;">
+          <h4 style="margin-bottom: 12px; font-size: 0.95rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            Dados Pessoais & Objetivos Académicos
+          </h4>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="profile-input-name" style="font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 4px;">Nome Completo (para os Certificados Oficiais):</label>
+            <input type="text" id="profile-input-name" class="chat-input" placeholder="Ex: Arnaldo Vilhete" style="width: 100%; padding: 10px 12px; box-sizing: border-box;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="form-group">
+              <label for="profile-select-province" style="font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 4px;">Tua Província:</label>
+              <select id="profile-select-province" class="chat-input" style="width: 100%; padding: 10px; box-sizing: border-box;">
+                <option value="Maputo Cidade">🏙️ Maputo Cidade</option>
+                <option value="Maputo Província">🌴 Maputo Província</option>
+                <option value="Gaza">🌊 Gaza</option>
+                <option value="Inhambane">🥥 Inhambane</option>
+                <option value="Sofala">🚢 Sofala (Beira)</option>
+                <option value="Manica">⛰️ Manica (Chimoio)</option>
+                <option value="Tete">⚡ Tete</option>
+                <option value="Zambézia">🌴 Zambézia (Quelimane)</option>
+                <option value="Nampula">🏛️ Nampula</option>
+                <option value="Niassa">🌊 Niassa</option>
+                <option value="Cabo Delgado">🏖️ Cabo Delgado</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="profile-select-university" style="font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 4px;">Universidade Alvo:</label>
+              <select id="profile-select-university" class="chat-input" style="width: 100%; padding: 10px; box-sizing: border-box;">
+                <option value="UEM">🏛️ UEM (Eduardo Mondlane)</option>
+                <option value="UP">🎓 UP (Pedagógica de Maputo)</option>
+                <option value="UniZambeze">⚡ UniZambeze</option>
+                <option value="UniLúrio">🌊 UniLúrio</option>
+                <option value="UniPúnguè">⛰️ UniPúnguè</option>
+                <option value="UniRovuma">🌴 UniRovuma</option>
+                <option value="UniLicungo">🥥 UniLicungo</option>
+                <option value="ISCISA">🩺 ISCISA (Saúde)</option>
+                <option value="ACIPOL">👮 ACIPOL (Policial)</option>
+                <option value="ISRI">🌍 ISRI / UJC</option>
+                <option value="12a">📚 12ª Classe / ESG</option>
+                <option value="10a">📖 10ª Classe / ESG</option>
+                <option value="INATRO">🚗 INATRO (Condução)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 18px;">
+            <label for="profile-input-course" style="font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 4px;">Curso dos Teus Sonhos:</label>
+            <input type="text" id="profile-input-course" class="chat-input" placeholder="Ex: Engenharia Informática, Medicina Geral, Direito..." style="width: 100%; padding: 10px 12px; box-sizing: border-box;">
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="profile-save-btn" style="width: 100%; font-weight: 700; padding: 10px;">
+            💾 Guardar Alterações do Perfil
+          </button>
+        </form>
+
+        <!-- Secção de Alteração de Senha -->
+        <div style="margin-top: 24px; padding-top: 18px; border-top: 1px dashed var(--border-color);">
+          <h4 style="margin-bottom: 12px; font-size: 0.95rem; color: var(--text-primary);">
+            🔒 Segurança da Conta (Alterar Palavra-passe / PIN)
+          </h4>
+          <form id="profile-password-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 10px;">
+            <input type="password" id="profile-input-current-pass" placeholder="Palavra-passe Atual" class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+            <input type="password" id="profile-input-new-pass" placeholder="Nova Palavra-passe (mínimo 4 caracteres)" class="chat-input" style="padding: 8px 12px; width: 100%; box-sizing: border-box;">
+            <button type="submit" class="btn btn-outline" id="profile-change-pass-btn" style="width: 100%; font-weight: 600;">
+              🔑 Atualizar Palavra-passe
+            </button>
+          </form>
+        </div>
+
+        <!-- Atalho Rápido de Ativação de Voucher -->
+        <div style="margin-top: 18px; padding: 12px; background: rgba(245,158,11,0.08); border-radius: var(--radius-sm); border: 1px solid rgba(245,158,11,0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: #d97706;">🎟️ Tens uma Raspadinha / Voucher?</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">Ativa o teu código de 7 ou 30 dias</div>
+          </div>
+          <button type="button" class="btn btn-sm btn-accent" id="profile-open-voucher-btn" style="background: #f59e0b; color: #111; font-weight: 700;">
+            Ativar Código
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts com Cache Busting -->
-  <script src="omr_engine.js?v=13.0"></script>
-  <script src="mesh_sync.js?v=13.0"></script>
-  <script src="app.js?v=13.0"></script>
+  <script src="omr_engine.js?v=14.0"></script>
+  <script src="mesh_sync.js?v=14.0"></script>
+  <script src="app.js?v=14.0"></script>
 </body>
 </html>

@@ -304,7 +304,7 @@ app.post('/api/auth/reset-password', (req, res) => {
 });
 
 app.get('/api/user/profile', requireAuth, (req, res) => {
-  db.get("SELECT id, phone, premium_until, is_admin, province, league_tier, xp_points, tri_proficiency, glicko_rating, mastery_data, campaign_progress FROM users WHERE id = ?", [req.user.id], (err, user) => {
+  db.get("SELECT id, phone, name, province, target_university, target_course, premium_until, is_admin, league_tier, xp_points, tri_proficiency, glicko_rating, mastery_data, campaign_progress FROM users WHERE id = ?", [req.user.id], (err, user) => {
     if (err || !user) {
       return res.status(404).json({ error: 'Utilizador não encontrado.' });
     }
@@ -324,7 +324,10 @@ app.get('/api/user/profile', requireAuth, (req, res) => {
     res.json({
       id: user.id,
       phone: user.phone,
+      name: user.name || '',
       province: user.province || 'Maputo Cidade',
+      targetUniversity: user.target_university || 'UEM',
+      targetCourse: user.target_course || 'Geral',
       isPremium,
       premiumExpires: user.premium_until,
       isAdmin: user.is_admin === 1,
@@ -334,6 +337,88 @@ app.get('/api/user/profile', requireAuth, (req, res) => {
       glickoRating: user.glicko_rating || 1500,
       masteryData: parsedMastery,
       campaignProgress: parsedCampaign
+    });
+  });
+});
+
+// Atualizar Perfil Completo do Estudante
+app.put('/api/user/profile', requireAuth, (req, res) => {
+  const { name, province, targetUniversity, targetCourse } = req.body;
+  const validProvinces = [
+    "Maputo Cidade", "Maputo Província", "Gaza", "Inhambane", 
+    "Sofala", "Manica", "Tete", "Zambézia", "Nampula", "Niassa", "Cabo Delgado"
+  ];
+
+  const cleanName = name !== undefined ? name.trim().slice(0, 100) : null;
+  const cleanUniv = targetUniversity !== undefined ? targetUniversity.trim().slice(0, 100) : null;
+  const cleanCourse = targetCourse !== undefined ? targetCourse.trim().slice(0, 100) : null;
+  const cleanProv = (province && validProvinces.includes(province)) ? province : null;
+
+  const updates = [];
+  const params = [];
+
+  if (cleanName !== null) {
+    updates.push('name = ?');
+    params.push(cleanName);
+  }
+  if (cleanProv !== null) {
+    updates.push('province = ?');
+    params.push(cleanProv);
+  }
+  if (cleanUniv !== null) {
+    updates.push('target_university = ?');
+    params.push(cleanUniv);
+  }
+  if (cleanCourse !== null) {
+    updates.push('target_course = ?');
+    params.push(cleanCourse);
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ error: 'Nenhum campo fornecido para atualização.' });
+  }
+
+  const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+  params.push(req.user.id);
+
+  db.run(query, params, function(err) {
+    if (err) return res.status(500).json({ error: 'Erro ao atualizar o perfil: ' + err.message });
+    res.json({
+      success: true,
+      message: 'Perfil atualizado com sucesso!',
+      user: {
+        name: cleanName,
+        province: cleanProv,
+        targetUniversity: cleanUniv,
+        targetCourse: cleanCourse
+      }
+    });
+  });
+});
+
+// Alterar Palavra-passe / PIN enquanto autenticado
+app.post('/api/user/change-password', requireAuth, (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Palavra-passe atual e nova palavra-passe são obrigatórias.' });
+  }
+  if (newPassword.length < 4) {
+    return res.status(400).json({ error: 'A nova palavra-passe deve ter pelo menos 4 caracteres.' });
+  }
+
+  db.get('SELECT password_hash FROM users WHERE id = ?', [req.user.id], (err, user) => {
+    if (err || !user) return res.status(500).json({ error: 'Erro ao verificar o utilizador.' });
+
+    const isMatch = bcrypt.compareSync(currentPassword, user.password_hash);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'A palavra-passe atual está incorreta.' });
+    }
+
+    const salt = bcrypt.genSaltSync(10);
+    const newHash = bcrypt.hashSync(newPassword, salt);
+    db.run('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, req.user.id], (updateErr) => {
+      if (updateErr) return res.status(500).json({ error: 'Erro ao guardar nova palavra-passe.' });
+      res.json({ success: true, message: 'Palavra-passe alterada com sucesso!' });
     });
   });
 });

@@ -342,8 +342,13 @@ app.get('/api/exams', (req, res) => {
       if (r.id && r.id.startsWith('esg-')) {
         const parts = r.id.split('-');
         if (parts.length >= 5) {
-          const fn = `12a_${parts[1]}_${parts[3]}_${parts[4]}.pdf`;
-          pdfUrl = `/pdf/exams/${fn}`;
+          if (parts[2] === '10') {
+            const fn = `10a_${parts[1]}_${parts[3]}_${parts[4]}.pdf`;
+            pdfUrl = `/pdf/exams/10a/${fn}`;
+          } else {
+            const fn = `12a_${parts[1]}_${parts[3]}_${parts[4]}.pdf`;
+            pdfUrl = `/pdf/exams/${fn}`;
+          }
         }
       }
       return {

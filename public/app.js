@@ -739,6 +739,7 @@ function setupEventListeners() {
   safeAddListener("btn-tab-uem-catalog", "click", () => switchUemGuideTab("catalog"));
   safeAddListener("btn-tab-uem-schedule", "click", () => switchUemGuideTab("schedule"));
   safeAddListener("btn-tab-up-schedule", "click", () => switchUemGuideTab("up-schedule"));
+  safeAddListener("btn-tab-payments-guide", "click", () => switchUemGuideTab("payments"));
   safeAddListener("btn-open-up-archive-banner", "click", () => {
     showSection("predictor");
     activateMenuTab("predictor");
@@ -8036,20 +8037,24 @@ function switchUemGuideTab(tab) {
   const btnCatalog = document.getElementById("btn-tab-uem-catalog");
   const btnSchedule = document.getElementById("btn-tab-uem-schedule");
   const btnUpSchedule = document.getElementById("btn-tab-up-schedule");
+  const btnPayments = document.getElementById("btn-tab-payments-guide");
   const panelCalc = document.getElementById("panel-uem-calc");
   const panelCatalog = document.getElementById("panel-uem-catalog");
   const panelSchedule = document.getElementById("panel-uem-schedule");
   const panelUpSchedule = document.getElementById("panel-up-schedule");
+  const panelPayments = document.getElementById("panel-payments-guide");
 
   // Reset classes
   if (btnCalc) btnCalc.className = "btn btn-sm btn-outline";
   if (btnCatalog) btnCatalog.className = "btn btn-sm btn-outline";
   if (btnSchedule) btnSchedule.className = "btn btn-sm btn-outline";
   if (btnUpSchedule) btnUpSchedule.className = "btn btn-sm btn-outline";
+  if (btnPayments) btnPayments.className = "btn btn-sm btn-outline";
   if (panelCalc) panelCalc.style.display = "none";
   if (panelCatalog) panelCatalog.style.display = "none";
   if (panelSchedule) panelSchedule.style.display = "none";
   if (panelUpSchedule) panelUpSchedule.style.display = "none";
+  if (panelPayments) panelPayments.style.display = "none";
 
   if (tab === "calc") {
     if (btnCalc) btnCalc.className = "btn btn-sm btn-primary active";
@@ -8065,7 +8070,34 @@ function switchUemGuideTab(tab) {
     if (btnUpSchedule) btnUpSchedule.className = "btn btn-sm btn-primary active";
     if (panelUpSchedule) panelUpSchedule.style.display = "block";
     loadUpExamArchive();
+  } else if (tab === "payments") {
+    if (btnPayments) btnPayments.className = "btn btn-sm btn-primary active";
+    if (panelPayments) panelPayments.style.display = "block";
   }
+}
+
+function shareSimulationOnWhatsApp() {
+  const uniSelect = document.getElementById("pred-select-university");
+  const courseSelect = document.getElementById("pred-select-course");
+  const calcGradeEl = document.getElementById("pred-calculated-grade");
+  const pctEl = document.getElementById("pred-prob-percent");
+
+  const uni = uniSelect ? (uniSelect.options[uniSelect.selectedIndex] ? uniSelect.options[uniSelect.selectedIndex].text.split('(')[0].trim() : "Universidade") : "UEM";
+  const course = courseSelect ? courseSelect.value : "Curso Universitário";
+  const grade = calcGradeEl ? calcGradeEl.textContent : "15.0";
+  const prob = pctEl ? pctEl.textContent : "75%";
+
+  const text = `🇲🇿 *Simulador de Admissão - ${uni} 2027*\n\n🎯 *Curso:* ${course}\n📊 *Média Estimada:* ${grade} valores\n🔥 *Probabilidade de Admissão:* ${prob}\n\n👉 Faz também a tua simulação grátis e descobre as tuas chances no ExamePronto:\nhttps://examepronto.co.mz`;
+
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
+function sharePaymentGuideOnWhatsApp() {
+  const text = `🚨 *ATENÇÃO AOS PRAZOS DE PAGAMENTO DE CANDIDATURAS 2027*\n\n🏛️ *UEM:* Até 04 de Dezembro de 2026 (BCI / Millennium BIM - 1.000 MT/disciplina)\n🏛️ *Rede UP (UP, Licungo, Púnguè, Rovuma):* Até 05 de Dezembro de 2026 (Millennium BIM - 1.000 MT taxa única)\n\n📌 Consulta o passo a passo de como pagar no ATM, Smart IZI e evitar fraudes no ExamePronto:\nhttps://examepronto.co.mz`;
+
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
 }
 
 function renderUemCoursesTable() {
@@ -8232,8 +8264,8 @@ function renderUpExamCards(exams) {
           <a href="${e.url}" target="_blank" class="btn btn-sm btn-outline" style="flex: 1; text-align: center; font-size: 0.78rem; padding: 6px 10px; border-radius: var(--radius-sm); text-decoration: none;">
             📥 Baixar PDF
           </a>
-          <button type="button" class="btn btn-sm btn-primary" style="flex: 1; font-size: 0.78rem; padding: 6px 10px; border-radius: var(--radius-sm); background: #2563eb;" onclick="practiceUpExam('${escapeHtml(e.subject)}')">
-            🎯 Praticar
+          <button type="button" class="btn btn-sm btn-primary" style="flex: 1; font-size: 0.78rem; padding: 6px 10px; border-radius: var(--radius-sm); background: #2563eb;" onclick="practiceUpExam('${escapeHtml(e.subject)}', '${e.examId || ''}')">
+            🚀 Simular Online
           </button>
         </div>
       </div>
@@ -8241,7 +8273,15 @@ function renderUpExamCards(exams) {
   }).join("");
 }
 
-function practiceUpExam(subjectName) {
+function practiceUpExam(subjectName, examId) {
+  if (examId) {
+    if (typeof showToast === "function") {
+      showToast(`🎯 A iniciar Simulado Oficial UP: ${subjectName}...`, "info");
+    }
+    startExam(examId, 'exam');
+    return;
+  }
+
   let slug = "matematica";
   const s = subjectName.toLowerCase();
   if (s.includes("biol")) slug = "biologia";

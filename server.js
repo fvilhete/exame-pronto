@@ -3161,6 +3161,31 @@ app.get('/api/exams/up/archive', (req, res) => {
     const exams = [];
     let edital = null;
 
+    const UP_FILE_TO_EXAM_ID = {
+      "Aptidao em desenho 2026.pdf": "up-desenho-aptidao-2026",
+      "BIOLOGIA2_2025.pdf": "up-biologia2-2025",
+      "Biologia 2026.pdf": "up-biologia-2026",
+      "DESENHO_2025.pdf": "up-desenho-2025",
+      "FILOSOFIA_2025.pdf": "up-filosofia-2025",
+      "FISICA_2025.pdf": "up-fisica-2025",
+      "FRANCES_2025.pdf": "up-frances-2025",
+      "Filosofia 2026.pdf": "up-filosofia-2026",
+      "Fisica 2026.pdf": "up-fisica-2026",
+      "Frances 2026.pdf": "up-frances-2026",
+      "GEOGRAFIA_2025.pdf": "up-geografia-2025",
+      "Geografia 2026.pdf": "up-geografia-2026",
+      "HISTORIA_2025.pdf": "up-historia-2025",
+      "Historia 2026.pdf": "up-historia-2026",
+      "INGL_2025.pdf": "up-ingles-2025",
+      "Ingles 2026.pdf": "up-ingles-2026",
+      "Matematica 2026.pdf": "up-matematica-2026",
+      "PORTUGUES II_2025.pdf": "up-portugues2-2025",
+      "PORTUGUES I_2025.pdf": "up-portugues1-2025",
+      "Portugues I 2026.pdf": "up-portugues1-2026",
+      "Portugues II 2026.pdf": "up-portugues2-2026",
+      "Quimica 2026.pdf": "up-quimica-2026"
+    };
+
     files.forEach(f => {
       if (f.startsWith('Edital')) {
         edital = {
@@ -3172,11 +3197,14 @@ app.get('/api/exams/up/archive', (req, res) => {
       } else if (f.endsWith('.pdf')) {
         const year = f.includes('2026') ? 2026 : 2025;
         let subject = f.replace(/_|\.pdf/g, ' ').replace(/2025|2026/g, '').trim();
+        const examId = UP_FILE_TO_EXAM_ID[f] || null;
         exams.push({
           filename: f,
           subject: subject,
           year: year,
-          url: `/pdf/exams/up/${encodeURIComponent(f)}`
+          url: `/pdf/exams/up/${encodeURIComponent(f)}`,
+          examId: examId,
+          canSimulateOnline: !!examId
         });
       }
     });

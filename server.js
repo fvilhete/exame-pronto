@@ -337,7 +337,21 @@ app.get('/api/exams', (req, res) => {
     if (err) {
       return res.status(500).json({ error: 'Erro ao listar exames.' });
     }
-    res.json(rows);
+    const enrichedRows = rows.map(r => {
+      let pdfUrl = null;
+      if (r.id && r.id.startsWith('esg-')) {
+        const parts = r.id.split('-');
+        if (parts.length >= 5) {
+          const fn = `12a_${parts[1]}_${parts[3]}_${parts[4]}.pdf`;
+          pdfUrl = `/pdf/exams/${fn}`;
+        }
+      }
+      return {
+        ...r,
+        pdf_url: pdfUrl
+      };
+    });
+    res.json(enrichedRows);
   });
 });
 

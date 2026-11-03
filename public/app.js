@@ -1797,7 +1797,8 @@ function filterAndRenderExams() {
 
     const qCount = (exam.question_count !== undefined && exam.question_count !== null) ? Number(exam.question_count) : 40;
     const isReady = qCount > 0;
-    let badgeHtml = isReady ? `<span class="exam-tag free">Grátis</span>` : `<span class="badge-draft-exam">Em Catalogação</span>`;
+    const hasPdf = !!exam.pdf_url;
+    let badgeHtml = isReady ? `<span class="exam-tag free">Grátis</span>` : (hasPdf ? `<span class="exam-tag" style="background: rgba(37,99,235,0.12); color: #2563eb; font-weight: 800;">PDF Oficial</span>` : `<span class="badge-draft-exam">Em Catalogação</span>`);
     let scoreBadge = "";
     if (completedInfo) {
       const pct = Math.round((completedInfo.score / completedInfo.total) * 100);
@@ -1826,13 +1827,19 @@ function filterAndRenderExams() {
           📥 Baixar Caderno A4 (PDF)
         </button>
       </div>
+    ` : (hasPdf ? `
+      <div class="exam-card-actions">
+        <a href="${exam.pdf_url}" target="_blank" class="btn btn-sm btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; color: #1e3a8a; text-decoration: none; border-color: rgba(30, 58, 138, 0.35); background: rgba(37,99,235,0.04);" title="Baixar Caderno Oficial da 12ª Classe em PDF">
+          📥 Baixar Prova Oficial (PDF)
+        </a>
+      </div>
     ` : `
       <div class="exam-card-actions">
         <button class="btn btn-sm btn-outline" disabled style="opacity: 0.65; cursor: not-allowed; width: 100%; border-style: dashed;">
           ⏳ Brevemente Disponível
         </button>
       </div>
-    `;
+    `);
 
     card.innerHTML = `
       <div>

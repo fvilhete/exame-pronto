@@ -509,15 +509,8 @@ function setupEventListeners() {
   // Tabs de Filtro de Ensino (ESG 10ª/12ª, Superior, Técnico, Cambridge, Condução)
   document.querySelectorAll("#education-level-grid .uni-card").forEach(card => {
     card.addEventListener("click", (e) => {
-      document.querySelectorAll("#education-level-grid .uni-card").forEach(c => c.classList.remove("active"));
-      const selectedCard = e.currentTarget;
-      selectedCard.classList.add("active");
-      activeLevel = selectedCard.getAttribute("data-level");
-      activeUniversity = "all";
-      activeSubject = "all";
-      activeYear = "all";
-      examsPageLimit = 16;
-      renderExamsList();
+      const lvl = e.currentTarget.getAttribute("data-level");
+      selectEducationLevel(lvl);
     });
   });
 
@@ -774,6 +767,23 @@ function setupEventListeners() {
     showSection("enas");
     activateMenuTab("enas");
   });
+
+  // Banner e Modal da Calculadora de Média MINEDH (10ª e 12ª)
+  safeAddListener("btn-open-mfc-modal-banner", "click", () => openMfcModal("12a"));
+  safeAddListener("btn-open-mfc-calculator-menu", "click", (e) => {
+    e.preventDefault();
+    openMfcModal("12a");
+  });
+  safeAddListener("mfc-modal-close-btn", "click", closeMfcModal);
+  safeAddListener("btn-mfc-close-action", "click", closeMfcModal);
+  safeAddListener("btn-quick-12a-banner", "click", () => selectEducationLevel("12a"));
+  safeAddListener("btn-quick-10a-banner", "click", () => selectEducationLevel("10a"));
+  safeAddListener("btn-mfc-train-now", "click", () => {
+    const lvl = document.getElementById("mfc-level-select") ? document.getElementById("mfc-level-select").value : "12a";
+    closeMfcModal();
+    selectEducationLevel(lvl);
+  });
+  initMfcCalculatorEvents();
 
   // Filtro e Busca no Catálogo de Cursos UEM & UP
   const catSearch = document.getElementById("catalog-courses-search");
@@ -8797,6 +8807,203 @@ async function deleteReportedQuestion(questionId, reportId) {
     }
   } catch (e) {
     showToast("Falha de rede ao eliminar pergunta.", "error");
+  }
+}
+
+// =============================================================================
+// PILAR 6: ACERVO NACIONAL MINEDH & CALCULADORA DE MÉDIA (MFC 10ª E 12ª CLASSE)
+// =============================================================================
+
+function selectEducationLevel(level) {
+  document.querySelectorAll("#education-level-grid .uni-card").forEach(c => c.classList.remove("active"));
+  const targetCard = document.querySelector(`#education-level-grid .uni-card[data-level="${level}"]`);
+  if (targetCard) targetCard.classList.add("active");
+  
+  activeLevel = level;
+  activeUniversity = "all";
+  activeSubject = "all";
+  activeYear = "all";
+  examsPageLimit = 16;
+
+  showSection("dashboard");
+  activateMenuTab("dashboard");
+  renderExamsList();
+
+  const grid = document.getElementById("education-level-grid");
+  if (grid) grid.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function openMfcModal(defaultLevel = "12a") {
+  const modal = document.getElementById("mfc-calculator-modal");
+  if (!modal) return;
+  const levelSelect = document.getElementById("mfc-level-select");
+  if (levelSelect) levelSelect.value = defaultLevel;
+  modal.style.display = "flex";
+  updateMfcCalculator();
+}
+
+function closeMfcModal() {
+  const modal = document.getElementById("mfc-calculator-modal");
+  if (modal) modal.style.display = "none";
+}
+
+function initMfcCalculatorEvents() {
+  const cafRange = document.getElementById("mfc-caf-range");
+  const cafInput = document.getElementById("mfc-caf-input");
+  const cneRange = document.getElementById("mfc-cne-range");
+  const cneInput = document.getElementById("mfc-cne-input");
+  const modeSelect = document.getElementById("mfc-mode-select");
+  const levelSelect = document.getElementById("mfc-level-select");
+
+  if (cafRange && cafInput) {
+    cafRange.addEventListener("input", (e) => {
+      cafInput.value = parseFloat(e.target.value).toFixed(1);
+      updateMfcCalculator();
+    });
+    cafInput.addEventListener("input", (e) => {
+      let v = parseFloat(e.target.value);
+      if (isNaN(v)) v = 10.0;
+      v = Math.max(0, Math.min(20, v));
+      cafRange.value = v;
+      updateMfcCalculator();
+    });
+  }
+
+  if (cneRange && cneInput) {
+    cneRange.addEventListener("input", (e) => {
+      cneInput.value = parseFloat(e.target.value).toFixed(1);
+      updateMfcCalculator();
+    });
+    cneInput.addEventListener("input", (e) => {
+      let v = parseFloat(e.target.value);
+      if (isNaN(v)) v = 10.0;
+      v = Math.max(0, Math.min(20, v));
+      cneRange.value = v;
+      updateMfcCalculator();
+    });
+  }
+
+  if (modeSelect) modeSelect.addEventListener("change", updateMfcCalculator);
+  if (levelSelect) levelSelect.addEventListener("change", updateMfcCalculator);
+}
+
+function updateMfcCalculator() {
+  const modeSelect = document.getElementById("mfc-mode-select");
+  const levelSelect = document.getElementById("mfc-level-select");
+  const cafInput = document.getElementById("mfc-caf-input");
+  const cneInput = document.getElementById("mfc-cne-input");
+  const cneWrapper = document.getElementById("mfc-cne-wrapper");
+  const cafBadge = document.getElementById("mfc-caf-badge");
+  const cneBadge = document.getElementById("mfc-cne-badge");
+  const resultLabel = document.getElementById("mfc-result-label");
+  const statusBadge = document.getElementById("mfc-status-badge");
+  const primaryScore = document.getElementById("mfc-primary-score");
+  const breakdownText = document.getElementById("mfc-breakdown-text");
+  const resultsCard = document.getElementById("mfc-results-card");
+
+  if (!cafInput || !primaryScore) return;
+
+  const mode = modeSelect ? modeSelect.value : "target";
+  const level = levelSelect ? levelSelect.value : "12a";
+  const levelName = level === "12a" ? "12ª Classe" : "10ª Classe";
+
+  if (cneWrapper) {
+    cneWrapper.style.display = mode === "final" ? "block" : "none";
+  }
+
+  const caf = Math.max(0, Math.min(20, parseFloat(cafInput.value) || 0));
+  const cne = Math.max(0, Math.min(20, parseFloat(cneInput ? cneInput.value : 0) || 0));
+
+  if (cafBadge) cafBadge.textContent = `${caf.toFixed(1)} val`;
+  if (cneBadge) cneBadge.textContent = `${cne.toFixed(1)} val`;
+
+  if (mode === "target") {
+    // Modo Alvo: MFC = 0.75 * CAF + 0.25 * CNE >= 10.0
+    // CNE >= (10.0 - 0.75 * CAF) / 0.25 = 40 - 3 * CAF
+    if (resultLabel) resultLabel.textContent = `Nota Mínima Necessária no Exame da ${levelName}`;
+    const requiredCne = 40 - 3 * caf;
+    const roundedCne = Math.max(0, requiredCne);
+
+    if (requiredCne > 20) {
+      primaryScore.textContent = `${requiredCne.toFixed(1)}`;
+      primaryScore.style.color = "#ef4444";
+      if (statusBadge) {
+        statusBadge.textContent = "⚠️ REQUER RECUPERAÇÃO";
+        statusBadge.style.background = "#ef4444";
+      }
+      if (resultsCard) {
+        resultsCard.style.borderColor = "#ef4444";
+        resultsCard.style.background = "rgba(239, 68, 68, 0.06)";
+      }
+      if (breakdownText) {
+        breakdownText.innerHTML = `
+          • <strong>Frequência Escolar:</strong> ${caf.toFixed(1)} valores (gera <strong>${(0.75 * caf).toFixed(2)} val</strong> de 75%).<br>
+          • <strong>Nota no Exame Necessária:</strong> <strong style="color: #ef4444;">${requiredCne.toFixed(1)} valores</strong> (fora da escala máxima de 20).<br>
+          • <strong>Aviso Pedagógico:</strong> A tua média de frequência está abaixo de 6.7 valores. Mesmo com 20 no exame oficial não atingirias 10 valores. Contacta a direção pedagógica da tua escola para provas extraordinárias ou recuperação.
+        `;
+      }
+    } else if (requiredCne <= 0) {
+      primaryScore.textContent = "0.0";
+      primaryScore.style.color = "#10b981";
+      if (statusBadge) {
+        statusBadge.textContent = "🎉 APROVAÇÃO GARANTIDA";
+        statusBadge.style.background = "#10b981";
+      }
+      if (resultsCard) {
+        resultsCard.style.borderColor = "#10b981";
+        resultsCard.style.background = "rgba(16, 185, 129, 0.08)";
+      }
+      if (breakdownText) {
+        breakdownText.innerHTML = `
+          • <strong>Frequência Escolar:</strong> ${caf.toFixed(1)} valores (já garante <strong>${(0.75 * caf).toFixed(2)} val</strong> na média final).<br>
+          • <strong>Nota Mínima no Exame:</strong> <strong style="color: #10b981;">0.0 valores</strong>.<br>
+          • <strong>Excelente Desempenho:</strong> Com esta CAF (&ge; 13.4), a tua aprovação na disciplina já está assegurada! Foca-te agora em tirar nota alta no exame para subir a tua média geral para admissão na universidade pública (UEM / UP).
+        `;
+      }
+    } else {
+      const isEasy = roundedCne <= 10;
+      primaryScore.textContent = `${roundedCne.toFixed(1)}`;
+      primaryScore.style.color = isEasy ? "#047857" : "#d97706";
+      if (statusBadge) {
+        statusBadge.textContent = isEasy ? "✓ PLENAMENTE ATINGÍVEL" : "⚡ EXIGE PREPARAÇÃO";
+        statusBadge.style.background = isEasy ? "#10b981" : "#f59e0b";
+      }
+      if (resultsCard) {
+        resultsCard.style.borderColor = isEasy ? "#047857" : "#f59e0b";
+        resultsCard.style.background = isEasy ? "rgba(6,78,59,0.06)" : "rgba(245,158,11,0.06)";
+      }
+      if (breakdownText) {
+        breakdownText.innerHTML = `
+          • <strong>Frequência (75%):</strong> 0.75 × ${caf.toFixed(1)} = <strong>${(0.75 * caf).toFixed(2)} valores</strong>.<br>
+          • <strong>Margem para Aprovar (10.0 val):</strong> 10.0 - ${(0.75 * caf).toFixed(2)} = <strong>${(10.0 - 0.75 * caf).toFixed(2)} valores</strong>.<br>
+          • <strong>Nota Alvo no Exame Nacional:</strong> Precisas de pelo menos <strong style="color: ${isEasy ? '#047857' : '#d97706'};">${roundedCne.toFixed(1)} valores</strong> para concluir a disciplina com aprovação oficial.
+        `;
+      }
+    }
+  } else {
+    // Modo Final: MFC = 0.75 * CAF + 0.25 * CNE
+    if (resultLabel) resultLabel.textContent = `Média Final de Conclusão (MFC) - ${levelName}`;
+    const mfc = 0.75 * caf + 0.25 * cne;
+    const isApproved = mfc >= 9.5; // Arredondamento oficial MINEDH (>= 9.5 arredonda para 10)
+
+    primaryScore.textContent = `${mfc.toFixed(1)}`;
+    primaryScore.style.color = isApproved ? "#10b981" : "#ef4444";
+
+    if (statusBadge) {
+      statusBadge.textContent = isApproved ? "✓ APROVADO NA DISCIPLINA" : "❌ NÃO APROVADO";
+      statusBadge.style.background = isApproved ? "#10b981" : "#ef4444";
+    }
+    if (resultsCard) {
+      resultsCard.style.borderColor = isApproved ? "#10b981" : "#ef4444";
+      resultsCard.style.background = isApproved ? "rgba(16, 185, 129, 0.08)" : "rgba(239, 68, 68, 0.08)";
+    }
+    if (breakdownText) {
+      breakdownText.innerHTML = `
+        • <strong>Frequência (75%):</strong> 0.75 × ${caf.toFixed(1)} = <strong>${(0.75 * caf).toFixed(2)} valores</strong>.<br>
+        • <strong>Exame Nacional (25%):</strong> 0.25 × ${cne.toFixed(1)} = <strong>${(0.25 * cne).toFixed(2)} valores</strong>.<br>
+        • <strong>Classificação Final:</strong> ${(0.75 * caf).toFixed(2)} + ${(0.25 * cne).toFixed(2)} = <strong style="color: ${isApproved ? '#10b981' : '#ef4444'};">${mfc.toFixed(1)} valores</strong> (${isApproved ? 'Aprovado para efeitos de certificado' : 'Necessita de 2ª Época'}).
+      `;
+    }
   }
 }
 

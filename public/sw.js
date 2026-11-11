@@ -1,6 +1,6 @@
-const CACHE_NAME = 'examepronto-v14.1-cache';
+const CACHE_NAME = 'examepronto-v14.2-cache';
 const IMAGE_CACHE_NAME = 'examepronto-images-v1';
-const API_CACHE_NAME = 'examepronto-api-v2';
+const API_CACHE_NAME = 'examepronto-api-v3';
 const EXT_CACHE_NAME = 'examepronto-ext-v1';
 
 const STATIC_ASSETS = [

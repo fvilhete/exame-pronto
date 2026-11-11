@@ -444,7 +444,7 @@ app.put('/api/user/province', requireAuth, (req, res) => {
 app.get('/api/exams', (req, res) => {
   const { level, university, year } = req.query;
   let query = `
-    SELECT e.id, e.level, e.level_name, e.subject, e.subject_name, e.year, e.duration_minutes, 
+    SELECT e.id, e.level, e.level_name, e.subject, e.subject_name, e.year, e.duration_minutes, e.pdf_url,
            COALESCE(e.university, 'UEM') as university,
            COALESCE(qc.q_count, 0)::int as question_count
     FROM exams e
@@ -475,8 +475,8 @@ app.get('/api/exams', (req, res) => {
       return res.status(500).json({ error: 'Erro ao listar exames.' });
     }
     const enrichedRows = rows.map(r => {
-      let pdfUrl = null;
-      if (r.id && r.id.startsWith('esg-')) {
+      let pdfUrl = r.pdf_url || null;
+      if (!pdfUrl && r.id && r.id.startsWith('esg-')) {
         const parts = r.id.split('-');
         if (parts.length >= 5) {
           if (parts[2] === '10') {

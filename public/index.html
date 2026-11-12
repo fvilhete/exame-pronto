@@ -183,6 +183,11 @@
           <span class="network-dot"></span> <span id="network-status-text" style="display: none;">Online</span>
         </div>
 
+        <!-- Modo Poupança Extrema de Dados (Megas) -->
+        <button type="button" class="nav-circle-btn datasaver-btn" id="btn-data-saver" title="Economia de Megas: Reduz tráfego móvel Movitel/Vodacom" style="background: rgba(16, 185, 129, 0.12); color: #059669; border-color: rgba(16, 185, 129, 0.3);">
+          ⚡
+        </button>
+
         <!-- Controlo de Efeitos Sonoros -->
         <button class="nav-circle-btn" id="btn-sound-toggle" title="Ativar/Desativar Efeitos Sonoros">
           🔊
@@ -433,32 +438,32 @@
             <div class="uni-card" data-level="12a">
               <div class="uni-badge" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);">12ª</div>
               <h3>12ª Classe</h3>
-              <p>289 Provas Oficiais (83 Interativas & 267 PDFs).</p>
+              <p>270 Provas 100% Interativas (Simulador, Caderno A4 & PDF Original).</p>
             </div>
             <div class="uni-card" data-level="10a">
               <div class="uni-badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">10ª</div>
               <h3>10ª Classe</h3>
-              <p>93 Provas Oficiais (74 Interativas & 91 PDFs).</p>
+              <p>93 Provas 100% Interativas (Simulador, Caderno A4 & PDF Original).</p>
             </div>
             <div class="uni-card" data-level="primario">
               <div class="uni-badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">7ª</div>
               <h3>7ª Classe</h3>
-              <p>Exames do Ensino Primário.</p>
+              <p>Exames Nacionais do Ensino Primário (Matemática e Português).</p>
             </div>
             <div class="uni-card" data-level="tecnico">
               <div class="uni-badge" style="background: rgba(239, 68, 68, 0.1); color: var(--error);">TÉC</div>
               <h3>Ensino Técnico</h3>
-              <p>Exames para IFP, Saúde e IIC.</p>
+              <p>Admissão a Institutos Médios (Industrial, Comercial e Saúde).</p>
             </div>
             <div class="uni-card" data-level="cambridge">
               <div class="uni-badge" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5;">CAM</div>
               <h3>Cambridge IGCSE</h3>
-              <p>Exames de Currículo Internacional.</p>
+              <p>Exames de Currículo Internacional (A-Level & IGCSE).</p>
             </div>
             <div class="uni-card" data-level="conducao">
               <div class="uni-badge" style="background: rgba(249, 115, 22, 0.1); color: #f97316;">COND</div>
               <h3>Carta Condução</h3>
-              <p>Simulador INATRO, Código e Sinais.</p>
+              <p>Simulador Oficial INATRO (Código de Estrada, Sinais & Prioridades).</p>
             </div>
           </div>
 
@@ -4164,6 +4169,31 @@
       </div>
     </div>
   </div>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR MÓVEL NATIVA (ESTILO APP PWA) -->
+  <nav class="mobile-bottom-nav" aria-label="Navegação Móvel Principal">
+    <button type="button" class="mobile-nav-item active" data-target="dashboard">
+      <span class="mobile-nav-icon">📝</span>
+      <span class="mobile-nav-label">Simulador</span>
+    </button>
+    <button type="button" class="mobile-nav-item" data-target="enas">
+      <span class="mobile-nav-icon">🏆</span>
+      <span class="mobile-nav-label">ENAS</span>
+      <span class="mobile-nav-badge">AO VIVO</span>
+    </button>
+    <button type="button" class="mobile-nav-item" data-target="games">
+      <span class="mobile-nav-icon">🎮</span>
+      <span class="mobile-nav-label">Jogos</span>
+    </button>
+    <button type="button" class="mobile-nav-item" data-target="predictor">
+      <span class="mobile-nav-icon">🎯</span>
+      <span class="mobile-nav-label">Caloiro</span>
+    </button>
+    <button type="button" class="mobile-nav-item" id="mobile-nav-profile-btn">
+      <span class="mobile-nav-icon">👤</span>
+      <span class="mobile-nav-label">Perfil</span>
+    </button>
+  </nav>
 
   <!-- Scripts com Cache Busting -->
   <script src="omr_engine.js?v=14.0"></script>

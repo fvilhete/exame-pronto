@@ -586,6 +586,37 @@ function setupEventListeners() {
     });
   });
 
+  // Menu Inferior Móvel (PWA Bottom Nav)
+  document.querySelectorAll(".mobile-nav-item[data-target]").forEach(item => {
+    item.addEventListener("click", (e) => {
+      const target = e.currentTarget.getAttribute("data-target");
+      activateMenuTab(target);
+      showSection(target);
+      
+      if (target === "dashboard") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (target === "enas") {
+        loadEnasData();
+      } else if (target === "games") {
+        openGamesLobby();
+        loadDuolingoLeagues();
+      } else if (target === "predictor") {
+        loadPredictorData();
+      }
+    });
+  });
+
+  safeAddListener("mobile-nav-profile-btn", "click", () => {
+    if (jwtToken) {
+      openProfileModal();
+    } else {
+      openAuthModal();
+    }
+  });
+
+  // Modo Poupança de Megas (Data Saver)
+  initDataSaver();
+
   // Modal Autenticação
   const authOverlay = document.getElementById("auth-overlay");
   safeAddListener("header-auth-btn", "click", openAuthModal);
@@ -1176,6 +1207,34 @@ function activateMenuTab(target) {
       item.classList.add("active");
     }
   });
+  document.querySelectorAll(".mobile-nav-item").forEach(item => {
+    item.classList.remove("active");
+    if (item.getAttribute("data-target") === target) {
+      item.classList.add("active");
+    }
+  });
+}
+
+function initDataSaver() {
+  const isDataSaver = localStorage.getItem("examepronto_datasaver") === "true";
+  const btn = document.getElementById("btn-data-saver");
+  if (isDataSaver) {
+    document.body.classList.add("data-saver-active");
+    if (btn) btn.classList.add("active");
+  }
+
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const active = document.body.classList.toggle("data-saver-active");
+      btn.classList.toggle("active", active);
+      localStorage.setItem("examepronto_datasaver", active ? "true" : "false");
+      if (active) {
+        showToast("⚡ Modo Poupança de Dados ATIVO: Menor consumo de megas na Movitel/Vodacom/Tmcel!", "success");
+      } else {
+        showToast("Modo Visual Completo ativado.", "info");
+      }
+    });
+  }
 }
 
 // --- CONTROLO DO MODAL DE AUTENTICAÇÃO SECURA ---

@@ -407,10 +407,10 @@
               <div>
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                   <span style="background: #34d399; color: #064e3b; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; letter-spacing: 0.4px;">MINEDH MOÇAMBIQUE</span>
-                  <strong style="font-size: 1.08rem; color: #ffffff;">Biblioteca Oficial 10ª & 12ª Classe (382 Exames)</strong>
+                  <strong style="font-size: 1.08rem; color: #ffffff;">Biblioteca Oficial 10ª & 12ª Classe (363 Exames 100% Ativos)</strong>
                 </div>
                 <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #d1fae5; line-height: 1.35;">
-                  157 simuladores interativos com cronómetro oficial e nota + download direto de cadernos de exame em PDF (2000 a 2025).
+                  363 simuladores interativos com cronómetro oficial e nota + download direto de cadernos de exame em PDF (2000 a 2025).
                 </p>
               </div>
             </div>
@@ -419,11 +419,111 @@
                 <span>🧮</span> Calculadora de Média (MFC)
               </button>
               <button type="button" class="btn btn-sm btn-outline" id="btn-quick-12a-banner" style="background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.4); font-weight: 700; padding: 9px 14px; border-radius: var(--radius-md);">
-                🎓 12ª Classe (289)
+                🎓 12ª Classe (270)
               </button>
               <button type="button" class="btn btn-sm btn-outline" id="btn-quick-10a-banner" style="background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.4); font-weight: 700; padding: 9px 14px; border-radius: var(--radius-md);">
                 📘 10ª Classe (93)
               </button>
+            </div>
+          </div>
+
+          <!-- CONTADOR REGRESSIVO OFICIAL DE EXAMES DE MOÇAMBIQUE (2026/2027) -->
+          <div id="moz-countdown-container" style="margin-bottom: 24px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">⏱️</span>
+                <div>
+                  <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">
+                    Contagem Regressiva para as Provas Oficiais (Moçambique 2026/2027)
+                  </h4>
+                  <span style="font-size: 0.78rem; color: var(--text-secondary);">
+                    Prazos oficiais baseados nos editais da UEM, UP e calendário escolar do MINEDH
+                  </span>
+                </div>
+              </div>
+              <span class="badge" style="background: rgba(239,68,68,0.12); color: #ef4444; font-weight: 800; font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;">
+                🔴 RETA FINAL AO VIVO
+              </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;" id="moz-countdown-cards-grid">
+              
+              <!-- Card 1: 12ª Classe MINEDH -->
+              <div class="countdown-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-top: 3px solid #f59e0b; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #f59e0b; text-transform: uppercase;">12ª Classe MINEDH</span>
+                    <span style="font-size: 0.7rem; color: var(--text-secondary);">24 Nov 2026</span>
+                  </div>
+                  <div style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: var(--text-primary); margin: 6px 0;" id="cd-12a-timer">
+                    --d --h --m --s
+                  </div>
+                  <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 10px 0;">
+                    1ª Época Geral Nacional • 270 Provas no Acervo
+                  </p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline cd-action-btn" data-level="12a" style="width: 100%; font-size: 0.78rem; font-weight: 700; padding: 6px;">
+                  Treinar 12ª Classe →
+                </button>
+              </div>
+
+              <!-- Card 2: 10ª Classe MINEDH -->
+              <div class="countdown-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-top: 3px solid #10b981; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #10b981; text-transform: uppercase;">10ª Classe MINEDH</span>
+                    <span style="font-size: 0.7rem; color: var(--text-secondary);">01 Dez 2026</span>
+                  </div>
+                  <div style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: var(--text-primary); margin: 6px 0;" id="cd-10a-timer">
+                    --d --h --m --s
+                  </div>
+                  <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 10px 0;">
+                    Fim do 1º Ciclo Secundário • 93 Provas no Acervo
+                  </p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline cd-action-btn" data-level="10a" style="width: 100%; font-size: 0.78rem; font-weight: 700; padding: 6px;">
+                  Treinar 10ª Classe →
+                </button>
+              </div>
+
+              <!-- Card 3: Admissão UEM 2027 -->
+              <div class="countdown-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-top: 3px solid #2563eb; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; text-transform: uppercase;">Admissão UEM 2027</span>
+                    <span style="font-size: 0.7rem; color: var(--text-secondary);">05 Jan 2027</span>
+                  </div>
+                  <div style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: var(--text-primary); margin: 6px 0;" id="cd-uem-timer">
+                    --d --h --m --s
+                  </div>
+                  <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 10px 0;">
+                    Universidade Eduardo Mondlane • Provas Oficiais
+                  </p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline cd-action-btn" data-level="superior" data-univ="UEM" style="width: 100%; font-size: 0.78rem; font-weight: 700; padding: 6px; color: #2563eb; border-color: rgba(37,99,235,0.4);">
+                  Treinar UEM →
+                </button>
+              </div>
+
+              <!-- Card 4: Admissão Rede UP 2027 -->
+              <div class="countdown-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-top: 3px solid #8b5cf6; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #8b5cf6; text-transform: uppercase;">Rede UP 2027</span>
+                    <span style="font-size: 0.7rem; color: var(--text-secondary);">12 Jan 2027</span>
+                  </div>
+                  <div style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: var(--text-primary); margin: 6px 0;" id="cd-up-timer">
+                    --d --h --m --s
+                  </div>
+                  <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 10px 0;">
+                    UP-Maputo, Licungo, Púnguè & Rovuma
+                  </p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline cd-action-btn" data-level="superior" data-univ="UP" style="width: 100%; font-size: 0.78rem; font-weight: 700; padding: 6px; color: #8b5cf6; border-color: rgba(139,92,246,0.4);">
+                  Treinar Rede UP →
+                </button>
+              </div>
+
             </div>
           </div>
 
@@ -3308,6 +3408,15 @@
         <p class="auth-toggle-link" id="auth-toggle-link">
           Não tem conta? <span style="color: var(--primary); font-weight: 600; cursor: pointer;">Registe-se aqui</span>
         </p>
+
+        <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border-color); text-align: center;">
+          <p style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 8px;">
+            Queres experimentar sem registar agora?
+          </p>
+          <button type="button" class="btn btn-outline" id="auth-guest-btn" style="width: 100%; border-style: dashed; font-weight: 700; color: #047857; border-color: #10b981; background: rgba(16, 185, 129, 0.06); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px;">
+            <span>⚡</span> Entrar como Convidado (Acesso Imediato Grátis)
+          </button>
+        </div>
       </div>
     </div>
   </div>

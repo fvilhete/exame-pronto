@@ -270,6 +270,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initNetworkStatus();
   initReferralTracking();
   initLiveOnlineUsersTicker();
+  initExamCountdownClocks();
   
   if (jwtToken) {
     await checkAuthStatus();
@@ -336,11 +337,14 @@ function updateAuthUI() {
     authBtn.style.display = "none";
     logoutBtn.style.display = "inline-flex";
     phoneText.style.display = "inline-flex";
-    const displayName = userProfile.name ? userProfile.name.split(' ')[0] : `+258 ${userProfile.phone}`;
-    phoneText.innerHTML = `👤 <span>${escapeHtml(displayName)}</span>`;
-    welcomeTitle.textContent = userProfile.name 
-      ? `Olá, ${escapeHtml(userProfile.name)}! 👋` 
-      : `Olá, Estudante (+258 ${userProfile.phone.substring(0,3)}***${userProfile.phone.substring(6)})! 👋`;
+    const isGuest = userProfile.isGuest || userProfile.phone === "Convidado";
+    const displayName = isGuest ? "Convidado" : (userProfile.name ? userProfile.name.split(' ')[0] : `+258 ${userProfile.phone}`);
+    phoneText.innerHTML = isGuest ? `⚡ <span>Convidado</span>` : `👤 <span>${escapeHtml(displayName)}</span>`;
+    welcomeTitle.textContent = isGuest
+      ? `Olá, Convidado! 👋 Acesso de Degustação Liberado`
+      : (userProfile.name 
+        ? `Olá, ${escapeHtml(userProfile.name)}! 👋` 
+        : `Olá, Estudante (+258 ${userProfile.phone.substring(0,3)}***${userProfile.phone.substring(6)})! 👋`);
     mainNavMenu.style.display = "flex";
 
     const adminBtn = document.getElementById("nav-admin-btn");
@@ -627,6 +631,7 @@ function setupEventListeners() {
 
   safeAddListener("auth-toggle-link", "click", toggleAuthMode);
   safeAddListener("auth-submit-btn", "click", submitAuth);
+  safeAddListener("auth-guest-btn", "click", submitAuthGuest);
   safeAddListener("header-logout-btn", "click", logout);
 
   // Recuperação de Senha / PIN
@@ -1630,6 +1635,11 @@ async function submitAuth() {
         showSection("dashboard");
         activateMenuTab("dashboard");
         await renderExamsList();
+        if (pendingExamStart) {
+          const target = pendingExamStart;
+          pendingExamStart = null;
+          startExam(target.examId, target.mode);
+        }
       }, 1000);
     } else {
       errorAlert.textContent = data.error || "Erro de autenticação.";
@@ -1638,6 +1648,39 @@ async function submitAuth() {
   } catch (e) {
     errorAlert.textContent = "Erro de conexão ao servidor.";
     errorAlert.style.display = "block";
+  }
+}
+
+async function submitAuthGuest() {
+  const errorAlert = document.getElementById("auth-error-alert");
+  try {
+    const res = await fetch("/api/auth/guest", { method: "POST" });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      jwtToken = data.token;
+      userProfile = data.user;
+      localStorage.setItem("examepronto_token", jwtToken);
+      localStorage.setItem("examepronto_user", JSON.stringify(userProfile));
+      document.getElementById("auth-overlay").style.display = "none";
+      updateAuthUI();
+      showToast("🎉 Bem-vindo! Entraste como Convidado com Acesso Total Liberado.", "success");
+      await renderExamsList();
+      if (pendingExamStart) {
+        const target = pendingExamStart;
+        pendingExamStart = null;
+        startExam(target.examId, target.mode);
+      }
+    } else {
+      if (errorAlert) {
+        errorAlert.textContent = data.error || "Erro ao entrar como convidado.";
+        errorAlert.style.display = "block";
+      }
+    }
+  } catch (err) {
+    if (errorAlert) {
+      errorAlert.textContent = "Erro de conexão ao servidor.";
+      errorAlert.style.display = "block";
+    }
   }
 }
 
@@ -2515,11 +2558,14 @@ function handleUrlRouting() {
   }
 }
 
+let pendingExamStart = null;
+
 // --- FLUXO DO QUIZ SEGURO ---
 async function startExam(examId, mode = 'exam') {
   if (!jwtToken) {
-    alert("🔒 Autenticação Necessária!\n\nDeves iniciar sessão para realizar exames.");
+    pendingExamStart = { examId, mode };
     openAuthModal();
+    showToast("🔑 Inicia sessão ou entra como Convidado para realizar o exame imediatamente!", "info");
     return;
   }
 
@@ -2529,14 +2575,14 @@ async function startExam(examId, mode = 'exam') {
     });
 
     if (!res.ok) {
-      alert("Erro ao aceder ao exame do servidor.");
+      showToast("Erro ao aceder ao exame do servidor.", "error");
       return;
     }
 
     const exam = await res.json();
     
     if (!exam || !exam.questions || exam.questions.length === 0) {
-      alert("⚠️ Este exame ainda está em fase de catalogação e não possui questões ativas.");
+      showToast("⚠️ Este exame ainda está em fase de catalogação e não possui questões ativas.", "warning");
       return;
     }
 
@@ -9566,5 +9612,66 @@ function updateMfcCalculator() {
       `;
     }
   }
+}
+
+// --- RELÓGIOS DE CONTAGEM REGRESSIVA OFICIAL (MOÇAMBIQUE 2026/2027) ---
+function initExamCountdownClocks() {
+  const cd12a = document.getElementById("cd-12a-timer");
+  const cd10a = document.getElementById("cd-10a-timer");
+  const cdUem = document.getElementById("cd-uem-timer");
+  const cdUp = document.getElementById("cd-up-timer");
+
+  if (!cd12a && !cd10a && !cdUem && !cdUp) return;
+
+  const targets = {
+    "12a": new Date(2026, 10, 24, 7, 30, 0).getTime(), // 24 Nov 2026
+    "10a": new Date(2026, 11, 1, 7, 30, 0).getTime(),  // 01 Dez 2026
+    "uem": new Date(2027, 0, 5, 8, 0, 0).getTime(),    // 05 Jan 2027
+    "up":  new Date(2027, 0, 12, 8, 0, 0).getTime()    // 12 Jan 2027
+  };
+
+  function updateClocks() {
+    const now = Date.now();
+
+    function formatDiff(target) {
+      const diff = target - now;
+      if (diff <= 0) return "Provas a Decorrer!";
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const mins = Math.floor((diff / (1000 * 60)) % 60);
+      const secs = Math.floor((diff / 1000) % 60);
+      return `${days}d ${String(hours).padStart(2, "0")}h ${String(mins).padStart(2, "0")}m ${String(secs).padStart(2, "0")}s`;
+    }
+
+    if (cd12a) cd12a.textContent = formatDiff(targets["12a"]);
+    if (cd10a) cd10a.textContent = formatDiff(targets["10a"]);
+    if (cdUem) cdUem.textContent = formatDiff(targets["uem"]);
+    if (cdUp)  cdUp.textContent  = formatDiff(targets["up"]);
+  }
+
+  updateClocks();
+  setInterval(updateClocks, 1000);
+
+  // Ações rápidas dos botões de treinar por nível
+  document.querySelectorAll(".cd-action-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const level = e.currentTarget.getAttribute("data-level");
+      const univ = e.currentTarget.getAttribute("data-univ");
+      if (level) {
+        activeLevel = level;
+        document.querySelectorAll(".uni-card").forEach(c => {
+          c.classList.toggle("active", c.getAttribute("data-level") === level);
+        });
+        activeUniversity = univ || "all";
+        activeSubject = "all";
+        activeYear = "all";
+        renderExamsList();
+        const grid = document.getElementById("exams-list-grid");
+        if (grid) {
+          grid.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    });
+  });
 }
 

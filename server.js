@@ -137,6 +137,9 @@ function requireAdmin(req, res, next) {
 function checkPremiumUser(userId) {
   return new Promise((resolve) => {
     if (!userId) return resolve(false);
+    if (typeof userId === 'string' && userId.startsWith('guest_')) {
+      return resolve(true);
+    }
     db.get("SELECT premium_until FROM users WHERE id = ?", [userId], (err, user) => {
       if (!err && user) {
         const now = new Date().getTime();
@@ -170,9 +173,11 @@ app.post('/api/auth/register', (req, res) => {
   const cleanAdminPhone = adminPhone.replace(/\D/g, '');
   const isAdmin = (cleanPhone === cleanAdminPhone) ? 1 : 0;
   const userProvince = province || 'Maputo Cidade';
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+  const welcomePremiumUntil = Date.now() + sevenDaysMs;
 
-  const query = `INSERT INTO users (phone, password_hash, is_admin, province) VALUES (?, ?, ?, ?)`;
-  db.run(query, [cleanPhone, passwordHash, isAdmin, userProvince], function(err) {
+  const query = `INSERT INTO users (phone, password_hash, is_admin, province, premium_until) VALUES (?, ?, ?, ?, ?)`;
+  db.run(query, [cleanPhone, passwordHash, isAdmin, userProvince, welcomePremiumUntil], function(err) {
     if (err) {
       if (err.message && err.message.includes('UNIQUE constraint failed')) {
         return res.status(400).json({ error: 'Este número de telefone já está registado.' });
@@ -182,14 +187,57 @@ app.post('/api/auth/register', (req, res) => {
 
     const token = jwt.sign({ id: this.lastID, phone: cleanPhone }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({
-      message: 'Utilizador criado com sucesso.',
+      message: 'Utilizador criado com sucesso! Ganhaste 7 dias de Acesso VIP de Boas-Vindas 🎉',
       token,
       user: { 
         id: this.lastID, 
         phone: cleanPhone, 
         province: userProvince, 
-        isPremium: false, 
+        isPremium: true,
+        premiumExpires: welcomePremiumUntil,
         isAdmin: isAdmin === 1 
+      }
+    });
+  });
+});
+
+// Acesso Imediato de Degustação como Convidado (Sem Barreira de Entrada)
+app.post('/api/auth/guest', (req, res) => {
+  const guestPhone = 'visitante_' + Math.floor(100000 + Math.random() * 900000);
+  const guestExpires = Date.now() + (24 * 60 * 60 * 1000); // 24 horas de degustação livre
+  const query = `INSERT INTO users (phone, password_hash, is_admin, province, premium_until) VALUES (?, ?, 0, 'Moçambique', ?)`;
+  db.run(query, [guestPhone, 'guest_session', guestExpires], function(err) {
+    if (err) {
+      // Fallback em memória com ID determinístico
+      const fallbackId = 'guest_' + Date.now().toString(36);
+      const token = jwt.sign({ id: fallbackId, phone: 'Convidado', is_guest: true }, JWT_SECRET, { expiresIn: '1d' });
+      return res.json({
+        message: 'Sessão de Convidado iniciada com sucesso. Bons estudos!',
+        token,
+        user: {
+          id: fallbackId,
+          phone: 'Convidado',
+          province: 'Moçambique',
+          isPremium: true,
+          premiumExpires: guestExpires,
+          isAdmin: false,
+          isGuest: true
+        }
+      });
+    }
+
+    const token = jwt.sign({ id: this.lastID, phone: 'Convidado', is_guest: true }, JWT_SECRET, { expiresIn: '1d' });
+    res.json({
+      message: 'Sessão de Convidado iniciada com sucesso. Bons estudos!',
+      token,
+      user: {
+        id: this.lastID,
+        phone: 'Convidado',
+        province: 'Moçambique',
+        isPremium: true,
+        premiumExpires: guestExpires,
+        isAdmin: false,
+        isGuest: true
       }
     });
   });

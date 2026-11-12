@@ -1819,7 +1819,7 @@ function updateHeroBanner(level, exams) {
   }, 0);
 
   if (statExams) statExams.textContent = (exams || []).length;
-  if (statQuestions) statQuestions.textContent = totalQ > 0 ? totalQ.toLocaleString('pt-MZ') : '8.520';
+  if (statQuestions) statQuestions.textContent = totalQ > 0 ? totalQ.toLocaleString('pt-MZ') : '14.550';
 
   if (level === "superior") {
     if (badge) badge.textContent = "📚 Admissão Universitária (UEM & UP)";
@@ -2284,9 +2284,20 @@ function filterAndRenderExams() {
         <button class="btn btn-sm btn-primary btn-start-exam" data-id="${exam.id}" style="flex: 1; min-width: 105px;" title="Simular Prova: Simulação oficial cronometrada com contagem regressiva">
           ⏱️ Simular Prova
         </button>
-        <button type="button" class="btn btn-sm btn-outline btn-download-pdf-exam" data-id="${exam.id}" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; color: #1e3a8a; border-color: rgba(30, 58, 138, 0.28);" title="Baixar Caderno Oficial de Exame em Formato A4 (PDF)">
-          📥 Baixar Caderno A4 (PDF)
-        </button>
+        ${hasPdf ? `
+          <div style="width: 100%; display: flex; gap: 6px;">
+            <button type="button" class="btn btn-sm btn-outline btn-download-pdf-exam" data-id="${exam.id}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 600; font-size: 0.78rem; color: #1e3a8a; border-color: rgba(30, 58, 138, 0.28);" title="Baixar Caderno Oficial de Exame em Formato A4 (PDF)">
+              📥 Caderno A4
+            </button>
+            <a href="${exam.pdf_url}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 600; font-size: 0.78rem; color: #047857; border-color: rgba(4, 120, 87, 0.28); background: rgba(16, 185, 129, 0.05); text-decoration: none;" title="Abrir ou Baixar PDF Original Digitalizado do Exame Oficial">
+              📄 PDF Original
+            </a>
+          </div>
+        ` : `
+          <button type="button" class="btn btn-sm btn-outline btn-download-pdf-exam" data-id="${exam.id}" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; color: #1e3a8a; border-color: rgba(30, 58, 138, 0.28);" title="Baixar Caderno Oficial de Exame em Formato A4 (PDF)">
+            📥 Baixar Caderno A4 (PDF)
+          </button>
+        `}
       </div>
     ` : (hasPdf ? `
       <div class="exam-card-actions">
